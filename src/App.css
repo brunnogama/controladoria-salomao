@@ -1,0 +1,35 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import MainLayout from './layouts/MainLayout';
+import Dashboard from './pages/Dashboard';
+import Contratos from './pages/Contratos'; // <--- Importamos a página nova
+
+// Placeholder para páginas que ainda não criamos
+const PaginaEmConstrucao = ({ nome }) => (
+  <div className="p-10 text-center">
+    <h1 className="text-2xl font-bold text-gray-400">Módulo {nome}</h1>
+    <p className="text-gray-500">Em desenvolvimento...</p>
+  </div>
+);
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Dashboard />} />
+          {/* Aqui ligamos a rota /contratos à página real */}
+          <Route path="contratos" element={<Contratos />} /> 
+          
+          <Route path="clientes" element={<PaginaEmConstrucao nome="Clientes" />} />
+          <Route path="volumetria" element={<PaginaEmConstrucao nome="Volumetria" />} />
+          <Route path="kanban" element={<PaginaEmConstrucao nome="Kanban" />} />
+          <Route path="historico" element={<PaginaEmConstrucao nome="Histórico" />} />
+          <Route path="configuracoes" element={<PaginaEmConstrucao nome="Configurações" />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;
