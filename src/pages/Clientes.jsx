@@ -20,6 +20,7 @@ const Clientes = () => {
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
+  const [buscandoCNPJ, setBuscandoCNPJ] = useState(false)
 
   // Controle do Modal de Edição
   const [showModal, setShowModal] = useState(false)
@@ -265,6 +266,52 @@ const Clientes = () => {
     })
   }
 
+  const buscarDadosCNPJ = async () => {
+    const cnpjLimpo = formData.cnpj.replace(/\D/g, '');
+    
+    if (!cnpjLimpo || cnpjLimpo.length !== 14) {
+      alert('⚠️ CNPJ inválido! Digite 14 dígitos.');
+      return;
+    }
+    
+    setBuscandoCNPJ(true);
+    try {
+      console.log('🔍 Buscando CNPJ na Receita Federal:', cnpjLimpo);
+      
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      
+      if (!response.ok) {
+        throw new Error('CNPJ não encontrado na Receita Federal');
+      }
+      
+      const dados = await response.json();
+      console.log('✅ Dados da Receita Federal:', dados);
+      
+      // Função para converter para Title Case
+      const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+      };
+      
+      // Preencher formulário com dados da Receita
+      setFormData(prev => ({
+        ...prev,
+        razao_social: toTitleCase(dados.razao_social || ''),
+        nome_contato: toTitleCase(dados.qsa?.[0]?.nome || ''),
+        email: dados.email || prev.email,
+        telefone: dados.ddd_telefone_1 ? `(${dados.ddd_telefone_1.substring(0,2)}) ${dados.ddd_telefone_1.substring(2)}` : prev.telefone,
+        cnpj: cnpjLimpo
+      }));
+      
+      alert(`✅ Dados encontrados na Receita Federal!\n\n${toTitleCase(dados.razao_social)}\nCNPJ: ${cnpjLimpo}`);
+    } catch (error) {
+      console.error('❌ Erro ao buscar CNPJ:', error);
+      alert(`❌ ${error.message}\n\n💡 Você pode preencher os dados manualmente.`);
+    } finally {
+      setBuscandoCNPJ(false);
+    }
+  };
+
   const clientesFiltrados = clientes.filter((c) =>
     c.razao_social?.toLowerCase().includes(busca.toLowerCase()) ||
     c.cnpj?.includes(busca) ||
@@ -410,7 +457,38 @@ const Clientes = () => {
 
               <div>
                 <label className='block text-sm font-bold text-gray-700 mb-2'>CNPJ *</label>
-                <input type='text' required value={formData.cnpj} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} className='w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500' placeholder='00.000.000/0000-00' />
+                <div className='relative'>
+                  <input 
+                    type='text' 
+                    required 
+                    value={formData.cnpj} 
+                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} 
+                    className='w-full p-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500' 
+                    placeholder='00.000.000/0000-00'
+                    disabled={editingId} // Desabilita se estiver editando
+                  />
+                  {!editingId && (
+                    <button
+                      type='button'
+                      onClick={buscarDadosCNPJ}
+                      disabled={buscandoCNPJ}
+                      className='absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors'
+                      title='Buscar dados na Receita Federal'
+                    >
+                      {buscandoCNPJ ? (
+                        <svg className='animate-spin h-5 w-5' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                          <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                          <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                        </svg>
+                      ) : (
+                        <Search size={20} />
+                      )}
+                    </button>
+                  )}
+                </div>
+                {editingId && (
+                  <p className='text-xs text-gray-500 mt-1'>CNPJ não pode ser alterado ao editar</p>
+                )}
               </div>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
