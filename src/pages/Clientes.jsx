@@ -10,6 +10,7 @@ import {
   Edit2,
   Trash2,
   X,
+  XCircle,
   Building2,
   FileText,
   Hash,
@@ -24,6 +25,10 @@ const Clientes = () => {
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [saving, setSaving] = useState(false)
+  
+  // Controle do Modal de Erro
+  const [showErrorModal, setShowErrorModal] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -117,10 +122,23 @@ const Clientes = () => {
     if (!window.confirm(`Tem certeza que deseja excluir ${nome}?`)) return
     try {
       const { error } = await supabase.from('clientes').delete().eq('id', id)
-      if (error) throw error
+      if (error) {
+        // Verificar se é erro de constraint de foreign key
+        if (error.code === '23503' || error.message.includes('foreign key constraint')) {
+          setErrorMessage(
+            'Não é possível excluir este cliente pois existem contratos vinculados a ele.'
+          )
+          setShowErrorModal(true)
+          return
+        }
+        throw error
+      }
+      
       fetchClientes()
     } catch (error) {
-      alert('Erro ao excluir: ' + error.message)
+      console.error('Erro ao excluir cliente:', error)
+      setErrorMessage('Erro inesperado ao excluir o cliente. Tente novamente.')
+      setShowErrorModal(true)
     }
   }
 
@@ -406,6 +424,32 @@ const Clientes = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Erro */}
+      {showErrorModal && (
+        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm'>
+          <div className='bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200'>
+            <div className='bg-red-500 p-4 flex items-center gap-3 text-white'>
+              <XCircle size={24} />
+              <h3 className='font-bold text-lg'>Não foi possível excluir</h3>
+            </div>
+            <div className='p-6'>
+              <p className='text-gray-700 mb-4'>{errorMessage}</p>
+              <div className='bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800'>
+                <strong>💡 Dica:</strong> Para excluir este cliente, primeiro remova ou transfira todos os contratos associados.
+              </div>
+            </div>
+            <div className='p-4 bg-gray-50 flex justify-end border-t'>
+              <button
+                onClick={() => setShowErrorModal(false)}
+                className='px-6 py-2 bg-[#0F2C4C] text-white rounded-lg hover:bg-blue-900 transition-colors font-bold'
+              >
+                Entendi
+              </button>
+            </div>
           </div>
         </div>
       )}
