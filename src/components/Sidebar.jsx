@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  History, 
-  Settings, 
-  LogOut,
-  UserCircle,
-  Trello
+  LayoutDashboard, FileText, Users, History, 
+  Settings, UserCircle, LogOut, Trello 
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -17,7 +11,6 @@ const Sidebar = () => {
   const [userName, setUserName] = useState('Visitante');
 
   useEffect(() => {
-    // Busca a logo interna
     const savedLogo = localStorage.getItem('app_logo_path');
     if (savedLogo) setCustomLogo(savedLogo);
 
@@ -26,16 +19,24 @@ const Sidebar = () => {
   }, []);
 
   const isActive = (path) => {
-    if (path === '/' && location.pathname !== '/') return "text-blue-100 hover:bg-white/10 hover:text-white";
-    if (path !== '/' && location.pathname.startsWith(path)) return "bg-white/10 text-white font-bold border-l-4 border-yellow-400";
-    if (location.pathname === path) return "bg-white/10 text-white font-bold border-l-4 border-yellow-400";
-    return "text-blue-100 hover:bg-white/10 hover:text-white transition-colors";
+    if (path === '/' && location.pathname !== '/') return "text-blue-100 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3 px-4 py-3 text-sm rounded-lg";
+    if (path !== '/' && location.pathname.startsWith(path)) return "bg-white/10 text-white font-bold border-l-4 border-yellow-400 flex items-center gap-3 px-4 py-3 text-sm rounded-lg";
+    if (location.pathname === path) return "bg-white/10 text-white font-bold border-l-4 border-yellow-400 flex items-center gap-3 px-4 py-3 text-sm rounded-lg";
+    return "text-blue-100 hover:bg-white/10 hover:text-white transition-colors flex items-center gap-3 px-4 py-3 text-sm rounded-lg";
   };
 
   const handleLogout = () => {
     localStorage.clear();
     window.location.href = '/login';
   };
+
+  const menuItems = [
+    { path: '/', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+    { path: '/kanban', label: 'Kanban', icon: <Trello size={20} /> },
+    { path: '/contratos', label: 'Contratos', icon: <FileText size={20} /> },
+    { path: '/clientes', label: 'Clientes', icon: <Users size={20} /> },
+    { path: '/historico', label: 'Histórico', icon: <History size={20} /> },
+  ];
 
   return (
     <aside className="w-64 bg-[#0F2C4C] text-white h-screen flex flex-col fixed left-0 top-0 z-50 shadow-xl">
@@ -51,20 +52,20 @@ const Sidebar = () => {
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2">
-        <Link to="/" className={isActive('/')}><LayoutDashboard size={20} /> <span>Dashboard</span></Link>
-        <Link to="/kanban" className={isActive('/kanban')}><Trello size={20} /> <span>Kanban</span></Link>
-        <Link to="/contratos" className={isActive('/contratos')}><FileText size={20} /> <span>Contratos</span></Link>
-        <Link to="/clientes" className={isActive('/clientes')}><Users size={20} /> <span>Clientes</span></Link>
-        <Link to="/historico" className={isActive('/historico')}><History size={20} /> <span>Histórico</span></Link>
+        {menuItems.map((item) => (
+          <Link key={item.path} to={item.path} className={isActive(item.path)}>
+            {item.icon} <span>{item.label}</span>
+          </Link>
+        ))}
       </nav>
 
       <div className="p-4 border-t border-white/10 space-y-2">
-        <Link to="/configuracoes" className={`flex items-center gap-3 px-4 py-2 text-sm rounded-lg ${isActive('/configuracoes')}`}>
+        <Link to="/configuracoes" className={isActive('/configuracoes')}>
           <Settings size={20} /> <span>Configurações</span>
         </Link>
-        <div className="flex items-center justify-between p-3 bg-black/10 rounded-lg border border-white/5">
+        <div className="flex items-center justify-between p-3 bg-black/10 rounded-lg border border-white/5 mt-2">
           <div className="flex items-center gap-2 overflow-hidden">
-            <UserCircle size={24} className="text-blue-300" />
+            <UserCircle size={24} className="text-blue-300 shrink-0" />
             <span className="text-xs font-bold truncate">{userName}</span>
           </div>
           <button onClick={handleLogout} className="text-red-300 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-md">
