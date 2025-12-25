@@ -1,437 +1,483 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../supabaseClient'
-import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import { Save, ArrowLeft, Briefcase, Search, Loader2 } from 'lucide-react';
+import { formatCNPJ, aplicarMascaraMoeda, removerMascaraMoeda } from '../utils/formatters';
+import PDFUpload from '../components/PDFUpload';
 
-const Contratos = () => {
-  const navigate = useNavigate()
-  const [contratos, setContratos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [busca, setBusca] = useState('')
-  const [contratoSelecionado, setContratoSelecionado] = useState(null)
-  const [showModal, setShowModal] = useState(false)
+const ContratoForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [buscandoCNPJ, setBuscandoCNPJ] = useState(false);
+  const [clienteEncontrado, setClienteEncontrado] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    cliente_id: '',
+    cliente_nome: '',
+    cnpj_cliente: '',
+    status: 'Sob Análise',
+    area: '',
+    responsavel: '',
+    contrario: '',
+    processo: '',
+    valor_causa: '',
+    tribunal_turma: '',
+    juiz_desembargador: '',
+    uf: '',
+    data_prospect: '',
+    analisado_por: '',
+    obs_prospect: '',
+    data_proposta: '',
+    arquivo_proposta_url: '',
+    proposta_pro_labore: '',
+    proposta_honorario_fixo: '',
+    proposta_exito_total: '',
+    proposta_exito_percentual: '',
+    proposta_timesheet: false,
+    proposta_outros: '',
+    descricao_proposta: '',
+    observacoes_proposta: '',
+    data_contrato: '',
+    numero_hon: '',
+    arquivo_contrato_url: '',
+    numero_proc: '',
+    contrato_pro_labore: '',
+    contrato_honorario_fixo: '',
+    contrato_exito_total: '',
+    contrato_exito_percentual: '',
+    contrato_timesheet: false,
+    contrato_outros: '',
+    descricao_contrato: '',
+    observacoes_contrato: '',
+    data_rejeicao: '',
+    rejeitado_por: '',
+    observacoes_rejeicao: '',
+    data_probono: '',
+    enviado_por: '',
+    observacoes_probono: '',
+  });
 
   useEffect(() => {
-    buscarContratos()
-  }, [])
+    if (id) fetchContrato();
+  }, [id]);
 
-  const buscarContratos = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('contratos')
-        .select(`
-          *,
-          clientes ( razao_social, cnpj )
-        `)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setContratos(data || [])
-    } catch (error) {
-      console.error('Erro ao buscar contratos:', error)
-      alert('Erro ao carregar contratos!')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleUploadPDF = async (event, contratoId) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `ged_${contratoId}_${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('contratos_ged')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('contratos_ged')
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await supabase
-        .from('contratos')
-        .update({ arquivo_pdf_url: urlData.publicUrl })
-        .eq('id', contratoId);
-
-      if (updateError) throw updateError;
-
-      alert('PDF vinculado com sucesso!');
-      buscarContratos();
-    } catch (error) {
-      console.error('Erro ao fazer upload:', error);
-      alert('Erro ao vincular PDF!');
+  const fetchContrato = async () => {
+    const { data } = await supabase
+      .from('contratos')
+      .select('*, clientes(razao_social, cnpj)')
+      .eq('id', id)
+      .single();
+    
+    if (data) {
+      setFormData({
+        ...data,
+        cliente_nome: data.clientes?.razao_social || '',
+        cnpj_cliente: data.clientes?.cnpj || '',
+        proposta_pro_labore: data.proposta_pro_labore ? aplicarMascaraMoeda(data.proposta_pro_labore * 100) : '',
+        proposta_honorario_fixo: data.proposta_honorario_fixo ? aplicarMascaraMoeda(data.proposta_honorario_fixo * 100) : '',
+        proposta_exito_total: data.proposta_exito_total ? aplicarMascaraMoeda(data.proposta_exito_total * 100) : '',
+        contrato_pro_labore: data.contrato_pro_labore ? aplicarMascaraMoeda(data.contrato_pro_labore * 100) : '',
+        contrato_honorario_fixo: data.contrato_honorario_fixo ? aplicarMascaraMoeda(data.contrato_honorario_fixo * 100) : '',
+        contrato_exito_total: data.contrato_exito_total ? aplicarMascaraMoeda(data.contrato_exito_total * 100) : '',
+        valor_causa: data.valor_causa ? aplicarMascaraMoeda(data.valor_causa * 100) : '',
+      });
+      setClienteEncontrado(data.clientes);
     }
   };
 
-  const getStatusColor = (status) => {
-    const cores = {
-      'Sob Análise': 'bg-orange-100 text-orange-700',
-      'Proposta Enviada': 'bg-yellow-100 text-yellow-700',
-      'Contrato Fechado': 'bg-green-100 text-green-700',
-      'Rejeitada': 'bg-red-100 text-red-700',
-      'Probono': 'bg-blue-100 text-blue-700',
+  const buscarClientePorCNPJ = async (cnpj) => {
+    if (!cnpj || cnpj.replace(/\D/g, '').length < 11) {
+      setClienteEncontrado(null);
+      setFormData(prev => ({ ...prev, cliente_id: '', cliente_nome: '' }));
+      return;
     }
-    return cores[status] || 'bg-gray-100 text-gray-700'
-  }
+    
+    setBuscandoCNPJ(true);
+    try {
+      const cnpjLimpo = cnpj.replace(/\D/g, '');
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id, razao_social, cnpj')
+        .eq('cnpj', cnpjLimpo)
+        .single();
 
-  const contratosFiltrados = contratos.filter((c) => {
-    const termo = busca.toLowerCase()
-    return (
-      c.clientes?.razao_social?.toLowerCase().includes(termo) ||
-      c.descricao_contrato?.toLowerCase().includes(termo) ||
-      c.responsavel?.toLowerCase().includes(termo)
-    )
-  })
+      if (data) {
+        setClienteEncontrado(data);
+        setFormData(prev => ({ 
+          ...prev, 
+          cliente_id: data.id,
+          cliente_nome: data.razao_social
+        }));
+      } else {
+        setClienteEncontrado(null);
+        setFormData(prev => ({ 
+          ...prev, 
+          cliente_id: '',
+          cliente_nome: ''
+        }));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar cliente:', err);
+      setClienteEncontrado(null);
+      setFormData(prev => ({ 
+        ...prev, 
+        cliente_id: '',
+        cliente_nome: ''
+      }));
+    } finally {
+      setBuscandoCNPJ(false);
+    }
+  };
 
-  const abrirModal = (contrato) => {
-    setContratoSelecionado(contrato)
-    setShowModal(true)
-  }
+  const handleMoneyChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: aplicarMascaraMoeda(value)
+    }));
+  };
 
-  const fecharModal = () => {
-    setShowModal(false)
-    setContratoSelecionado(null)
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (formData.status === 'Contrato Fechado' && !formData.cliente_id && !formData.cliente_nome) {
+      alert("Para contratos fechados é obrigatório informar um cliente (por CNPJ ou manualmente).");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const { cnpj_cliente, cliente_nome, ...dadosParaSalvar } = formData;
+      
+      const dadosFinais = {
+        ...dadosParaSalvar,
+        cliente_id: dadosParaSalvar.cliente_id || null,
+        proposta_pro_labore: dadosParaSalvar.proposta_pro_labore ? removerMascaraMoeda(dadosParaSalvar.proposta_pro_labore) : null,
+        proposta_honorario_fixo: dadosParaSalvar.proposta_honorario_fixo ? removerMascaraMoeda(dadosParaSalvar.proposta_honorario_fixo) : null,
+        proposta_exito_total: dadosParaSalvar.proposta_exito_total ? removerMascaraMoeda(dadosParaSalvar.proposta_exito_total) : null,
+        contrato_pro_labore: dadosParaSalvar.contrato_pro_labore ? removerMascaraMoeda(dadosParaSalvar.contrato_pro_labore) : null,
+        contrato_honorario_fixo: dadosParaSalvar.contrato_honorario_fixo ? removerMascaraMoeda(dadosParaSalvar.contrato_honorario_fixo) : null,
+        contrato_exito_total: dadosParaSalvar.contrato_exito_total ? removerMascaraMoeda(dadosParaSalvar.contrato_exito_total) : null,
+        valor_causa: dadosParaSalvar.valor_causa ? removerMascaraMoeda(dadosParaSalvar.valor_causa) : null,
+      };
+      
+      console.log('Dados a salvar:', dadosFinais);
+      
+      if (id) {
+        const { data, error } = await supabase.from('contratos').update(dadosFinais).eq('id', id);
+        if (error) throw error;
+        console.log('Contrato atualizado:', data);
+      } else {
+        const { data, error } = await supabase.from('contratos').insert([dadosFinais]);
+        if (error) throw error;
+        console.log('Contrato criado:', data);
+      }
+      
+      alert('Contrato salvo com sucesso!');
+      navigate('/contratos');
+    } catch (error) {
+      console.error('Erro completo:', error);
+      alert("Erro ao salvar: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const irParaEdicao = (id) => {
-    navigate(`/contratos/editar/${id}`)
-  }
-
-  const formatarMoeda = (valor) => {
-    if (!valor) return 'R$ 0,00'
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor)
-  }
-
-  const formatarData = (data) => {
-    if (!data) return '-'
-    return new Date(data).toLocaleDateString('pt-BR')
-  }
+  const renderCamposStatus = () => {
+    switch(formData.status) {
+      case 'Sob Análise':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 border-b pb-2">Dados de Prospecção</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data Prospect</label>
+                <input type="date" value={formData.data_prospect} onChange={(e) => setFormData({...formData, data_prospect: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Analisado por</label>
+                <input type="text" value={formData.analisado_por} onChange={(e) => setFormData({...formData, analisado_por: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do analista" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Obs Prospect</label>
+              <textarea value={formData.obs_prospect} onChange={(e) => setFormData({...formData, obs_prospect: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Observações sobre a prospecção..." />
+            </div>
+          </div>
+        );
+        
+      case 'Proposta Enviada':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 border-b pb-2">Dados da Proposta</h3>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Data Proposta *</label>
+              <input type="date" value={formData.data_proposta} onChange={(e) => setFormData({...formData, data_proposta: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Vincular Proposta (PDF)</label>
+              <PDFUpload onUpload={async (file) => { console.log('Upload proposta:', file); }} loading={loading} buttonText="Anexar PDF da Proposta" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Pró-labore (R$)</label>
+                <input type="text" value={formData.proposta_pro_labore} onChange={(e) => handleMoneyChange('proposta_pro_labore', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Honorário Fixo (R$)</label>
+                <input type="text" value={formData.proposta_honorario_fixo} onChange={(e) => handleMoneyChange('proposta_honorario_fixo', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Êxito Total (R$)</label>
+                <input type="text" value={formData.proposta_exito_total} onChange={(e) => handleMoneyChange('proposta_exito_total', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Êxito %</label>
+                <input type="text" value={formData.proposta_exito_percentual} onChange={(e) => setFormData({...formData, proposta_exito_percentual: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="0%" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+              <input type="checkbox" checked={formData.proposta_timesheet} onChange={(e) => setFormData({...formData, proposta_timesheet: e.target.checked})} className="w-5 h-5 rounded accent-blue-600" id="proposta_timesheet" />
+              <label htmlFor="proposta_timesheet" className="text-sm font-medium text-blue-900">Timesheet</label>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Outros</label>
+              <input type="text" value={formData.proposta_outros} onChange={(e) => setFormData({...formData, proposta_outros: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Informações adicionais..." />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Descrição da Proposta</label>
+              <textarea value={formData.descricao_proposta} onChange={(e) => setFormData({...formData, descricao_proposta: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Descreva os detalhes da proposta..." />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
+              <textarea value={formData.observacoes_proposta} onChange={(e) => setFormData({...formData, observacoes_proposta: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="2" />
+            </div>
+          </div>
+        );
+        
+      case 'Contrato Fechado':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 border-b pb-2">Dados do Contrato</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data Contrato *</label>
+                <input type="date" value={formData.data_contrato} onChange={(e) => setFormData({...formData, data_contrato: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Número Hon</label>
+                <input type="text" value={formData.numero_hon} onChange={(e) => setFormData({...formData, numero_hon: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="HON-XXXX" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Vincular Contrato (PDF)</label>
+              <PDFUpload onUpload={async (file) => { console.log('Upload contrato:', file); }} loading={loading} buttonText="Anexar PDF do Contrato" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Número PROC</label>
+              <input type="text" value={formData.numero_proc} onChange={(e) => setFormData({...formData, numero_proc: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Número LegalOne" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Pró-labore (R$)</label>
+                <input type="text" value={formData.contrato_pro_labore} onChange={(e) => handleMoneyChange('contrato_pro_labore', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Honorário Fixo (R$)</label>
+                <input type="text" value={formData.contrato_honorario_fixo} onChange={(e) => handleMoneyChange('contrato_honorario_fixo', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Êxito Total (R$)</label>
+                <input type="text" value={formData.contrato_exito_total} onChange={(e) => handleMoneyChange('contrato_exito_total', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Êxito %</label>
+                <input type="text" value={formData.contrato_exito_percentual} onChange={(e) => setFormData({...formData, contrato_exito_percentual: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="0%" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+              <input type="checkbox" checked={formData.contrato_timesheet} onChange={(e) => setFormData({...formData, contrato_timesheet: e.target.checked})} className="w-5 h-5 rounded accent-green-600" id="contrato_timesheet" />
+              <label htmlFor="contrato_timesheet" className="text-sm font-medium text-green-900">Timesheet</label>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Outros</label>
+              <input type="text" value={formData.contrato_outros} onChange={(e) => setFormData({...formData, contrato_outros: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Informações adicionais..." />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
+              <textarea value={formData.observacoes_contrato} onChange={(e) => setFormData({...formData, observacoes_contrato: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="2" />
+            </div>
+          </div>
+        );
+        
+      case 'Rejeitada':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 border-b pb-2">Dados da Rejeição</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data Rejeição *</label>
+                <input type="date" value={formData.data_rejeicao} onChange={(e) => setFormData({...formData, data_rejeicao: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Rejeitado por</label>
+                <input type="text" value={formData.rejeitado_por} onChange={(e) => setFormData({...formData, rejeitado_por: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do responsável" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
+              <textarea value={formData.observacoes_rejeicao} onChange={(e) => setFormData({...formData, observacoes_rejeicao: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Motivo da rejeição..." />
+            </div>
+          </div>
+        );
+        
+      case 'Probono':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-gray-700 border-b pb-2">Dados Probono</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data Probono *</label>
+                <input type="date" value={formData.data_probono} onChange={(e) => setFormData({...formData, data_probono: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Enviado Por</label>
+                <input type="text" value={formData.enviado_por} onChange={(e) => setFormData({...formData, enviado_por: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do responsável" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
+              <textarea value={formData.observacoes_probono} onChange={(e) => setFormData({...formData, observacoes_probono: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Detalhes do caso probono..." />
+            </div>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className='w-full space-y-6'>
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
-        <div>
-          <h1 className='text-3xl font-bold text-[#0F2C4C]'>
-            Gestão de Contratos
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate('/contratos')} className="flex items-center gap-2 text-gray-500 hover:text-[#0F2C4C] font-bold">
+          <ArrowLeft size={20} /> Voltar
+        </button>
+        <div className="text-right">
+          <h1 className="text-2xl font-black text-[#0F2C4C] uppercase tracking-tighter">
+            {id ? 'Edição de Contrato' : 'Abertura de Novo Caso'}
           </h1>
-          <p className='text-gray-500'>
-            Acompanhe o status de todas as demandas e documentos vinculados.
-          </p>
-        </div>
-
-        <Link
-          to='/contratos/novo'
-          className='flex items-center gap-2 bg-[#0F2C4C] text-white px-5 py-2.5 rounded-lg hover:bg-blue-900 transition-colors shadow-lg font-bold'
-        >
-          <Plus size={20} />
-          <span>Novo Contrato</span>
-        </Link>
-      </div>
-
-      <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4'>
-        <div className='relative flex-1'>
-          <Search className='absolute left-3 top-3 text-gray-400' size={20} />
-          <input
-            type='text'
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder='Buscar por cliente, descrição ou responsável...'
-            className='w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          />
+          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Flow Metrics System v1.4.4</p>
         </div>
       </div>
 
-      <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-        {loading ? (
-          <div className='p-10 text-center text-gray-500 font-bold animate-pulse'>
-            Carregando dados da controladoria...
-          </div>
-        ) : contratosFiltrados.length === 0 ? (
-          <div className='p-16 flex flex-col items-center justify-center text-gray-400'>
-            <FileText size={48} className='mb-4 opacity-20' />
-            <p className='text-lg'>Nenhum contrato encontrado.</p>
-            <p className='text-sm'>Clique em "Novo Contrato" para começar.</p>
-          </div>
-        ) : (
-          <div className='overflow-x-auto'>
-            <table className='w-full text-left'>
-              <thead className='bg-gray-50 border-b border-gray-100'>
-                <tr>
-                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest'>
-                    Status
-                  </th>
-                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest'>
-                    Cliente
-                  </th>
-                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest'>
-                    Descrição do Contrato
-                  </th>
-                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest text-center'>
-                    GED (PDF)
-                  </th>
-                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest text-center'>
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-50'>
-                {contratosFiltrados.map((contrato) => (
-                  <tr
-                    key={contrato.id}
-                    className='hover:bg-gray-50 transition-colors cursor-pointer'
-                    onClick={() => abrirModal(contrato)}
-                  >
-                    <td className='px-6 py-4'>
-                      <span
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusColor(
-                          contrato.status
-                        )}`}
-                      >
-                        {contrato.status}
-                      </span>
-                    </td>
-                    <td className='px-6 py-4 font-bold text-[#0F2C4C] text-sm'>
-                      {contrato.clientes?.razao_social || 'Cliente não identificado'}
-                    </td>
-                    <td className='px-6 py-4 text-gray-600 text-xs italic'>
-                      {contrato.descricao_contrato || '-'}
-                    </td>
-                    <td className='px-6 py-4 text-center'>
-                      {contrato.status === 'Contrato Fechado' && (
-                        <div className="flex justify-center items-center" onClick={(e) => e.stopPropagation()}>
-                          {contrato.arquivo_pdf_url ? (
-                            <div className="text-emerald-600 flex items-center gap-1 text-[10px] font-black bg-emerald-50 px-2 py-1 rounded-lg">
-                              <CheckCircle2 size={14} /> PDF OK
-                            </div>
-                          ) : (
-                            <label className="cursor-pointer bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-blue-100 transition-all">
-                              <Upload size={14} /> Vincular PDF
-                              <input 
-                                type="file" 
-                                accept=".pdf" 
-                                className="hidden" 
-                                onChange={(e) => handleUploadPDF(e, contrato.id)} 
-                              />
-                            </label>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className='px-6 py-4 text-center'>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          irParaEdicao(contrato.id)
-                        }}
-                        className='inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all'
-                      >
-                        <Edit2 size={14} />
-                        Editar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Modal de Visualização */}
-      {showModal && contratoSelecionado && (
-        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm' onClick={fecharModal}>
-          <div className='bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl' onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div className='bg-gradient-to-r from-[#0F2C4C] to-blue-900 p-6 flex items-center justify-between text-white'>
-              <div className='flex items-center gap-3'>
-                <FileCheck size={28} />
-                <div>
-                  <h2 className='text-xl font-bold'>Detalhes do Contrato</h2>
-                  <p className='text-sm text-blue-100'>{contratoSelecionado.clientes?.razao_social}</p>
-                </div>
-              </div>
-              <div className='flex items-center gap-2'>
-                <button
-                  onClick={() => {
-                    fecharModal()
-                    irParaEdicao(contratoSelecionado.id)
-                  }}
-                  className='p-2 hover:bg-white/20 rounded-lg transition-colors'
-                  title='Editar'
-                >
-                  <Edit2 size={20} />
-                </button>
-                <button
-                  onClick={fecharModal}
-                  className='p-2 hover:bg-white/20 rounded-lg transition-colors'
-                >
-                  <X size={20} />
-                </button>
-              </div>
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
+        <div className="p-8 space-y-8">
+          
+          <div className="bg-gradient-to-r from-blue-50 to-transparent p-6 rounded-2xl border border-blue-100">
+            <div className="flex items-center gap-2 text-[#0F2C4C] font-black uppercase text-xs tracking-widest mb-4">
+              <Briefcase size={16} className="text-blue-600"/> Informações Básicas
             </div>
-
-            {/* Body */}
-            <div className='p-6 overflow-y-auto max-h-[calc(90vh-120px)]'>
-              {/* Status Badge */}
-              <div className='mb-6'>
-                <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getStatusColor(contratoSelecionado.status)}`}>
-                  {contratoSelecionado.status}
-                </span>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
+                <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                  <option value="Sob Análise">Sob Análise</option>
+                  <option value="Proposta Enviada">Proposta Enviada</option>
+                  <option value="Contrato Fechado">Contrato Fechado</option>
+                  <option value="Rejeitada">Rejeitada</option>
+                  <option value="Probono">Probono</option>
+                </select>
               </div>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                {/* Informações Básicas */}
-                <div className='space-y-4'>
-                  <h3 className='text-sm font-bold text-gray-700 border-b pb-2'>Informações Básicas</h3>
-                  
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Cliente</label>
-                    <p className='text-sm font-bold text-gray-800'>{contratoSelecionado.clientes?.razao_social || '-'}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>CNPJ</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.clientes?.cnpj || '-'}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Área</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.area || '-'}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Responsável</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.responsavel || '-'}</p>
-                  </div>
-                </div>
-
-                {/* Dados do Processo */}
-                <div className='space-y-4'>
-                  <h3 className='text-sm font-bold text-gray-700 border-b pb-2'>Dados do Processo</h3>
-                  
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Contrário</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.contrario || '-'}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Processo</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.processo || '-'}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Valor da Causa</label>
-                    <p className='text-sm text-gray-800 font-mono'>{formatarMoeda(contratoSelecionado.valor_causa)}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>Tribunal/Turma</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.tribunal_turma || '-'}</p>
-                  </div>
-
-                  <div>
-                    <label className='text-xs text-gray-500 font-semibold'>UF</label>
-                    <p className='text-sm text-gray-800'>{contratoSelecionado.uf || '-'}</p>
-                  </div>
-                </div>
-
-                {/* Descrição */}
-                <div className='md:col-span-2'>
-                  <h3 className='text-sm font-bold text-gray-700 border-b pb-2 mb-3'>Descrição</h3>
-                  <p className='text-sm text-gray-700 bg-gray-50 p-4 rounded-lg'>
-                    {contratoSelecionado.descricao_contrato || 'Sem descrição'}
-                  </p>
-                </div>
-
-                {/* Dados Financeiros (se Contrato Fechado) */}
-                {contratoSelecionado.status === 'Contrato Fechado' && (
-                  <div className='md:col-span-2 bg-green-50 p-4 rounded-lg'>
-                    <h3 className='text-sm font-bold text-green-800 border-b border-green-200 pb-2 mb-3'>Dados Financeiros</h3>
-                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                      <div>
-                        <label className='text-xs text-green-700 font-semibold'>Pró-labore</label>
-                        <p className='text-sm font-bold text-green-900 font-mono'>{formatarMoeda(contratoSelecionado.contrato_pro_labore)}</p>
-                      </div>
-                      <div>
-                        <label className='text-xs text-green-700 font-semibold'>Honorário Fixo</label>
-                        <p className='text-sm font-bold text-green-900 font-mono'>{formatarMoeda(contratoSelecionado.contrato_honorario_fixo)}</p>
-                      </div>
-                      <div>
-                        <label className='text-xs text-green-700 font-semibold'>Êxito Total</label>
-                        <p className='text-sm font-bold text-green-900 font-mono'>{formatarMoeda(contratoSelecionado.contrato_exito_total)}</p>
-                      </div>
-                      <div>
-                        <label className='text-xs text-green-700 font-semibold'>Êxito %</label>
-                        <p className='text-sm font-bold text-green-900'>{contratoSelecionado.contrato_exito_percentual || '-'}</p>
-                      </div>
-                    </div>
-                    <div className='mt-3'>
-                      <label className='text-xs text-green-700 font-semibold'>Número HON</label>
-                      <p className='text-sm font-bold text-green-900'>{contratoSelecionado.numero_hon || '-'}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Dados da Proposta (se Proposta Enviada) */}
-                {contratoSelecionado.status === 'Proposta Enviada' && (
-                  <div className='md:col-span-2 bg-blue-50 p-4 rounded-lg'>
-                    <h3 className='text-sm font-bold text-blue-800 border-b border-blue-200 pb-2 mb-3'>Dados da Proposta</h3>
-                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                      <div>
-                        <label className='text-xs text-blue-700 font-semibold'>Pró-labore</label>
-                        <p className='text-sm font-bold text-blue-900 font-mono'>{formatarMoeda(contratoSelecionado.proposta_pro_labore)}</p>
-                      </div>
-                      <div>
-                        <label className='text-xs text-blue-700 font-semibold'>Honorário Fixo</label>
-                        <p className='text-sm font-bold text-blue-900 font-mono'>{formatarMoeda(contratoSelecionado.proposta_honorario_fixo)}</p>
-                      </div>
-                      <div>
-                        <label className='text-xs text-blue-700 font-semibold'>Êxito Total</label>
-                        <p className='text-sm font-bold text-blue-900 font-mono'>{formatarMoeda(contratoSelecionado.proposta_exito_total)}</p>
-                      </div>
-                      <div>
-                        <label className='text-xs text-blue-700 font-semibold'>Data Proposta</label>
-                        <p className='text-sm font-bold text-blue-900'>{formatarData(contratoSelecionado.data_proposta)}</p>
-                      </div>
-                    </div>
-                  </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  Cliente {formData.status === 'Contrato Fechado' && '*'}
+                </label>
+                <input type="text" placeholder="Nome do cliente" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formData.cliente_nome} onChange={(e) => setFormData({...formData, cliente_nome: e.target.value})} required={formData.status === 'Contrato Fechado'} />
+                {clienteEncontrado && (
+                  <p className="text-xs text-green-600 font-bold mt-1">✓ {clienteEncontrado.razao_social}</p>
                 )}
               </div>
             </div>
 
-            {/* Footer */}
-            <div className='p-4 bg-gray-50 border-t flex justify-end gap-3'>
-              <button
-                onClick={fecharModal}
-                className='px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg font-bold transition-colors'
-              >
-                Fechar
-              </button>
-              <button
-                onClick={() => {
-                  fecharModal()
-                  irParaEdicao(contratoSelecionado.id)
-                }}
-                className='px-6 py-2 bg-[#0F2C4C] text-white rounded-lg font-bold hover:bg-blue-900 transition-colors flex items-center gap-2'
-              >
-                <Edit2 size={16} />
-                Editar Contrato
-              </button>
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                CNPJ {formData.status === 'Contrato Fechado' && '*'}
+              </label>
+              <div className="relative">
+                <input type="text" placeholder="00.000.000/0000-00" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formatCNPJ(formData.cnpj_cliente)} onChange={(e) => setFormData({...formData, cnpj_cliente: e.target.value})} onBlur={(e) => buscarClientePorCNPJ(e.target.value)} required={formData.status === 'Contrato Fechado'} />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {buscandoCNPJ ? <Loader2 size={18} className="animate-spin text-blue-500"/> : <Search size={18} className="text-gray-300"/>}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Área</label>
+                <input type="text" value={formData.area} onChange={(e) => setFormData({...formData, area: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" placeholder="Ex: Trabalhista, Cível..." />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Responsável</label>
+                <input type="text" value={formData.responsavel} onChange={(e) => setFormData({...formData, responsavel: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" placeholder="Advogado responsável" />
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição do Contrato</label>
+              <textarea value={formData.descricao_contrato} onChange={(e) => setFormData({...formData, descricao_contrato: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-blue-500" rows="3" placeholder="Descreva os detalhes do contrato..." />
             </div>
           </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-gray-700 border-b pb-2 mb-4">Dados do Processo</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Contrário</label>
+                <input type="text" value={formData.contrario} onChange={(e) => setFormData({...formData, contrario: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Parte contrária" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Processo</label>
+                <input type="text" value={formData.processo} onChange={(e) => setFormData({...formData, processo: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nº do processo" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Valor da Causa (R$)</label>
+                <input type="text" value={formData.valor_causa} onChange={(e) => handleMoneyChange('valor_causa', e.target.value)} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-mono" placeholder="0,00" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Tribunal/Turma</label>
+                <input type="text" value={formData.tribunal_turma} onChange={(e) => setFormData({...formData, tribunal_turma: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ex: TRT 2ª Região" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Juiz/Desembargador</label>
+                <input type="text" value={formData.juiz_desembargador} onChange={(e) => setFormData({...formData, juiz_desembargador: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do magistrado" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">UF</label>
+                <select value={formData.uf} onChange={(e) => setFormData({...formData, uf: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Selecione...</option>
+                  <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t pt-6">
+            {renderCamposStatus()}
+          </div>
         </div>
-      )}
+
+        <div className="p-8 bg-gray-50 flex justify-end gap-4 border-t">
+          <button type="button" onClick={() => navigate('/contratos')} className="px-8 py-3 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-200 transition-colors">Cancelar</button>
+          <button type="submit" disabled={loading} className="bg-[#0F2C4C] text-white px-12 py-3 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-blue-900 shadow-lg disabled:opacity-50 transition-all">
+            {loading ? (<><Loader2 size={18} className="animate-spin" />Salvando...</>) : (<><Save size={18} />Salvar Contrato</>)}
+          </button>
+        </div>
+      </form>
     </div>
-  )
-}
+  );
+};
 
-export default Contratos
+export default ContratoForm;
