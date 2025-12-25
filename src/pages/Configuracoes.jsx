@@ -3,44 +3,40 @@ import {
   Save,
   Settings,
   Code,
-  Terminal,
   History,
   Image as ImageIcon,
   ChevronDown,
   ChevronUp,
   Monitor,
   Lock,
-  CheckCircle
+  RefreshCw
 } from 'lucide-react'
 
 const Configuracoes = () => {
-  const [logoInterno, setLogoInterno] = useState('')
-  const [logoLogin, setLogoLogin] = useState('')
+  const [logoInternoNome, setLogoInternoNome] = useState('')
+  const [logoLoginNome, setLogoLoginNome] = useState('')
   const [showAllVersions, setShowAllVersions] = useState(false)
 
-  // Lista de arquivos na sua pasta /public
-  const opcoesLogos = [
-    { id: 1, nome: 'Logo Cor', path: '/logo-color.png' },
-    { id: 2, nome: 'Logo Branco', path: '/logo-white.png' },
-    { id: 3, nome: 'Logo Horizontal', path: '/logo-horizontal.png' },
-    { id: 4, nome: 'Ícone Sistema', path: '/favicon.png' },
-  ]
-
   useEffect(() => {
+    // Carrega os nomes salvos ou deixa vazio
     const savedInterno = localStorage.getItem('app_logo_path')
     const savedLogin = localStorage.getItem('app_login_logo_path')
-    if (savedInterno) setLogoInterno(savedInterno)
-    if (savedLogin) setLogoLogin(savedLogin)
+    
+    // Removemos a barra inicial se existir para facilitar a edição no input
+    if (savedInterno) setLogoInternoNome(savedInterno.replace('/', ''))
+    if (savedLogin) setLogoLoginNome(savedLogin.replace('/', ''))
   }, [])
 
-  const selecionarLogo = (tipo, path) => {
-    if (tipo === 'interno') {
-      localStorage.setItem('app_logo_path', path)
-      setLogoInterno(path)
-    } else {
-      localStorage.setItem('app_login_logo_path', path)
-      setLogoLogin(path)
-    }
+  const salvarLogoInterna = () => {
+    const path = logoInternoNome.startsWith('/') ? logoInternoNome : `/${logoInternoNome}`
+    localStorage.setItem('app_logo_path', path)
+    alert('Logo Interna atualizada! Atualize a página.')
+  }
+
+  const salvarLogoLogin = () => {
+    const path = logoLoginNome.startsWith('/') ? logoLoginNome : `/${logoLoginNome}`
+    localStorage.setItem('app_login_logo_path', path)
+    alert('Logo de Login atualizada!')
   }
 
   const versionsData = [
@@ -51,7 +47,7 @@ const Configuracoes = () => {
       changes: [
         "Rebranding: Sistema oficial 'Controladoria Jurídica do Salomão Advogados'.",
         'Integração completa com Banco de Dados (Supabase).',
-        'Módulo de Configurações com personalização de Logos independentes.',
+        'Módulo de Configurações com personalização de Logos independentes via nome de arquivo.',
         'Correção de bugs no Kanban e Histórico.',
       ],
     },
@@ -69,60 +65,77 @@ const Configuracoes = () => {
         <h1 className='text-3xl font-bold text-[#0F2C4C]'>Configurações</h1>
       </div>
 
-      {/* SEÇÃO DE LOGOTIPOS */}
+      {/* SEÇÃO DE LOGOTIPOS VIA NOME DE ARQUIVO */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        {/* LOGO INTERNO */}
+        
+        {/* CONFIGURAR LOGO INTERNA */}
         <div className='bg-white p-6 rounded-2xl border shadow-sm space-y-4'>
           <div className='flex items-center gap-2 font-bold text-gray-700 border-b pb-2'>
-            <Monitor size={20} /> Logo Interna (Sidebar)
+            <Monitor size={20} className="text-blue-600" /> 
+            Logo Interna (Sidebar)
           </div>
-          <div className='grid grid-cols-2 gap-3'>
-            {opcoesLogos.map((logo) => (
-              <button
-                key={`int-${logo.id}`}
-                onClick={() => selecionarLogo('interno', logo.path)}
-                className={`p-3 border-2 rounded-xl transition-all flex flex-col items-center gap-2 ${
-                  logoInterno === logo.path ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
-                }`}
-              >
-                <img src={logo.path} className='h-8 object-contain' alt={logo.nome} />
-                <span className='text-[10px] font-bold uppercase'>{logo.nome}</span>
-                {logoInterno === logo.path && <CheckCircle size={14} className='text-blue-500' />}
-              </button>
-            ))}
+          <p className='text-xs text-gray-500'>Digite o nome do arquivo que está na pasta <b>public</b>:</p>
+          <div className='flex gap-2'>
+            <input 
+              type="text"
+              value={logoInternoNome}
+              onChange={(e) => setLogoInternoNome(e.target.value)}
+              placeholder="ex: logo-sidebar.png"
+              className='flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500'
+            />
+            <button 
+              onClick={salvarLogoInterna}
+              className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2'
+            >
+              <Save size={18} /> Salvar
+            </button>
           </div>
+          {logoInternoNome && (
+            <div className='mt-2 p-2 bg-gray-50 rounded border flex items-center gap-4'>
+              <span className='text-[10px] font-bold text-gray-400'>PREVIEW:</span>
+              <img src={`/${logoInternoNome}`} alt="Preview" className='h-8 object-contain' />
+            </div>
+          )}
         </div>
 
-        {/* LOGO LOGIN */}
+        {/* CONFIGURAR LOGO LOGIN */}
         <div className='bg-white p-6 rounded-2xl border shadow-sm space-y-4'>
           <div className='flex items-center gap-2 font-bold text-gray-700 border-b pb-2'>
-            <Lock size={20} /> Logo do Login
+            <Lock size={20} className="text-orange-500" /> 
+            Logo da Tela de Login
           </div>
-          <div className='grid grid-cols-2 gap-3'>
-            {opcoesLogos.map((logo) => (
-              <button
-                key={`log-${logo.id}`}
-                onClick={() => selecionarLogo('login', logo.path)}
-                className={`p-3 border-2 rounded-xl transition-all flex flex-col items-center gap-2 ${
-                  logoLogin === logo.path ? 'border-[#0F2C4C] bg-gray-50' : 'border-gray-100 hover:bg-gray-50'
-                }`}
-              >
-                <img src={logo.path} className='h-8 object-contain' alt={logo.nome} />
-                <span className='text-[10px] font-bold uppercase'>{logo.nome}</span>
-                {logoLogin === logo.path && <CheckCircle size={14} className='text-[#0F2C4C]' />}
-              </button>
-            ))}
+          <p className='text-xs text-gray-500'>Digite o nome do arquivo que está na pasta <b>public</b>:</p>
+          <div className='flex gap-2'>
+            <input 
+              type="text"
+              value={logoLoginNome}
+              onChange={(e) => setLogoLoginNome(e.target.value)}
+              placeholder="ex: logo-login.png"
+              className='flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-[#0F2C4C]'
+            />
+            <button 
+              onClick={salvarLogoLogin}
+              className='bg-[#0F2C4C] text-white px-4 py-2 rounded-lg hover:bg-blue-900 flex items-center gap-2'
+            >
+              <Save size={18} /> Salvar
+            </button>
           </div>
+          {logoLoginNome && (
+            <div className='mt-2 p-2 bg-gray-50 rounded border flex items-center gap-4'>
+              <span className='text-[10px] font-bold text-gray-400'>PREVIEW:</span>
+              <img src={`/${logoLoginNome}`} alt="Preview" className='h-8 object-contain' />
+            </div>
+          )}
         </div>
       </div>
 
-      <div className='flex justify-end'>
-        <button onClick={() => window.location.reload()} className='flex items-center gap-2 bg-[#0F2C4C] text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-900'>
-          <Save size={20} /> Aplicar Alterações
+      <div className='flex justify-center'>
+        <button onClick={() => window.location.reload()} className='flex items-center gap-2 bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-bold hover:bg-gray-300'>
+          <RefreshCw size={20} /> Atualizar Sistema para aplicar mudanças
         </button>
       </div>
 
-      {/* CHANGELOG (RESTAURADO) */}
+      {/* CHANGELOG */}
       <div className='bg-white rounded-2xl border shadow-sm overflow-hidden'>
         <div className='p-6 border-b bg-gray-50 flex justify-between items-center'>
           <div className='flex items-center gap-2 font-bold text-gray-700'>
@@ -152,7 +165,7 @@ const Configuracoes = () => {
         </div>
       </div>
 
-      {/* CRÉDITOS (RESTAURADO) */}
+      {/* CRÉDITOS */}
       <div className='bg-[#0F2C4C] rounded-2xl p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6'>
         <div className='space-y-2 text-center md:text-left'>
           <div className='flex items-center justify-center md:justify-start gap-2 opacity-80'>
