@@ -152,6 +152,15 @@ const ContratoForm = () => {
       const dadosFinais = {
         ...dadosParaSalvar,
         cliente_id: dadosParaSalvar.cliente_id || null,
+        
+        // Converter datas vazias para null
+        data_prospect: dadosParaSalvar.data_prospect || null,
+        data_proposta: dadosParaSalvar.data_proposta || null,
+        data_contrato: dadosParaSalvar.data_contrato || null,
+        data_rejeicao: dadosParaSalvar.data_rejeicao || null,
+        data_probono: dadosParaSalvar.data_probono || null,
+        
+        // Converter valores monetários
         proposta_pro_labore: dadosParaSalvar.proposta_pro_labore ? removerMascaraMoeda(dadosParaSalvar.proposta_pro_labore) : null,
         proposta_honorario_fixo: dadosParaSalvar.proposta_honorario_fixo ? removerMascaraMoeda(dadosParaSalvar.proposta_honorario_fixo) : null,
         proposta_exito_total: dadosParaSalvar.proposta_exito_total ? removerMascaraMoeda(dadosParaSalvar.proposta_exito_total) : null,
