@@ -9,8 +9,8 @@ const Configuracoes = () => {
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
 
-  // VERSIONAMENTO SEMÂNTICO: 1.4.2
-  const versaoAtual = "1.4.2"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.4.3
+  const versaoAtual = "1.4.3"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -28,6 +28,21 @@ const Configuracoes = () => {
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
+    {
+      versao: "1.4.3",
+      data: "25/12/2025",
+      tipo: "Correção de Bug",
+      mudancas: [
+        "Implementação completa do sistema de logs/auditoria no módulo Histórico.",
+        "Rastreamento detalhado: Quem (usuário + email), Quando (data/hora), Onde (IP + navegador).",
+        "Registro automático de todas as ações: Criação, Edição, Exclusão, Mudança de Status, Upload.",
+        "Visualização de dados Antes/Depois em alterações (diff visual).",
+        "Filtros por ação, categoria, usuário e período.",
+        "Estatísticas em tempo real: total de logs, criações, edições e exclusões.",
+        "Hook useLogs() para facilitar integração em qualquer componente.",
+        "Serviço logService.js com funções auxiliares para todos os tipos de log."
+      ]
+    },
     {
       versao: "1.4.2",
       data: "25/12/2025",
