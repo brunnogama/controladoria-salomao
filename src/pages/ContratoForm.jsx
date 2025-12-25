@@ -101,12 +101,40 @@ const ContratoForm = () => {
       const cnpjLimpo = cnpj.replace(/\D/g, '');
       console.log('🔍 Buscando CNPJ:', cnpjLimpo);
       
-      const { data, error } = await supabase
+      // Tentar buscar com CNPJ limpo (sem formatação)
+      let { data, error } = await supabase
         .from('clientes')
         .select('id, razao_social, cnpj')
         .eq('cnpj', cnpjLimpo);
 
-      console.log('📊 Resultado da busca:', data, error);
+      console.log('📊 Resultado busca (sem formatação):', data, error);
+
+      // Se não encontrou, tentar com formatação
+      if (!data || data.length === 0) {
+        console.log('⚠️ Tentando busca com formatação...');
+        const cnpjFormatado = formatCNPJ(cnpj);
+        const resultado = await supabase
+          .from('clientes')
+          .select('id, razao_social, cnpj')
+          .eq('cnpj', cnpjFormatado);
+        
+        data = resultado.data;
+        error = resultado.error;
+        console.log('📊 Resultado busca (com formatação):', data, error);
+      }
+
+      // Se ainda não encontrou, tentar busca LIKE (parcial)
+      if (!data || data.length === 0) {
+        console.log('⚠️ Tentando busca parcial...');
+        const resultado = await supabase
+          .from('clientes')
+          .select('id, razao_social, cnpj')
+          .like('cnpj', `%${cnpjLimpo}%`);
+        
+        data = resultado.data;
+        error = resultado.error;
+        console.log('📊 Resultado busca (parcial):', data, error);
+      }
 
       if (error) {
         console.error('❌ Erro na busca:', error);
@@ -127,13 +155,22 @@ const ContratoForm = () => {
         alert(`✅ Cliente encontrado: ${cliente.razao_social}`);
       } else {
         console.log('⚠️ Nenhum cliente encontrado com CNPJ:', cnpjLimpo);
+        
+        // Buscar TODOS os clientes para debug
+        const { data: todosClientes } = await supabase
+          .from('clientes')
+          .select('id, razao_social, cnpj')
+          .limit(10);
+        
+        console.log('📋 Primeiros 10 clientes no banco (para debug):', todosClientes);
+        
         setClienteEncontrado(null);
         setFormData(prev => ({ 
           ...prev, 
           cliente_id: '',
           cliente_nome: ''
         }));
-        alert('⚠️ Nenhum cliente encontrado com este CNPJ. Você pode digitar o nome manualmente.');
+        alert(`⚠️ Nenhum cliente encontrado com este CNPJ.\n\nCNPJ buscado: ${cnpjLimpo}\n\nVocê pode:\n1. Digitar o nome manualmente\n2. Verificar se o cliente está cadastrado\n3. Abrir o Console (F12) para ver detalhes`);
       }
     } catch (err) {
       console.error('💥 Exceção ao buscar cliente:', err);
