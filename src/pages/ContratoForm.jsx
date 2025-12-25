@@ -90,97 +90,77 @@ const ContratoForm = () => {
   };
 
   const buscarClientePorCNPJ = async (cnpj) => {
-    if (!cnpj || cnpj.replace(/\D/g, '').length < 11) {
-      setClienteEncontrado(null);
-      setFormData(prev => ({ ...prev, cliente_id: '', cliente_nome: '' }));
+    const cnpjLimpo = cnpj.replace(/\D/g, '');
+    
+    if (!cnpjLimpo || cnpjLimpo.length !== 14) {
+      alert('⚠️ CNPJ inválido! Digite 14 dígitos.');
       return;
     }
     
     setBuscandoCNPJ(true);
     try {
-      const cnpjLimpo = cnpj.replace(/\D/g, '');
-      console.log('🔍 Buscando CNPJ:', cnpjLimpo);
+      console.log('🔍 Buscando CNPJ na Receita Federal:', cnpjLimpo);
       
-      // Tentar buscar com CNPJ limpo (sem formatação)
-      let { data, error } = await supabase
+      // 1. Buscar na BrasilAPI (Receita Federal)
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+      
+      if (!response.ok) {
+        throw new Error('CNPJ não encontrado na Receita Federal');
+      }
+      
+      const dadosReceita = await response.json();
+      console.log('✅ Dados da Receita Federal:', dadosReceita);
+      
+      // Função para converter para Title Case
+      const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+      };
+      
+      const razaoSocial = toTitleCase(dadosReceita.razao_social || dadosReceita.nome_fantasia || '');
+      
+      // 2. Verificar se já existe no banco local
+      const { data: clienteExistente } = await supabase
         .from('clientes')
         .select('id, razao_social, cnpj')
-        .eq('cnpj', cnpjLimpo);
-
-      console.log('📊 Resultado busca (sem formatação):', data, error);
-
-      // Se não encontrou, tentar com formatação
-      if (!data || data.length === 0) {
-        console.log('⚠️ Tentando busca com formatação...');
-        const cnpjFormatado = formatCNPJ(cnpj);
-        const resultado = await supabase
-          .from('clientes')
-          .select('id, razao_social, cnpj')
-          .eq('cnpj', cnpjFormatado);
-        
-        data = resultado.data;
-        error = resultado.error;
-        console.log('📊 Resultado busca (com formatação):', data, error);
-      }
-
-      // Se ainda não encontrou, tentar busca LIKE (parcial)
-      if (!data || data.length === 0) {
-        console.log('⚠️ Tentando busca parcial...');
-        const resultado = await supabase
-          .from('clientes')
-          .select('id, razao_social, cnpj')
-          .like('cnpj', `%${cnpjLimpo}%`);
-        
-        data = resultado.data;
-        error = resultado.error;
-        console.log('📊 Resultado busca (parcial):', data, error);
-      }
-
-      if (error) {
-        console.error('❌ Erro na busca:', error);
-        alert('Erro ao buscar cliente: ' + error.message);
-        setClienteEncontrado(null);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const cliente = data[0];
-        console.log('✅ Cliente encontrado:', cliente);
-        setClienteEncontrado(cliente);
+        .eq('cnpj', cnpjLimpo)
+        .maybeSingle();
+      
+      if (clienteExistente) {
+        // Cliente já cadastrado
+        console.log('✅ Cliente já existe no banco:', clienteExistente);
+        setClienteEncontrado(clienteExistente);
         setFormData(prev => ({ 
           ...prev, 
-          cliente_id: cliente.id,
-          cliente_nome: cliente.razao_social
+          cliente_id: clienteExistente.id,
+          cliente_nome: clienteExistente.razao_social,
+          cnpj_cliente: cnpjLimpo
         }));
-        alert(`✅ Cliente encontrado: ${cliente.razao_social}`);
+        alert(`✅ Cliente encontrado!\n\n${clienteExistente.razao_social}\nCNPJ: ${cnpjLimpo}`);
       } else {
-        console.log('⚠️ Nenhum cliente encontrado com CNPJ:', cnpjLimpo);
-        
-        // Buscar TODOS os clientes para debug
-        const { data: todosClientes } = await supabase
-          .from('clientes')
-          .select('id, razao_social, cnpj')
-          .limit(10);
-        
-        console.log('📋 Primeiros 10 clientes no banco (para debug):', todosClientes);
-        
+        // Cliente não cadastrado - preencher com dados da Receita
+        console.log('⚠️ Cliente não cadastrado. Preenchendo com dados da Receita...');
         setClienteEncontrado(null);
         setFormData(prev => ({ 
           ...prev, 
           cliente_id: '',
-          cliente_nome: ''
+          cliente_nome: razaoSocial,
+          cnpj_cliente: cnpjLimpo
         }));
-        alert(`⚠️ Nenhum cliente encontrado com este CNPJ.\n\nCNPJ buscado: ${cnpjLimpo}\n\nVocê pode:\n1. Digitar o nome manualmente\n2. Verificar se o cliente está cadastrado\n3. Abrir o Console (F12) para ver detalhes`);
+        alert(`✅ Dados encontrados na Receita Federal!\n\n${razaoSocial}\nCNPJ: ${cnpjLimpo}\n\n💡 Cliente será criado automaticamente ao salvar.`);
       }
-    } catch (err) {
-      console.error('💥 Exceção ao buscar cliente:', err);
+    } catch (error) {
+      console.error('❌ Erro ao buscar CNPJ:', error);
       setClienteEncontrado(null);
+      
+      // Mesmo com erro, permitir preencher manualmente
       setFormData(prev => ({ 
         ...prev, 
         cliente_id: '',
-        cliente_nome: ''
+        cnpj_cliente: cnpjLimpo
       }));
-      alert('Erro inesperado ao buscar cliente.');
+      
+      alert(`❌ ${error.message}\n\n💡 Você pode:\n1. Verificar se o CNPJ está correto\n2. Digitar o nome manualmente\n3. Marcar "CNPJ não disponível"`);
     } finally {
       setBuscandoCNPJ(false);
     }
