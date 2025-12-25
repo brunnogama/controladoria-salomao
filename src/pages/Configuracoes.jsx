@@ -9,8 +9,8 @@ const Configuracoes = () => {
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
 
-  // VERSIONAMENTO SEMÂNTICO: 1.4.3
-  const versaoAtual = "1.4.3"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.4.4
+  const versaoAtual = "1.4.4"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -28,6 +28,18 @@ const Configuracoes = () => {
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
+    {
+      versao: "1.4.4",
+      data: "25/12/2025",
+      tipo: "Correção de Bug",
+      mudancas: [
+        "CNPJ opcional (obrigatório apenas para Contrato Fechado).",
+        "Campo Cliente manual adicionado (preenchimento independente do CNPJ).",
+        "Correção da busca automática por CNPJ (estava sempre pedindo cliente válido).",
+        "Reorganização lógica dos campos: Status, Cliente, Área, Responsável no topo.",
+        "Campos do processo agrupados em seção separada: Contrário, Processo, Valor da Causa, Tribunal, Juiz, UF."
+      ]
+    },
     {
       versao: "1.4.3",
       data: "25/12/2025",
