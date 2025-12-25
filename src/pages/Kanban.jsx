@@ -16,7 +16,7 @@ const Kanban = () => {
   const [loading, setLoading] = useState(true)
   const [draggedItem, setDraggedItem] = useState(null)
 
-  // CONFIGURAÇÃO DAS COLUNAS E CORES SOLICITADAS
+  // CONFIGURAÇÀO DAS COLUNAS E CORES SOLICITADAS
   const colunas = [
     {
       id: 'Sob Análise',
