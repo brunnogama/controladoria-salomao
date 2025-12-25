@@ -98,19 +98,47 @@ const Clientes = () => {
     }
 
     try {
+      // Verificar se existe cliente "Sem Cliente"
+      let clienteSemCliente = null
+      const { data: clienteExistente, error: erroConsulta } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('razao_social', 'Sem Cliente')
+        .single()
+
+      if (clienteExistente) {
+        clienteSemCliente = clienteExistente
+      } else {
+        // Criar cliente "Sem Cliente"
+        const { data: novoCliente, error: erroCriacao } = await supabase
+          .from('clientes')
+          .insert([{
+            razao_social: 'Sem Cliente',
+            cnpj: '00000000000000',
+            nome_contato: 'Sistema',
+            observacoes: 'Cliente genérico para contratos desvinculados'
+          }])
+          .select()
+          .single()
+
+        if (erroCriacao) throw erroCriacao
+        clienteSemCliente = novoCliente
+      }
+
+      // Atualizar contrato para o cliente "Sem Cliente"
       const { error } = await supabase
         .from('contratos')
-        .update({ cliente_id: null })
+        .update({ cliente_id: clienteSemCliente.id })
         .eq('id', contratoId)
 
       if (error) throw error
 
-      alert('Contrato desvinculado com sucesso!')
+      alert('✅ Contrato desvinculado com sucesso!')
       await fetchContratosVinculados(clienteSelecionado.id)
       await fetchClientes()
     } catch (error) {
       console.error('Erro ao desvincular contrato:', error)
-      alert('Erro ao desvincular contrato: ' + error.message)
+      alert('❌ Erro ao desvincular contrato: ' + error.message)
     }
   }
 
