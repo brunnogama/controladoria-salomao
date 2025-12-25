@@ -13,7 +13,7 @@ const Login = () => {
   const [shake, setShake] = useState(false)
 
   useEffect(() => {
-    // Busca a logo configurada especificamente para o LOGIN
+    // Carrega a logo salva no localStorage
     const savedLoginLogo = localStorage.getItem('app_login_logo_path')
     if (savedLoginLogo && savedLoginLogo !== '/') {
       setCustomLogo(savedLoginLogo)
@@ -29,17 +29,17 @@ const Login = () => {
     const nomeFormatado = userPrefix.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: emailCompleto,
         password: password,
       })
 
-      if (error) throw error
+      if (authError) throw authError
 
       localStorage.setItem('user_name', nomeFormatado)
       navigate('/')
     } catch (err) {
-      setError('Credenciais inválidas.')
+      setError('Credenciais inválidas. Verifique usuário e senha.')
       setShake(true)
       setTimeout(() => setShake(false), 500)
     } finally {
@@ -62,46 +62,46 @@ const Login = () => {
             {customLogo ? (
               <img
                 src={customLogo}
-                alt='Logo Login'
+                alt='Logo'
                 className='h-24 object-contain'
-                onError={() => setCustomLogo(null)} // Se o arquivo não existir, volta pro texto
+                onError={() => setCustomLogo(null)}
               />
             ) : (
               <div className='text-center'>
-                <h1 className='text-3xl font-bold text-[#0F2C4C]'>Salomão Advogados</h1>
+                <h1 className='text-3xl font-bold text-[#0F2C4C] tracking-tight'>Salomão Advogados</h1>
                 <div className='h-1 w-12 bg-[#0F2C4C] mx-auto mt-2'></div>
-                <p className='text-xs text-gray-500 uppercase tracking-widest mt-1'>Controladoria Jurídica</p>
+                <p className='text-xs text-gray-500 uppercase tracking-widest mt-1 font-semibold'>Controladoria Jurídica</p>
               </div>
             )}
           </div>
 
           <div className='text-center'>
-            <h2 className='text-2xl font-bold text-gray-800'>Acesso Restrito</h2>
-            <p className='text-sm text-gray-500 mt-2'>Identifique-se para acessar o painel.</p>
+            <h2 className='text-2xl font-bold text-gray-800 tracking-tight'>Acesso Restrito</h2>
+            <p className='text-sm text-gray-500 mt-2'>Identifique-se para acessar o painel de gestão.</p>
           </div>
 
           <form className='space-y-5' onSubmit={handleLogin}>
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>Usuário Corporativo</label>
-              <div className='flex border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#0F2C4C]'>
+              <div className='flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#0F2C4C] transition-all'>
                 <div className='flex items-center pl-3 bg-white'><User size={18} className='text-gray-400'/></div>
-                <input type='text' required value={userPrefix} onChange={(e)=>setUserPrefix(e.target.value)} className='flex-1 p-3 outline-none text-sm' placeholder='nome.sobrenome' />
-                <div className='bg-gray-50 px-3 flex items-center border-l text-xs font-bold text-gray-400'>@salomaoadv.com.br</div>
+                <input type='text' required value={userPrefix} onChange={(e)=>setUserPrefix(e.target.value)} className='flex-1 p-3 outline-none text-sm bg-transparent' placeholder='nome.sobrenome' />
+                <div className='bg-gray-50 px-3 flex items-center border-l text-[10px] font-black text-gray-400'>@salomaoadv.com.br</div>
               </div>
             </div>
 
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>Senha</label>
-              <div className='relative border rounded-lg flex items-center focus-within:ring-2 focus-within:ring-[#0F2C4C]'>
+              <div className='relative border border-gray-300 rounded-lg flex items-center focus-within:ring-2 focus-within:ring-[#0F2C4C] transition-all'>
                 <div className='pl-3'><Lock size={18} className='text-gray-400'/></div>
-                <input type='password' required value={password} onChange={(e)=>setPassword(e.target.value)} className='flex-1 p-3 outline-none text-sm' placeholder='••••••••' />
+                <input type='password' required value={password} onChange={(e)=>setPassword(e.target.value)} className='flex-1 p-3 outline-none text-sm bg-transparent' placeholder='••••••••' />
               </div>
             </div>
 
-            {error && <div className='bg-red-50 text-red-600 p-3 rounded text-xs text-center border border-red-200'>{error}</div>}
+            {error && <div className='bg-red-50 text-red-600 p-3 rounded-lg text-xs text-center border border-red-200 animate-pulse'>{error}</div>}
 
-            <button type='submit' disabled={loading} className={`w-full py-3 rounded-lg text-white font-bold transition-all shadow-lg ${shake ? 'animate-shake bg-red-600' : 'bg-[#0F2C4C] hover:bg-blue-900'}`}>
-              {loading ? <Loader2 className='animate-spin mx-auto' size={20} /> : 'Acessar Sistema'}
+            <button type='submit' disabled={loading} className={`w-full py-3.5 rounded-lg text-white font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${shake ? 'animate-shake bg-red-600' : 'bg-[#0F2C4C] hover:bg-blue-900'}`}>
+              {loading ? <Loader2 className='animate-spin' size={20} /> : <>Acessar Sistema <ArrowRight size={18} /></>}
             </button>
           </form>
         </div>
@@ -109,11 +109,12 @@ const Login = () => {
 
       {/* LADO DIREITO */}
       <div className='hidden lg:flex w-1/2 bg-[#0F2C4C] relative items-center justify-center'>
-        <img src='https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070' className='absolute inset-0 w-full h-full object-cover opacity-20' alt='Bg' />
-        <div className='relative z-10 p-16 text-white text-center'>
-          <h2 className='text-4xl font-bold mb-4'>Controladoria Jurídica <br /><span className='text-blue-200'>Estratégica</span></h2>
-          <div className='h-1 w-20 bg-yellow-500 mx-auto mb-6'></div>
-          <p className='text-gray-300 text-lg font-light'>Gestão inteligente de processos e contratos.</p>
+        <img src='https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070' className='absolute inset-0 w-full h-full object-cover opacity-20 grayscale' alt='Bg' />
+        <div className='absolute inset-0 bg-gradient-to-tr from-[#0F2C4C] to-transparent opacity-80'></div>
+        <div className='relative z-10 p-16 text-white'>
+          <h2 className='text-4xl font-bold mb-4 leading-tight'>Controladoria Jurídica <br /><span className='text-blue-300'>Estratégica</span></h2>
+          <div className='h-1 w-20 bg-yellow-500 mb-6'></div>
+          <p className='text-gray-300 text-lg font-light leading-relaxed max-w-md'>Gestão inteligente de processos e contratos com foco em eficiência e segurança jurídica.</p>
         </div>
       </div>
     </div>
