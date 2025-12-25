@@ -9,8 +9,8 @@ const Configuracoes = () => {
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
 
-  // VERSIONAMENTO SEMÂNTICO: 1.3.5
-  const versaoAtual = "1.3.5"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.3.6
+  const versaoAtual = "1.3.6"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -28,6 +28,15 @@ const Configuracoes = () => {
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
+    {
+      versao: "1.3.6",
+      data: "25/12/2025",
+      tipo: "Correção de Bug",
+      mudancas: [
+        "Otimização da função formatMoney no Dashboard para tratamento de valores nulos.",
+        "Validação preventiva de cálculos financeiros nos totais gerais."
+      ]
+    },
     {
       versao: "1.3.5",
       data: "25/12/2025",
