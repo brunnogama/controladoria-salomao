@@ -51,6 +51,8 @@ const ContratoForm = () => {
     descricao_contrato: '',
     observacoes_contrato: '',
     data_rejeicao: '',
+    motivo_rejeicao: '',
+    iniciativa_rejeicao: '',
     rejeitado_por: '',
     observacoes_rejeicao: '',
     data_probono: '',
@@ -385,9 +387,39 @@ const ContratoForm = () => {
                 <input type="text" value={formData.rejeitado_por} onChange={(e) => setFormData({...formData, rejeitado_por: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nome do responsável" />
               </div>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Motivo da Rejeição *</label>
+                <select 
+                  value={formData.motivo_rejeicao} 
+                  onChange={(e) => setFormData({...formData, motivo_rejeicao: e.target.value})} 
+                  className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Selecione o motivo</option>
+                  <option value="Caso ruim">Caso ruim</option>
+                  <option value="Conflito">Conflito</option>
+                  <option value="Cliente Declinou">Cliente Declinou</option>
+                  <option value="Cliente não respondeu">Cliente não respondeu</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Iniciativa da Rejeição *</label>
+                <select 
+                  value={formData.iniciativa_rejeicao} 
+                  onChange={(e) => setFormData({...formData, iniciativa_rejeicao: e.target.value})} 
+                  className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">Selecione quem rejeitou</option>
+                  <option value="Cliente">Cliente</option>
+                  <option value="Escritório">Escritório</option>
+                </select>
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
-              <textarea value={formData.observacoes_rejeicao} onChange={(e) => setFormData({...formData, observacoes_rejeicao: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Motivo da rejeição..." />
+              <textarea value={formData.observacoes_rejeicao} onChange={(e) => setFormData({...formData, observacoes_rejeicao: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Detalhes adicionais sobre a rejeição..." />
             </div>
           </div>
         );
