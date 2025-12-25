@@ -37,7 +37,10 @@ const Configuracoes = () => {
         "Campo Cliente manual adicionado (preenchimento independente do CNPJ).",
         "Correção da busca automática por CNPJ (estava sempre pedindo cliente válido).",
         "Reorganização lógica dos campos: Status, Cliente, Área, Responsável no topo.",
-        "Campos do processo agrupados em seção separada: Contrário, Processo, Valor da Causa, Tribunal, Juiz, UF."
+        "Campos do processo agrupados em seção separada: Contrário, Processo, Valor da Causa, Tribunal, Juiz, UF.",
+        "Módulo Contratos: botão 'Ver Detalhes' substituído por ícone de Editar.",
+        "Módulo Contratos: clique na linha abre modal de visualização com todos os detalhes.",
+        "Modal de visualização com botão de editar e informações organizadas por seção."
       ]
     },
     {
