@@ -164,10 +164,39 @@ const ContratoForm = () => {
         proposta_pro_labore: dadosParaSalvar.proposta_pro_labore ? removerMascaraMoeda(dadosParaSalvar.proposta_pro_labore) : null,
         proposta_honorario_fixo: dadosParaSalvar.proposta_honorario_fixo ? removerMascaraMoeda(dadosParaSalvar.proposta_honorario_fixo) : null,
         proposta_exito_total: dadosParaSalvar.proposta_exito_total ? removerMascaraMoeda(dadosParaSalvar.proposta_exito_total) : null,
+        proposta_exito_percentual: dadosParaSalvar.proposta_exito_percentual || null,
+        
         contrato_pro_labore: dadosParaSalvar.contrato_pro_labore ? removerMascaraMoeda(dadosParaSalvar.contrato_pro_labore) : null,
         contrato_honorario_fixo: dadosParaSalvar.contrato_honorario_fixo ? removerMascaraMoeda(dadosParaSalvar.contrato_honorario_fixo) : null,
         contrato_exito_total: dadosParaSalvar.contrato_exito_total ? removerMascaraMoeda(dadosParaSalvar.contrato_exito_total) : null,
+        contrato_exito_percentual: dadosParaSalvar.contrato_exito_percentual || null,
+        
         valor_causa: dadosParaSalvar.valor_causa ? removerMascaraMoeda(dadosParaSalvar.valor_causa) : null,
+        
+        // Converter strings vazias para null em campos de texto
+        area: dadosParaSalvar.area || null,
+        responsavel: dadosParaSalvar.responsavel || null,
+        contrario: dadosParaSalvar.contrario || null,
+        processo: dadosParaSalvar.processo || null,
+        tribunal_turma: dadosParaSalvar.tribunal_turma || null,
+        juiz_desembargador: dadosParaSalvar.juiz_desembargador || null,
+        uf: dadosParaSalvar.uf || null,
+        analisado_por: dadosParaSalvar.analisado_por || null,
+        obs_prospect: dadosParaSalvar.obs_prospect || null,
+        arquivo_proposta_url: dadosParaSalvar.arquivo_proposta_url || null,
+        proposta_outros: dadosParaSalvar.proposta_outros || null,
+        descricao_proposta: dadosParaSalvar.descricao_proposta || null,
+        observacoes_proposta: dadosParaSalvar.observacoes_proposta || null,
+        numero_hon: dadosParaSalvar.numero_hon || null,
+        arquivo_contrato_url: dadosParaSalvar.arquivo_contrato_url || null,
+        numero_proc: dadosParaSalvar.numero_proc || null,
+        contrato_outros: dadosParaSalvar.contrato_outros || null,
+        descricao_contrato: dadosParaSalvar.descricao_contrato || null,
+        observacoes_contrato: dadosParaSalvar.observacoes_contrato || null,
+        rejeitado_por: dadosParaSalvar.rejeitado_por || null,
+        observacoes_rejeicao: dadosParaSalvar.observacoes_rejeicao || null,
+        enviado_por: dadosParaSalvar.enviado_por || null,
+        observacoes_probono: dadosParaSalvar.observacoes_probono || null,
       };
       
       console.log('Dados a salvar:', dadosFinais);
