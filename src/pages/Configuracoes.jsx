@@ -41,7 +41,11 @@ const Configuracoes = () => {
         "Módulo Contratos: botão 'Ver Detalhes' substituído por ícone de Editar.",
         "Módulo Contratos: clique na linha abre modal de visualização com todos os detalhes.",
         "Modal de visualização com botão de editar e informações organizadas por seção.",
-        "Dashboard: correção do gráfico 'Entrada de Casos (6 Meses)' - agora atualiza corretamente com novos casos."
+        "Dashboard: correção do gráfico 'Entrada de Casos (6 Meses)' - agora atualiza corretamente com novos casos.",
+        "Dashboard: adicionado card 'Probono' na Distribuição da Carteira.",
+        "Dashboard: padronização de cores - Sob Análise (laranja), Propostas (amarelo), Fechados (verde), Rejeitados (vermelho), Probono (azul).",
+        "Dashboard: correção na contagem de status com normalização de strings.",
+        "Módulo Contratos: cores das tags de status atualizadas seguindo o mesmo padrão do Dashboard."
       ]
     },
     {
