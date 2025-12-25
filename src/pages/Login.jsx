@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
-import { User, Lock, Loader2, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react'
+import { User, Lock, Loader2, ArrowRight, AlertCircle } from 'lucide-react'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -14,25 +14,37 @@ const Login = () => {
   const [bgImage, setBgImage] = useState('')
 
   useEffect(() => {
+    // Carrega a logo personalizada
     const savedLoginLogo = localStorage.getItem('app_login_logo_path')
-    if (savedLoginLogo && savedLoginLogo !== '/') setCustomLogo(savedLoginLogo)
+    if (savedLoginLogo && savedLoginLogo !== '/') {
+      setCustomLogo(savedLoginLogo)
+    }
 
-    const randomID = Math.floor(Math.random() * 500)
-    setBgImage(`https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1080&sig=${randomID}`)
+    // Imagem Dinâmica (Direito/Escritório) com ID aleatório para mudar a cada acesso
+    const randomID = Math.floor(Math.random() * 1000)
+    setBgImage(`https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop&sig=${randomID}`)
   }, [])
 
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    const emailCompleto = `${userPrefix}@salomaoadv.com.br`
+    const nomeFormatado = userPrefix.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+
     try {
-      const emailCompleto = `${userPrefix}@salomaoadv.com.br`
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email: emailCompleto, password })
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: emailCompleto,
+        password: password,
+      })
+
       if (authError) throw authError
-      localStorage.setItem('user_name', userPrefix.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' '))
+
+      localStorage.setItem('user_name', nomeFormatado)
       navigate('/')
     } catch (err) {
-      setError('Credenciais inválidas.')
+      setError('Credenciais inválidas. Verifique usuário e senha.')
       setShake(true)
       setTimeout(() => setShake(false), 500)
     } finally {
@@ -47,55 +59,119 @@ const Login = () => {
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
       `}</style>
 
-      {/* LADO ESQUERDO: 100% Mobile, 50% Desktop */}
-      <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-6 md:p-16 bg-white z-10'>
-        <div className='w-full max-w-sm space-y-10'>
+      {/* LADO ESQUERDO: FORMULÁRIO (50% no Desktop, 100% no Mobile) */}
+      <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 md:p-16 z-10 bg-white'>
+        <div className='w-full max-w-md space-y-10'>
           
           <div className='flex justify-center'>
             {customLogo ? (
-              <img src={customLogo} alt='Logo' className='h-20 md:h-28 object-contain' />
+              <img
+                src={customLogo}
+                alt='Logo'
+                className='h-24 md:h-32 object-contain'
+                onError={() => setCustomLogo(null)}
+              />
             ) : (
               <div className='text-center'>
-                <h1 className='text-3xl md:text-4xl font-black text-[#0F2C4C] uppercase'>Salomão</h1>
-                <div className='h-1.5 w-12 bg-yellow-500 mx-auto mt-2 rounded-full'></div>
+                <h1 className='text-3xl font-bold text-[#0F2C4C] tracking-tight'>
+                  Salomão Advogados
+                </h1>
+                <div className='h-1 w-12 bg-[#0F2C4C] mx-auto mt-2 mb-1'></div>
+                <p className='text-xs text-gray-500 uppercase tracking-widest font-semibold'>
+                  Controladoria Jurídica
+                </p>
               </div>
             )}
           </div>
 
           <form className='space-y-6' onSubmit={handleLogin}>
-            <div className='space-y-2'>
-              <label className='block text-xs font-black text-[#0F2C4C] uppercase tracking-widest'>Usuário</label>
-              <div className='flex border-2 border-gray-100 rounded-2xl overflow-hidden focus-within:border-[#0F2C4C] bg-gray-50/50'>
-                <div className='flex items-center pl-4'><User size={20} className='text-gray-400'/></div>
-                <input type='text' required value={userPrefix} onChange={(e)=>setUserPrefix(e.target.value)} className='flex-1 p-3.5 outline-none text-sm' placeholder='nome.sobrenome' />
-                <div className='bg-gray-100 px-3 flex items-center border-l text-[9px] md:text-[11px] font-bold text-gray-400'>@salomaoadv.com.br</div>
+            <div>
+              <label className='block text-xs font-bold text-gray-700 uppercase mb-2 tracking-wider ml-1'>
+                Usuário Corporativo
+              </label>
+              <div className='flex border-2 border-gray-100 rounded-2xl overflow-hidden focus-within:border-[#0F2C4C] transition-all bg-gray-50/50 shadow-sm'>
+                <div className='flex items-center pl-4 bg-white'><User size={20} className='text-gray-400'/></div>
+                <input 
+                  type='text' 
+                  required 
+                  value={userPrefix} 
+                  onChange={(e)=>setUserPrefix(e.target.value)} 
+                  className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent min-w-0' 
+                  placeholder='nome.sobrenome' 
+                />
+                <div className='bg-gray-100 px-4 flex items-center border-l text-[10px] md:text-[11px] font-bold text-[#0F2C4C]/60 whitespace-nowrap'>
+                  @salomaoadv.com.br
+                </div>
               </div>
             </div>
 
-            <div className='space-y-2'>
-              <label className='block text-xs font-black text-[#0F2C4C] uppercase tracking-widest'>Senha</label>
-              <div className='border-2 border-gray-100 rounded-2xl flex items-center focus-within:border-[#0F2C4C] bg-gray-50/50'>
-                <div className='pl-4'><Lock size={20} className='text-gray-400'/></div>
-                <input type='password' required value={password} onChange={(e)=>setPassword(e.target.value)} className='flex-1 p-3.5 outline-none text-sm' placeholder='••••••••' />
+            <div>
+              <label className='block text-xs font-bold text-gray-700 uppercase mb-2 tracking-wider ml-1'>
+                Senha
+              </label>
+              <div className='relative border-2 border-gray-100 rounded-2xl flex items-center focus-within:border-[#0F2C4C] transition-all bg-gray-50/50 shadow-sm'>
+                <div className='pl-4 bg-white'><Lock size={20} className='text-gray-400'/></div>
+                <input 
+                  type='password' 
+                  required 
+                  value={password} 
+                  onChange={(e)=>setPassword(e.target.value)} 
+                  className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent' 
+                  placeholder='••••••••' 
+                />
               </div>
             </div>
 
-            <button type='submit' disabled={loading} className={`w-full py-4 rounded-2xl text-white font-black transition-all shadow-xl flex items-center justify-center gap-3 ${shake ? 'bg-red-600 animate-shake' : 'bg-[#0F2C4C] hover:bg-[#153a63]'}`}>
-              {loading ? <Loader2 className='animate-spin' size={24} /> : <>ENTRAR <ArrowRight size={20} /></>}
+            {error && (
+              <div className='text-sm text-red-600 bg-red-50 p-4 rounded-xl border border-red-200 text-center animate-shake font-medium'>
+                {error}
+              </div>
+            )}
+
+            <button 
+              type='submit' 
+              disabled={loading} 
+              className={`w-full py-4 rounded-2xl text-white font-black text-base tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 ${shake ? 'bg-red-600' : 'bg-[#0F2C4C] hover:bg-blue-900'}`}
+            >
+              {loading ? <Loader2 className='animate-spin' size={24} /> : <>ACESSAR SISTEMA <ArrowRight size={20} /></>}
             </button>
           </form>
+
+          <p className='text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em] pt-4'>
+            © 2025 Salomão Advogados • v1.2.0
+          </p>
         </div>
       </div>
 
-      {/* LADO DIREITO: FICA OCULTO NO MOBILE */}
-      <div className='hidden lg:flex lg:w-1/2 bg-[#0F2C4C] relative items-center justify-center'>
+      {/* LADO DIREITO: DESIGN ORIGINAL RESTAURADO (Fica oculto no mobile) */}
+      <div className='hidden lg:flex lg:w-1/2 bg-[#0F2C4C] relative items-center justify-center overflow-hidden'>
         <div className='absolute inset-0'>
-          <img src={bgImage} className='absolute inset-0 w-full h-full object-cover opacity-20 grayscale' alt='Bg' />
-          <div className='absolute inset-0 bg-gradient-to-br from-[#0F2C4C] via-[#0F2C4C]/90 to-transparent'></div>
+          <img
+            src={bgImage}
+            alt='Jurídico'
+            className='w-full h-full object-cover opacity-20 mix-blend-luminosity'
+          />
+          <div className='absolute inset-0 bg-gradient-to-tr from-[#0F2C4C] via-[#0F2C4C]/90 to-blue-900/40'></div>
         </div>
-        <div className='relative z-10 p-12 text-white max-w-lg'>
-          <h2 className='text-4xl font-black mb-6 leading-tight'>Controladoria <br /><span className='text-yellow-500'>Estratégica.</span></h2>
-          <p className='text-blue-50/70 text-xl font-light leading-relaxed'>Gestão inteligente de processos e contratos com precisão absoluta.</p>
+
+        <div className='relative z-10 p-16 max-w-xl'>
+          <div className='inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-8 backdrop-blur-sm shadow-2xl'>
+            <ArrowRight className='text-yellow-400 w-6 h-6' />
+          </div>
+
+          <h2 className='text-4xl font-bold text-white mb-6 leading-tight'>
+            Controladoria Jurídica <br />
+            <span className='text-blue-200'>Estratégica</span>
+          </h2>
+          <div className='h-1 w-24 bg-yellow-500 mb-8'></div>
+          <p className='text-gray-300 text-lg leading-relaxed font-light mb-8'>
+            Gestão inteligente de processos e contratos. A tecnologia garantindo
+            a segurança e eficiência do{' '}
+            <strong className='text-white font-medium'>
+              Salomão Advogados
+            </strong>
+            .
+          </p>
         </div>
       </div>
     </div>
