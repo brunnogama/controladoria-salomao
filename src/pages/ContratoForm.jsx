@@ -11,6 +11,7 @@ const ContratoForm = () => {
   const [loading, setLoading] = useState(false);
   const [buscandoCNPJ, setBuscandoCNPJ] = useState(false);
   const [clienteEncontrado, setClienteEncontrado] = useState(null);
+  const [cnpjNaoDisponivel, setCnpjNaoDisponivel] = useState(false);
   
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -143,8 +144,14 @@ const ContratoForm = () => {
     e.preventDefault();
     
     // Validação: Cliente sempre obrigatório
-    if (!formData.cliente_id && !formData.cliente_nome) {
-      alert("Por favor, informe um cliente (busque pelo CNPJ ou digite o nome manualmente).");
+    if (!formData.cliente_nome) {
+      alert("Por favor, informe o nome do cliente.");
+      return;
+    }
+
+    // Validação: CNPJ obrigatório se checkbox não estiver marcado
+    if (!cnpjNaoDisponivel && !formData.cnpj_cliente) {
+      alert("Por favor, informe o CNPJ ou marque 'CNPJ não disponível'.");
       return;
     }
     
@@ -154,11 +161,20 @@ const ContratoForm = () => {
       
       // Se tem nome mas não tem ID, criar cliente rapidamente
       if (!clienteIdFinal && formData.cliente_nome) {
+        let cnpjParaSalvar = formData.cnpj_cliente;
+        
+        // Se CNPJ não disponível, gerar um único baseado em timestamp
+        if (cnpjNaoDisponivel || !cnpjParaSalvar) {
+          cnpjParaSalvar = `SEM${Date.now()}`;
+        }
+        
         const { data: novoCliente, error: erroCliente } = await supabase
           .from('clientes')
           .insert([{ 
             razao_social: formData.cliente_nome,
-            cnpj: formData.cnpj_cliente || '00000000000000' // CNPJ temporário se não informado
+            cnpj: cnpjParaSalvar.replace(/\D/g, ''), // Remove formatação
+            email: 'nao-informado@cliente.com',
+            nome_contato: formData.cliente_nome
           }])
           .select()
           .single();
@@ -472,7 +488,7 @@ const ContratoForm = () => {
               <Briefcase size={16} className="text-blue-600"/> Informações Básicas
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
                 <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
@@ -483,27 +499,72 @@ const ContratoForm = () => {
                   <option value="Probono">Probono</option>
                 </select>
               </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                  Cliente *
-                </label>
-                <input type="text" placeholder="Nome do cliente" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formData.cliente_nome} onChange={(e) => setFormData({...formData, cliente_nome: e.target.value})} required />
-                {clienteEncontrado && (
-                  <p className="text-xs text-green-600 font-bold mt-1">✓ {clienteEncontrado.razao_social}</p>
-                )}
-              </div>
             </div>
 
-            <div className="mt-4">
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                CNPJ (opcional)
-              </label>
-              <div className="relative">
-                <input type="text" placeholder="00.000.000/0000-00" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formatCNPJ(formData.cnpj_cliente)} onChange={(e) => setFormData({...formData, cnpj_cliente: e.target.value})} onBlur={(e) => buscarClientePorCNPJ(e.target.value)} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  {buscandoCNPJ ? <Loader2 size={18} className="animate-spin text-blue-500"/> : <Search size={18} className="text-gray-300"/>}
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  CNPJ {!cnpjNaoDisponivel && '*'}
+                </label>
+                <div className="relative">
+                  <input 
+                    type="text" 
+                    placeholder="00.000.000/0000-00" 
+                    className={`w-full border-2 rounded-xl p-3 pr-12 text-sm font-bold outline-none focus:border-blue-500 ${cnpjNaoDisponivel ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white border-gray-200'}`}
+                    value={formatCNPJ(formData.cnpj_cliente)} 
+                    onChange={(e) => setFormData({...formData, cnpj_cliente: e.target.value})}
+                    disabled={cnpjNaoDisponivel}
+                    required={!cnpjNaoDisponivel}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => buscarClientePorCNPJ(formData.cnpj_cliente)}
+                    disabled={buscandoCNPJ || cnpjNaoDisponivel}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    title="Buscar cliente por CNPJ"
+                  >
+                    {buscandoCNPJ ? (
+                      <Loader2 size={18} className="animate-spin"/>
+                    ) : (
+                      <Search size={18}/>
+                    )}
+                  </button>
                 </div>
+                {clienteEncontrado && !cnpjNaoDisponivel && (
+                  <p className="text-xs text-green-600 font-bold mt-1">✓ Cliente encontrado: {clienteEncontrado.razao_social}</p>
+                )}
+                <div className="flex items-center gap-2 mt-2">
+                  <input 
+                    type="checkbox" 
+                    id="cnpj-nao-disponivel"
+                    checked={cnpjNaoDisponivel}
+                    onChange={(e) => {
+                      setCnpjNaoDisponivel(e.target.checked)
+                      if (e.target.checked) {
+                        setFormData({...formData, cnpj_cliente: ''})
+                        setClienteEncontrado(null)
+                      }
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <label htmlFor="cnpj-nao-disponivel" className="text-xs text-gray-600 font-medium cursor-pointer">
+                    CNPJ não disponível
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  Nome do Cliente *
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="Razão social ou nome do cliente" 
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" 
+                  value={formData.cliente_nome} 
+                  onChange={(e) => setFormData({...formData, cliente_nome: e.target.value})} 
+                  required 
+                />
               </div>
             </div>
 
