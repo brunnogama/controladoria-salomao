@@ -562,39 +562,39 @@ Controladoria Jurídica
           </div>
         </div>
 
-        {/* Entrada de Casos (6 Meses) */}
+        {/* Entrada de Casos (6 Meses) - SEM SCROLL */}
         <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
-          <div className='flex items-center gap-2 mb-6 border-b pb-4'>
-            <BarChart3 className='text-blue-600' size={24} />
+          <div className='flex items-center gap-2 mb-4 border-b pb-3'>
+            <BarChart3 className='text-blue-600' size={20} />
             <div>
-              <h2 className='text-xl font-bold text-gray-800'>Entrada de Casos (6 Meses)</h2>
-              <p className='text-xs text-gray-500'>Evolução por fase do processo</p>
+              <h2 className='text-lg font-bold text-gray-800'>Entrada de Casos (6M)</h2>
+              <p className='text-[10px] text-gray-500'>Evolução por fase</p>
             </div>
           </div>
 
-          <div className='space-y-4 max-h-[400px] overflow-y-auto pr-2'>
+          <div className='space-y-2'>
             {evolucaoMensal.map((item, index) => (
-              <div key={index} className='border-b border-gray-100 pb-3 last:border-0'>
-                <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-bold text-gray-700'>{item.mes}</span>
-                  <span className='text-xs text-gray-500'>Total: {item.prospects}</span>
+              <div key={index} className='border-b border-gray-100 pb-2 last:border-0'>
+                <div className='flex items-center justify-between mb-1'>
+                  <span className='text-xs font-bold text-gray-700'>{item.mes}</span>
+                  <span className='text-[10px] text-gray-500'>Total: {item.prospects}</span>
                 </div>
-                <div className='grid grid-cols-4 gap-2 text-xs'>
-                  <div className='bg-blue-50 px-2 py-1 rounded text-center'>
-                    <p className='font-semibold text-blue-700'>{item.prospects}</p>
-                    <p className='text-[10px] text-gray-500'>Prospects</p>
+                <div className='grid grid-cols-4 gap-1.5 text-xs'>
+                  <div className='bg-blue-50 px-1.5 py-1 rounded text-center'>
+                    <p className='font-semibold text-blue-700 text-xs'>{item.prospects}</p>
+                    <p className='text-[9px] text-gray-500'>Prosp</p>
                   </div>
-                  <div className='bg-yellow-50 px-2 py-1 rounded text-center'>
-                    <p className='font-semibold text-yellow-700'>{item.propostas}</p>
-                    <p className='text-[10px] text-gray-500'>Propostas</p>
+                  <div className='bg-yellow-50 px-1.5 py-1 rounded text-center'>
+                    <p className='font-semibold text-yellow-700 text-xs'>{item.propostas}</p>
+                    <p className='text-[9px] text-gray-500'>Prop</p>
                   </div>
-                  <div className='bg-green-50 px-2 py-1 rounded text-center'>
-                    <p className='font-semibold text-green-700'>{item.fechados}</p>
-                    <p className='text-[10px] text-gray-500'>Fechados</p>
+                  <div className='bg-green-50 px-1.5 py-1 rounded text-center'>
+                    <p className='font-semibold text-green-700 text-xs'>{item.fechados}</p>
+                    <p className='text-[9px] text-gray-500'>Fech</p>
                   </div>
-                  <div className='bg-red-50 px-2 py-1 rounded text-center'>
-                    <p className='font-semibold text-red-700'>{item.rejeitados}</p>
-                    <p className='text-[10px] text-gray-500'>Rejeitados</p>
+                  <div className='bg-red-50 px-1.5 py-1 rounded text-center'>
+                    <p className='font-semibold text-red-700 text-xs'>{item.rejeitados}</p>
+                    <p className='text-[9px] text-gray-500'>Rej</p>
                   </div>
                 </div>
               </div>
@@ -602,13 +602,13 @@ Controladoria Jurídica
           </div>
         </div>
 
-        {/* Últimos 10 Casos Cadastrados */}
+        {/* Últimos 10 Casos Cadastrados - SEM SCROLL */}
         <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
-          <div className='flex items-center gap-2 mb-6 border-b pb-4'>
-            <History className='text-blue-600' size={24} />
+          <div className='flex items-center gap-2 mb-4 border-b pb-3'>
+            <History className='text-blue-600' size={20} />
             <div>
-              <h2 className='text-xl font-bold text-gray-800'>Últimos 10 Casos</h2>
-              <p className='text-xs text-gray-500'>Casos mais recentes</p>
+              <h2 className='text-lg font-bold text-gray-800'>Últimos 10 Casos</h2>
+              <p className='text-[10px] text-gray-500'>Casos mais recentes</p>
             </div>
           </div>
 
@@ -618,31 +618,32 @@ Controladoria Jurídica
               <p className='text-sm'>Nenhum caso cadastrado</p>
             </div>
           ) : (
-            <div className='space-y-3 max-h-[400px] overflow-y-auto pr-2'>
-              {ultimosCasos.map((caso, index) => {
+            <div className='space-y-2'>
+              {ultimosCasos.slice(0, 10).map((caso, index) => {
                 const statusColors = {
-                  'Sob Análise': 'bg-orange-100 text-orange-700',
-                  'Proposta Enviada': 'bg-yellow-100 text-yellow-700',
-                  'Contrato Fechado': 'bg-green-100 text-green-700',
-                  'Rejeitada': 'bg-red-100 text-red-700',
-                  'Probono': 'bg-blue-100 text-blue-700',
+                  'Sob Análise': 'bg-orange-100 text-orange-700 border-orange-200',
+                  'Proposta Enviada': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                  'Contrato Fechado': 'bg-green-100 text-green-700 border-green-200',
+                  'Rejeitada': 'bg-red-100 text-red-700 border-red-200',
+                  'Probono': 'bg-blue-100 text-blue-700 border-blue-200',
                 }
                 
                 const dataFormatada = new Date(caso.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                const statusClass = statusColors[caso.status] || 'bg-gray-100 text-gray-700 border-gray-200'
                 
                 return (
-                  <div key={caso.id} className={`p-3 rounded-lg border transition-colors ${index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
-                    <div className='flex items-start justify-between gap-2 mb-2'>
+                  <div key={caso.id} className={`p-2 rounded-lg border ${index === 0 ? 'bg-blue-50 border-blue-300' : statusClass}`}>
+                    <div className='flex items-center justify-between gap-2'>
                       <div className='flex-1 min-w-0'>
-                        <div className='flex items-center gap-2 mb-1'>
-                          {index === 0 && <span className='text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold'>NOVO</span>}
-                          <p className='text-sm font-bold text-gray-800 truncate'>{caso.cliente}</p>
+                        <div className='flex items-center gap-1.5 mb-0.5'>
+                          {index === 0 && <span className='text-[9px] bg-blue-600 text-white px-1 py-0.5 rounded font-bold'>NOVO</span>}
+                          <p className='text-xs font-bold text-gray-800 truncate leading-tight'>{caso.cliente}</p>
                         </div>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[caso.status] || 'bg-gray-100 text-gray-700'}`}>
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold ${statusColors[caso.status] || 'bg-gray-100 text-gray-700'}`}>
                           {caso.status}
                         </span>
                       </div>
-                      <span className='text-[11px] text-gray-500 font-semibold whitespace-nowrap'>{dataFormatada}</span>
+                      <span className='text-[10px] text-gray-600 font-semibold whitespace-nowrap'>{dataFormatada}</span>
                     </div>
                   </div>
                 )
@@ -658,50 +659,54 @@ Controladoria Jurídica
           <Filter className='text-blue-600' size={24} />
           <div>
             <h2 className='text-xl font-bold text-gray-800'>Funil de Eficiência</h2>
-            <p className='text-xs text-gray-500'>Taxa de conversão de Prospects até Contratos Fechados</p>
+            <p className='text-xs text-gray-500'>Fluxo completo de conversão incluindo rejeições</p>
           </div>
         </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-5 gap-4 items-center'>
-          <div className='md:col-span-1 bg-gray-50 p-4 rounded-xl border border-gray-200 text-center relative'>
-            <p className='text-xs font-bold text-gray-500 uppercase'>Entrada Total</p>
-            <p className='text-4xl font-bold text-gray-800 my-2'>{funil.totalEntrada}</p>
-            <p className='text-xs text-gray-500'>100%</p>
+        <div className='flex flex-col md:flex-row items-center justify-center gap-3'>
+          {/* Entrada Total */}
+          <div className='bg-gray-50 p-4 rounded-xl border border-gray-200 text-center w-full md:w-auto md:min-w-[140px]'>
+            <p className='text-[10px] font-bold text-gray-500 uppercase mb-1'>Entrada Total</p>
+            <p className='text-3xl font-bold text-gray-800'>{funil.totalEntrada}</p>
+            <p className='text-[10px] text-gray-500 mt-1'>100%</p>
           </div>
 
-          <div className='hidden md:flex items-center justify-center'><ArrowRight className='text-gray-300' size={32} /></div>
+          <ArrowRight className='hidden md:block text-gray-300' size={24} />
 
-          <div className='md:col-span-1 bg-yellow-50 p-4 rounded-xl border border-yellow-200 text-center relative'>
-            <p className='text-xs font-bold text-yellow-600 uppercase'>Propostas Enviadas</p>
-            <p className='text-4xl font-bold text-yellow-800 my-2'>{funil.qualificadosProposta}</p>
-            <p className='text-xs text-yellow-600 font-bold'>{funil.taxaConversaoProposta}%</p>
-            {funil.perdaAnalise > 0 && (
-              <div className='absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-red-100 px-2 py-1 rounded text-xs'>
-                <span className='text-red-700 font-bold'>-{funil.perdaAnalise}</span>
-              </div>
-            )}
+          {/* Propostas Enviadas */}
+          <div className='bg-yellow-50 p-4 rounded-xl border border-yellow-200 text-center w-full md:w-auto md:min-w-[140px]'>
+            <p className='text-[10px] font-bold text-yellow-600 uppercase mb-1'>Propostas</p>
+            <p className='text-3xl font-bold text-yellow-800'>{funil.qualificadosProposta}</p>
+            <p className='text-[10px] text-yellow-600 font-bold mt-1'>{funil.taxaConversaoProposta}%</p>
           </div>
 
-          <div className='hidden md:flex items-center justify-center'><ArrowRight className='text-gray-300' size={32} /></div>
+          <ArrowRight className='hidden md:block text-gray-300' size={24} />
 
-          <div className='md:col-span-1 bg-green-50 p-4 rounded-xl border border-green-200 text-center relative'>
-            <p className='text-xs font-bold text-green-600 uppercase'>Contratos Fechados</p>
-            <p className='text-4xl font-bold text-green-800 my-2'>{funil.fechados}</p>
-            <p className='text-xs text-green-600 font-bold'>{funil.taxaConversaoFechamento}%</p>
-            {funil.perdaNegociacao > 0 && (
-              <div className='absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-red-100 px-2 py-1 rounded text-xs'>
-                <span className='text-red-700 font-bold'>-{funil.perdaNegociacao}</span>
-              </div>
-            )}
+          {/* Contratos Fechados */}
+          <div className='bg-green-50 p-4 rounded-xl border border-green-200 text-center w-full md:w-auto md:min-w-[140px]'>
+            <p className='text-[10px] font-bold text-green-600 uppercase mb-1'>Fechados</p>
+            <p className='text-3xl font-bold text-green-800'>{funil.fechados}</p>
+            <p className='text-[10px] text-green-600 font-bold mt-1'>{funil.taxaConversaoFechamento}%</p>
+          </div>
+
+          <ArrowRight className='hidden md:block text-gray-300' size={24} />
+
+          {/* Total Rejeitados */}
+          <div className='bg-red-50 p-4 rounded-xl border border-red-200 text-center w-full md:w-auto md:min-w-[140px]'>
+            <p className='text-[10px] font-bold text-red-600 uppercase mb-1'>Rejeitados</p>
+            <p className='text-3xl font-bold text-red-800'>{metrics.geral.rejeitados}</p>
+            <p className='text-[10px] text-red-600 font-bold mt-1'>
+              {funil.totalEntrada > 0 ? Math.round((metrics.geral.rejeitados / funil.totalEntrada) * 100) : 0}%
+            </p>
           </div>
         </div>
 
-        <div className='mt-8 pt-4 border-t'>
-          <p className='text-sm text-gray-600'>
-            <span className='font-bold'>Análise:</span> De {funil.totalEntrada} casos que entraram, {funil.qualificadosProposta} geraram propostas ({funil.taxaConversaoProposta}%) 
-            e {funil.fechados} foram fechados ({funil.taxaConversaoFechamento}% das propostas).
-            {funil.perdaAnalise > 0 && ` Rejeitados em análise: ${funil.perdaAnalise}.`}
-            {funil.perdaNegociacao > 0 && ` Rejeitados em negociação: ${funil.perdaNegociacao}.`}
+        <div className='mt-6 pt-4 border-t bg-gray-50 rounded-lg p-4'>
+          <p className='text-sm text-gray-700'>
+            <span className='font-bold text-blue-700'>Resumo:</span> De {funil.totalEntrada} casos, {funil.qualificadosProposta} viraram propostas ({funil.taxaConversaoProposta}%), 
+            {funil.fechados} foram fechados ({funil.taxaConversaoFechamento}% das propostas) e {metrics.geral.rejeitados} foram rejeitados.
+            {funil.perdaAnalise > 0 && ` ${funil.perdaAnalise} rejeitados antes da proposta.`}
+            {funil.perdaNegociacao > 0 && ` ${funil.perdaNegociacao} rejeitados após proposta.`}
           </p>
         </div>
       </div>
