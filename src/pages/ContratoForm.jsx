@@ -608,9 +608,21 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             </div>
             
             <div className="grid grid-cols-1 gap-4">
-              {/* Grid com 2 colunas: Status de Assinatura + Status do Caso */}
-              <div className="grid grid-cols-3 gap-4 items-start">
-                {/* Coluna 1: Status de Assinatura (só aparece se status for Contrato Fechado) */}
+              {/* Grid com 2 colunas quando Contrato Fechado, 1 coluna caso contrário */}
+              <div className={`grid gap-4 items-start ${formData.status === 'Contrato Fechado' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+                {/* Coluna 1 e 2: Status do Caso (sempre à esquerda, ocupa 2 colunas se Contrato Fechado) */}
+                <div className={formData.status === 'Contrato Fechado' ? 'col-span-2' : 'col-span-1'}>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
+                  <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                    <option value="Sob Análise">Sob Análise</option>
+                    <option value="Proposta Enviada">Proposta Enviada</option>
+                    <option value="Contrato Fechado">Contrato Fechado</option>
+                    <option value="Rejeitada">Rejeitada</option>
+                    <option value="Probono">Probono</option>
+                  </select>
+                </div>
+                
+                {/* Coluna 3: Status de Assinatura (só aparece se status for Contrato Fechado, sempre à direita) */}
                 {formData.status === 'Contrato Fechado' && (
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Contrato Assinado? *</label>
@@ -653,18 +665,6 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
                     )}
                   </div>
                 )}
-                
-                {/* Coluna 2 e 3: Status do Caso (ocupa 2 colunas ou 3 se não for Contrato Fechado) */}
-                <div className={formData.status === 'Contrato Fechado' ? 'col-span-2' : 'col-span-3'}>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
-                  <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
-                    <option value="Sob Análise">Sob Análise</option>
-                    <option value="Proposta Enviada">Proposta Enviada</option>
-                    <option value="Contrato Fechado">Contrato Fechado</option>
-                    <option value="Rejeitada">Rejeitada</option>
-                    <option value="Probono">Probono</option>
-                  </select>
-                </div>
               </div>
             </div>
 
