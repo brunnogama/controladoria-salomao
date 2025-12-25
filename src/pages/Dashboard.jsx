@@ -237,44 +237,44 @@ const Dashboard = () => {
         mMes.fechExito += exito
         mMes.fechMensal += mensal
       }
+    })
 
-      // Gráfico de Evolução Mensal (últimos 6 meses)
-      const hoje = new Date()
-      const ultimos6Meses = []
-      
-      // Gerar array dos últimos 6 meses
-      for (let i = 5; i >= 0; i--) {
-        const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
-        const mesAno = data.toLocaleDateString('pt-BR', {
-          month: 'short',
-          year: '2-digit',
-        })
-        ultimos6Meses.push({
-          mes: mesAno,
-          qtd: 0,
-          mesNumero: data.getMonth(),
-          anoNumero: data.getFullYear()
-        })
-      }
-      
-      // Contar casos criados em cada mês
-      contratos.forEach((c) => {
-        const dataCriacao = new Date(c.created_at)
-        const mesContrato = dataCriacao.getMonth()
-        const anoContrato = dataCriacao.getFullYear()
-        
-        ultimos6Meses.forEach((item) => {
-          if (item.mesNumero === mesContrato && item.anoNumero === anoContrato) {
-            item.qtd++
-          }
-        })
+    // Gráfico de Evolução Mensal (últimos 6 meses)
+    const hoje = new Date()
+    const ultimos6Meses = []
+    
+    // Gerar array dos últimos 6 meses
+    for (let i = 5; i >= 0; i--) {
+      const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
+      const mesAno = data.toLocaleDateString('pt-BR', {
+        month: 'short',
+        year: '2-digit',
       })
-      
-      // Calcular altura proporcional
-      const maxQtd = Math.max(...ultimos6Meses.map((m) => m.qtd), 1)
-      ultimos6Meses.forEach((m) => {
-        m.altura = (m.qtd / maxQtd) * 100
+      ultimos6Meses.push({
+        mes: mesAno,
+        qtd: 0,
+        mesNumero: data.getMonth(),
+        anoNumero: data.getFullYear()
       })
+    }
+    
+    // Contar casos criados em cada mês
+    contratos.forEach((c) => {
+      const dataCriacao = new Date(c.created_at)
+      const mesContrato = dataCriacao.getMonth()
+      const anoContrato = dataCriacao.getFullYear()
+      
+      ultimos6Meses.forEach((item) => {
+        if (item.mesNumero === mesContrato && item.anoNumero === anoContrato) {
+          item.qtd++
+        }
+      })
+    })
+    
+    // Calcular altura proporcional
+    const maxQtd = Math.max(...ultimos6Meses.map((m) => m.qtd), 1)
+    ultimos6Meses.forEach((m) => {
+      m.altura = (m.qtd / maxQtd) * 100
     })
 
     // Taxas
@@ -645,21 +645,21 @@ const Dashboard = () => {
                 Total Analisado
               </span>
             </div>
-            <div className='bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-center'>
-              <Clock className='mx-auto text-yellow-600 mb-2' size={20} />
-              <p className='text-2xl font-bold text-yellow-800'>
+            <div className='bg-orange-50 p-4 rounded-lg border border-orange-100 text-center'>
+              <Clock className='mx-auto text-orange-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-orange-800'>
                 {metrics.geral.emAnalise}
               </p>
-              <p className='text-xs text-yellow-700 font-bold uppercase mt-1'>
+              <p className='text-xs text-orange-700 font-bold uppercase mt-1'>
                 Sob Análise
               </p>
             </div>
-            <div className='bg-blue-50 p-4 rounded-lg border border-blue-100 text-center'>
-              <Briefcase className='mx-auto text-blue-600 mb-2' size={20} />
-              <p className='text-2xl font-bold text-blue-800'>
+            <div className='bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-center'>
+              <Briefcase className='mx-auto text-yellow-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-yellow-800'>
                 {metrics.geral.propostasAtivas}
               </p>
-              <p className='text-xs text-blue-700 font-bold uppercase mt-1'>
+              <p className='text-xs text-yellow-700 font-bold uppercase mt-1'>
                 Propostas
               </p>
             </div>
@@ -681,12 +681,12 @@ const Dashboard = () => {
                 Rejeitados
               </p>
             </div>
-            <div className='bg-purple-50 p-4 rounded-lg border border-purple-100 text-center'>
-              <Target className='mx-auto text-purple-600 mb-2' size={20} />
-              <p className='text-2xl font-bold text-purple-800'>
+            <div className='bg-blue-50 p-4 rounded-lg border border-blue-100 text-center'>
+              <Target className='mx-auto text-blue-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-blue-800'>
                 {metrics.geral.probono}
               </p>
-              <p className='text-xs text-purple-700 font-bold uppercase mt-1'>
+              <p className='text-xs text-blue-700 font-bold uppercase mt-1'>
                 Probono
               </p>
             </div>
