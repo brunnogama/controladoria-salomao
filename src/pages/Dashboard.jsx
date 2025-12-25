@@ -281,7 +281,7 @@ const Dashboard = () => {
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(val || 0)
+    }).format(val)
 
   const FinItem = ({ label, value, colorClass = 'text-gray-700' }) => {
     if (!value || value === 0) return null
@@ -598,7 +598,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ================= 4. DISTRIBUIÇÃO E GRÁFICO ================= */}
+      {/* ================= 4. DISTRIBUIÇÀO E GRÁFICO ================= */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
         {/* Card Grande de Volumetria */}
         <div className='lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100'>
@@ -716,7 +716,7 @@ const Dashboard = () => {
                   value={metrics.geral.valorEmNegociacaoExito}
                 />
 
-                {/* TOTAL GERAL NEGOCIAÇÃO */}
+                {/* TOTAL GERAL NEGOCIAÇÀO */}
                 <div className='flex justify-between items-end border-t border-gray-200 pt-2 mt-2'>
                   <span className='text-sm font-bold text-gray-700'>
                     TOTAL GERAL
