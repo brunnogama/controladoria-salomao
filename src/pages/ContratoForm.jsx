@@ -266,7 +266,7 @@ const ContratoForm = () => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Número PROC</label>
-              <input type="text" value={formData.numero_proc} onChange={(e) => setFormData({...formData, numero_proc: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Número do processo" />
+              <input type="text" value={formData.numero_proc} onChange={(e) => setFormData({...formData, numero_proc: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Número LegalOne" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -293,10 +293,6 @@ const ContratoForm = () => {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Outros</label>
               <input type="text" value={formData.contrato_outros} onChange={(e) => setFormData({...formData, contrato_outros: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Informações adicionais..." />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Descrição do Contrato</label>
-              <textarea value={formData.descricao_contrato} onChange={(e) => setFormData({...formData, descricao_contrato: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Descreva os detalhes do contrato..." />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
@@ -399,7 +395,7 @@ const ContratoForm = () => {
 
             <div className="mt-4">
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                CNPJ (opcional - busca automática) {formData.status === 'Contrato Fechado' && '*'}
+                CNPJ {formData.status === 'Contrato Fechado' && '*'}
               </label>
               <div className="relative">
                 <input type="text" placeholder="00.000.000/0000-00" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formatCNPJ(formData.cnpj_cliente)} onChange={(e) => setFormData({...formData, cnpj_cliente: e.target.value})} onBlur={(e) => buscarClientePorCNPJ(e.target.value)} required={formData.status === 'Contrato Fechado'} />
@@ -418,6 +414,11 @@ const ContratoForm = () => {
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Responsável</label>
                 <input type="text" value={formData.responsavel} onChange={(e) => setFormData({...formData, responsavel: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" placeholder="Advogado responsável" />
               </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição do Contrato</label>
+              <textarea value={formData.descricao_contrato} onChange={(e) => setFormData({...formData, descricao_contrato: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-blue-500" rows="3" placeholder="Descreva os detalhes do contrato..." />
             </div>
           </div>
 
