@@ -10,9 +10,12 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [customLogo, setCustomLogo] = useState(null)
+
+  // Estado para controlar a animação de "tremida"
   const [shake, setShake] = useState(false)
 
   useEffect(() => {
+    // Chave correta para buscar a logo de login definida em configurações
     const savedLoginLogo = localStorage.getItem('app_login_logo_path')
     if (savedLoginLogo) setCustomLogo(savedLoginLogo)
   }, [])
@@ -55,13 +58,17 @@ const Login = () => {
     } catch (err) {
       console.error('Erro de login:', err.message)
       setError('Credenciais inválidas. Verifique usuário e senha.')
+
+      // Ativa a animação de erro
       setShake(true)
+      // Remove a animação após 500ms para poder tremer de novo se errar outra vez
       setTimeout(() => setShake(false), 500)
     } finally {
       setLoading(false)
     }
   }
 
+  // Classes condicionais para erro (Vermelho) ou normal (Cinza/Azul)
   const inputContainerClass = error
     ? 'flex rounded-lg shadow-sm border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500 transition-all'
     : 'flex rounded-lg shadow-sm border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C] focus-within:border-transparent transition-all'
@@ -74,6 +81,7 @@ const Login = () => {
 
   return (
     <div className='min-h-screen flex w-full bg-white'>
+      {/* INJEÇÃO DE CSS PARA A ANIMAÇÃO SHAKE */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -89,14 +97,14 @@ const Login = () => {
       <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-24 relative bg-white z-10'>
         <div className='w-full max-w-sm space-y-8'>
           <div className='flex justify-center mb-6'>
+            {/* CORREÇÃO AQUI: Prioriza a imagem se customLogo existir */}
             {customLogo ? (
               <img
                 src={customLogo}
                 alt='Logo'
                 className='h-20 object-contain'
                 onError={(e) => {
-                    e.target.style.display = 'none';
-                    setCustomLogo(null);
+                  setCustomLogo(null) // Se a imagem falhar, volta para o texto
                 }}
               />
             ) : (
@@ -122,8 +130,13 @@ const Login = () => {
           </div>
 
           <form className='mt-8 space-y-5' onSubmit={handleLogin}>
+            {/* INPUT DE USUÁRIO */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${error ? 'text-red-600' : 'text-gray-700'}`}>
+              <label
+                className={`block text-sm font-medium mb-1 ${
+                  error ? 'text-red-600' : 'text-gray-700'
+                }`}
+              >
                 Usuário Corporativo
               </label>
 
@@ -144,7 +157,13 @@ const Login = () => {
                     }}
                   />
                 </div>
-                <div className={`flex items-center px-4 border-l rounded-r-lg ${error ? 'bg-red-100 border-red-200 text-red-800' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
+                <div
+                  className={`flex items-center px-4 border-l rounded-r-lg ${
+                    error
+                      ? 'bg-red-100 border-red-200 text-red-800'
+                      : 'bg-gray-50 border-gray-300 text-gray-500'
+                  }`}
+                >
                   <span className='sm:text-sm font-medium select-none'>
                     @salomaoadv.com.br
                   </span>
@@ -152,8 +171,13 @@ const Login = () => {
               </div>
             </div>
 
+            {/* INPUT DE SENHA */}
             <div>
-              <label className={`block text-sm font-medium mb-1 ${error ? 'text-red-600' : 'text-gray-700'}`}>
+              <label
+                className={`block text-sm font-medium mb-1 ${
+                  error ? 'text-red-600' : 'text-gray-700'
+                }`}
+              >
                 Senha
               </label>
               <div className={passwordContainerClass}>
@@ -195,6 +219,12 @@ const Login = () => {
                 'Acessar Sistema'
               )}
             </button>
+
+            <div className='text-center mt-4'>
+              <span className='text-xs text-gray-400'>
+                © 2025 Flow Metrics. v1.2.0
+              </span>
+            </div>
           </form>
         </div>
       </div>
@@ -211,6 +241,10 @@ const Login = () => {
         </div>
 
         <div className='relative z-10 p-16 max-w-xl'>
+          <div className='inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-8 backdrop-blur-sm shadow-2xl'>
+            <ArrowRight className='text-yellow-400 w-6 h-6' />
+          </div>
+
           <h2 className='text-4xl font-bold text-white mb-6 leading-tight'>
             Controladoria Jurídica <br />
             <span className='text-blue-200'>Estratégica</span>
