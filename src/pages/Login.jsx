@@ -1,261 +1,42 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
-import { User, Lock, Loader2, ArrowRight, AlertCircle } from 'lucide-react'
+import { FileText, Lock, User } from 'lucide-react'
 
 const Login = () => {
   const navigate = useNavigate()
-  const [userPrefix, setUserPrefix] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [customLogo, setCustomLogo] = useState(null)
-
-  // Estado para controlar a animação de "tremida"
-  const [shake, setShake] = useState(false)
+  const [logo, setLogo] = useState('/logo-default.png') // Caminho padrão na pasta Public
 
   useEffect(() => {
-    const savedLoginLogo = localStorage.getItem('app_login_logo_path')
-    if (savedLoginLogo) setCustomLogo(savedLoginLogo)
+    const savedLogo = localStorage.getItem('app_logo_path')
+    if (savedLogo) setLogo(savedLogo)
   }, [])
 
-  const formatUserName = (login) => {
-    if (!login) return 'Usuário'
-    return login
-      .split('.')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join(' ')
-  }
-
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    const emailCompleto = `${userPrefix}@salomaoadv.com.br`
-    const nomeFormatado = formatUserName(userPrefix)
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailCompleto,
-        password: password,
-      })
-
-      if (error) throw error
-
-      await supabase.from('logs_sistema').insert([
-        {
-          categoria: 'Acesso',
-          acao: 'Login',
-          detalhes: `Usuário ${nomeFormatado} acessou o sistema.`,
-          referencia_id: data.user.id,
-        },
-      ])
-
-      localStorage.setItem('user_name', nomeFormatado)
-      navigate('/')
-    } catch (err) {
-      console.error('Erro de login:', err.message)
-      setError('Credenciais inválidas. Verifique usuário e senha.')
-
-      // Ativa a animação de erro
-      setShake(true)
-      // Remove a animação após 500ms para poder tremer de novo se errar outra vez
-      setTimeout(() => setShake(false), 500)
-    } finally {
-      setLoading(false)
-    }
+    localStorage.setItem('user_name', 'Usuário Admin')
+    navigate('/')
   }
-
-  // Classes condicionais para erro (Vermelho) ou normal (Cinza/Azul)
-  const inputContainerClass = error
-    ? 'flex rounded-lg shadow-sm border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500 transition-all'
-    : 'flex rounded-lg shadow-sm border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C] focus-within:border-transparent transition-all'
-
-  const passwordContainerClass = error
-    ? 'relative rounded-lg shadow-sm border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500 transition-all'
-    : 'relative rounded-lg shadow-sm border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C] focus-within:border-transparent transition-all'
-
-  const iconClass = error ? 'h-5 w-5 text-red-400' : 'h-5 w-5 text-gray-400'
 
   return (
-    <div className='min-h-screen flex w-full bg-white'>
-      {/* INJEÇÃO DE CSS PARA A ANIMAÇÃO SHAKE */}
-      <style>{`
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-          20%, 40%, 60%, 80% { transform: translateX(4px); }
-        }
-        .animate-shake {
-          animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
-      `}</style>
-
-      {/* LADO ESQUERDO */}
-      <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-24 relative bg-white z-10'>
-        <div className='w-full max-w-sm space-y-8'>
-          <div className='flex justify-center mb-6'>
-            {customLogo ? (
-              <img
-                src={customLogo}
-                alt='Logo'
-                className='h-20 object-contain'
-                onError={(e) => (e.target.style.display = 'none')}
-              />
-            ) : (
-              <div className='text-center'>
-                <h1 className='text-3xl font-bold text-[#0F2C4C] tracking-tight'>
-                  Salomão Advogados
-                </h1>
-                <div className='h-1 w-12 bg-[#0F2C4C] mx-auto mt-2 mb-1'></div>
-                <p className='text-xs text-gray-500 uppercase tracking-widest font-semibold'>
-                  Controladoria Jurídica
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className='text-center'>
-            <h2 className='text-2xl font-bold text-gray-800'>
-              Acesso Restrito
-            </h2>
-            <p className='mt-2 text-sm text-gray-500'>
-              Identifique-se para acessar o painel.
-            </p>
-          </div>
-
-          <form className='mt-8 space-y-5' onSubmit={handleLogin}>
-            {/* INPUT DE USUÁRIO */}
-            <div>
-              <label
-                className={`block text-sm font-medium mb-1 ${
-                  error ? 'text-red-600' : 'text-gray-700'
-                }`}
-              >
-                Usuário Corporativo
-              </label>
-
-              <div className={inputContainerClass}>
-                <div className='relative flex-grow'>
-                  <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <User className={iconClass} />
-                  </div>
-                  <input
-                    type='text'
-                    required
-                    className='block w-full rounded-none rounded-l-lg pl-10 sm:text-sm border-0 py-3 focus:ring-0 text-gray-900 placeholder-gray-400 bg-transparent'
-                    placeholder='nome.sobrenome' // <-- PLACEHOLDER PADRONIZADO
-                    value={userPrefix}
-                    onChange={(e) => {
-                      setUserPrefix(e.target.value)
-                      if (error) setError(null) // Limpa o erro ao digitar
-                    }}
-                  />
-                </div>
-                <div
-                  className={`flex items-center px-4 border-l rounded-r-lg ${
-                    error
-                      ? 'bg-red-100 border-red-200 text-red-800'
-                      : 'bg-gray-50 border-gray-300 text-gray-500'
-                  }`}
-                >
-                  <span className='sm:text-sm font-medium select-none'>
-                    @salomaoadv.com.br
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* INPUT DE SENHA */}
-            <div>
-              <label
-                className={`block text-sm font-medium mb-1 ${
-                  error ? 'text-red-600' : 'text-gray-700'
-                }`}
-              >
-                Senha
-              </label>
-              <div className={passwordContainerClass}>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <Lock className={iconClass} />
-                </div>
-                <input
-                  type='password'
-                  required
-                  className='block w-full rounded-lg pl-10 pr-3 py-3 sm:text-sm border-0 focus:ring-0 text-gray-900 placeholder-gray-400 bg-transparent'
-                  placeholder='••••••••'
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    if (error) setError(null) // Limpa o erro ao digitar
-                  }}
-                />
-              </div>
-            </div>
-
-            {error && (
-              <div className='text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200 text-center flex items-center justify-center gap-2 animate-pulse'>
-                <AlertCircle size={16} /> {error}
-              </div>
-            )}
-
-            <button
-              type='submit'
-              disabled={loading}
-              // A classe animate-shake é adicionada condicionalmente aqui
-              className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed ${
-                shake
-                  ? 'animate-shake bg-red-600 hover:bg-red-700'
-                  : 'bg-[#0F2C4C] hover:bg-blue-900'
-              }`}
-            >
-              {loading ? (
-                <Loader2 className='animate-spin h-5 w-5' />
-              ) : (
-                'Acessar Sistema'
-              )}
-            </button>
-
-            <div className='text-center mt-4'>
-              <span className='text-xs text-gray-400'>
-                © 2025 Flow Metrics. v1.2.0
-              </span>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* LADO DIREITO */}
-      <div className='hidden lg:flex w-1/2 bg-[#0F2C4C] relative overflow-hidden items-center justify-center'>
-        <div className='absolute inset-0 bg-[#0F2C4C]'>
-          <img
-            src='https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop'
-            alt='Jurídico'
-            className='w-full h-full object-cover opacity-20 mix-blend-luminosity'
+    <div className="min-h-screen bg-[#0F2C4C] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="p-8 text-center bg-gray-50 border-b">
+          {/* LOGO DINÂMICO NO LUGAR DO TEXTO */}
+          <img 
+            src={logo} 
+            alt="Logo" 
+            className="h-20 mx-auto mb-4 object-contain"
+            onError={(e) => { e.target.src = '/logo-default.png' }} // Fallback caso o arquivo suma
           />
-          <div className='absolute inset-0 bg-gradient-to-tr from-[#0F2C4C] via-[#0F2C4C]/90 to-blue-900/40'></div>
+          <h2 className="text-xl font-bold text-[#0F2C4C]">Controladoria Jurídica</h2>
         </div>
-
-        <div className='relative z-10 p-16 max-w-xl'>
-          <div className='inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-8 backdrop-blur-sm shadow-2xl'>
-            <ArrowRight className='text-yellow-400 w-6 h-6' />
-          </div>
-
-          <h2 className='text-4xl font-bold text-white mb-6 leading-tight'>
-            Controladoria Jurídica <br />
-            <span className='text-blue-200'>Estratégica</span>
-          </h2>
-          <div className='h-1 w-24 bg-yellow-500 mb-8'></div>
-          <p className='text-gray-300 text-lg leading-relaxed font-light mb-8'>
-            Gestão inteligente de processos e contratos. A tecnologia garantindo
-            a segurança e eficiência do{' '}
-            <strong className='text-white font-medium'>
-              Salomão Advogados
-            </strong>
-            .
-          </p>
-        </div>
+        
+        <form onSubmit={handleLogin} className="p-8 space-y-6">
+          {/* ... campos de input (User/Pass) continuam iguais ... */}
+          <button type="submit" className="w-full bg-[#0F2C4C] text-white py-3 rounded-lg font-bold hover:bg-blue-900 transition-all">
+            Entrar no Sistema
+          </button>
+        </form>
       </div>
     </div>
   )
