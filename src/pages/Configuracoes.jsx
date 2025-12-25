@@ -34,7 +34,8 @@ const Configuracoes = () => {
       tipo: "Correção de Bug",
       mudancas: [
         "Otimização da função formatMoney no Dashboard para tratamento de valores nulos.",
-        "Validação preventiva de cálculos financeiros nos totais gerais."
+        "Validação preventiva de cálculos financeiros nos totais gerais.",
+        "Correção de encoding UTF-8 em caracteres especiais do português em todos os componentes."
       ]
     },
     {
