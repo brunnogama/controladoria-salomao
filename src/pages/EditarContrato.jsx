@@ -11,32 +11,31 @@ import {
   History,
 } from 'lucide-react'
 
-// --- FUNÇÕES DE MÁSCARA E FORMATAÇÃO (COPIE INTEGRALMENTE) ---
+// --- FUNÇÕES DE UTILIDADE PARA MOEDA ---
+
+// Formata o valor para exibição na tela (Máscara)
 const formatCurrencyInput = (value) => {
   if (!value && value !== 0) return ''
-  // Remove tudo que não é número
-  let stringValue = value.toString().replace(/\D/g, '')
-  // Se estiver vazio após remover letras, retorna vazio
-  if (!stringValue) return ''
-  // Converte para decimal
-  const options = { minimumFractionDigits: 2 }
-  const result = (Number(stringValue) / 100).toLocaleString('pt-BR', options)
-  return result
+  // Remove caracteres não numéricos
+  const digits = value.toString().replace(/\D/g, '')
+  if (!digits) return ''
+  // Converte para decimal e formata
+  const amount = (Number(digits) / 100).toFixed(2)
+  return amount.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
+// Limpa a máscara para salvar no banco como número
 const cleanCurrency = (val) => {
   if (!val) return 0
   if (typeof val === 'number') return val
-  // Remove pontos de milhar e troca vírgula por ponto
   const cleaned = val.replace(/\./g, '').replace(',', '.')
   return parseFloat(cleaned) || 0
 }
 
-// --- COMPONENTE DE CAMPOS FINANCEIROS ---
 const CamposFinanceiros = ({ values, onChange }) => {
   const handleMoneyChange = (e) => {
     const { name, value } = e.target
-    // Aplica a máscara enquanto o usuário digita
+    // Aplica a máscara em tempo real
     const formatted = formatCurrencyInput(value)
     onChange({
       target: {
@@ -179,11 +178,11 @@ const EditarContrato = () => {
 
         if (error) throw error
 
+        // Ao carregar, converte os números do banco para o formato de máscara
         setFormData({
           ...data,
           cnpj: data.clientes?.cnpj || '',
           razao_social: data.clientes?.razao_social || '',
-          // Formata os valores vindos do banco para a máscara da tela
           proposta_pro_labore: formatCurrencyInput(data.proposta_pro_labore * 100 || 0),
           proposta_exito_total: formatCurrencyInput(data.proposta_exito_total * 100 || 0),
           proposta_fixo_mensal: formatCurrencyInput(data.proposta_fixo_mensal * 100 || 0),
@@ -238,19 +237,14 @@ const EditarContrato = () => {
         .eq('id', id)
         .single()
 
-      // Limpa os valores formatados para enviar como número ao banco
+      // Limpa os dados antes de salvar (Remove a máscara)
       const payload = {
         ...formData,
         proposta_pro_labore: cleanCurrency(formData.proposta_pro_labore),
         proposta_exito_total: cleanCurrency(formData.proposta_exito_total),
         proposta_fixo_mensal: cleanCurrency(formData.proposta_fixo_mensal),
-        proposta_fixo_parcelas: formData.proposta_fixo_parcelas || null,
-        data_prospect: formData.data_prospect || null,
-        data_proposta: formData.data_proposta || null,
-        data_contrato: formData.data_contrato || null,
       }
 
-      // Remove campos que não pertencem à tabela contratos diretamente
       delete payload.clientes
       delete payload.processos
       delete payload.cnpj
@@ -263,7 +257,6 @@ const EditarContrato = () => {
 
       if (errContrato) throw errContrato
 
-      // Processos
       await supabase.from('processos').delete().eq('contrato_id', id)
       const processosParaSalvar = processos
         .filter((p) => p.numero)
@@ -279,7 +272,6 @@ const EditarContrato = () => {
         await supabase.from('processos').insert(processosParaSalvar)
       }
 
-      // Log
       await supabase.from('logs_sistema').insert([{
         categoria: 'Contrato',
         acao: antigo.status !== formData.status ? 'Mudança de Status' : 'Edição',
@@ -312,9 +304,8 @@ const EditarContrato = () => {
       </div>
 
       <form onSubmit={handleUpdate} className='space-y-6'>
-        {/* BLOCO 1 */}
+        {/* Informações Gerais */}
         <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4'>
-          <h2 className='font-semibold text-gray-700 border-b pb-2'>Informações Iniciais</h2>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
               <label className='block text-sm font-medium text-gray-600 mb-1'>Status Atual</label>
@@ -333,37 +324,34 @@ const EditarContrato = () => {
           </div>
         </div>
 
-        {/* BLOCO 2: Processos */}
+        {/* Bloco de Processos */}
         <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4'>
           <div className='flex justify-between items-center border-b pb-2'>
-            <h2 className='font-semibold text-gray-700'>Processos Vinculados</h2>
+            <h2 className='font-semibold text-gray-700'>Processos</h2>
             <button type='button' onClick={() => setProcessos([...processos, { numero: '', tribunal: '', juiz: '', valor_causa: '' }])} className='text-sm text-blue-600 flex items-center gap-1 hover:underline'>
-              <Plus size={16} /> Adicionar Processo
+              <Plus size={16} /> Adicionar
             </button>
           </div>
           {processos.map((proc, index) => (
-            <div key={index} className='grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200'>
-              <input placeholder='Número' type='text' value={proc.numero || ''} onChange={(e) => handleProcessoChange(index, 'numero', e.target.value)} className='p-2 border rounded col-span-1' />
+            <div key={index} className='grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-3 rounded-lg'>
+              <input placeholder='Nº Processo' type='text' value={proc.numero || ''} onChange={(e) => handleProcessoChange(index, 'numero', e.target.value)} className='p-2 border rounded' />
               <input placeholder='Tribunal' type='text' value={proc.tribunal || ''} onChange={(e) => handleProcessoChange(index, 'tribunal', e.target.value)} className='p-2 border rounded' />
               <input placeholder='Valor Causa' type='text' value={proc.valor_causa || ''} onChange={(e) => handleProcessoChange(index, 'valor_causa', e.target.value)} className='p-2 border rounded font-mono' />
-              <button type='button' onClick={() => setProcessos(processos.filter((_, i) => i !== index))} className='text-red-500 hover:bg-red-50 p-2 rounded w-fit'><Trash2 size={18} /></button>
+              <button type='button' onClick={() => setProcessos(processos.filter((_, i) => i !== index))} className='text-red-500 p-2'><Trash2 size={18} /></button>
             </div>
           ))}
         </div>
 
-        {/* BLOCO 3: Financeiro */}
-        <div className='bg-blue-50 p-6 rounded-xl border border-blue-100'>
-           {(formData.status === 'Proposta Enviada' || formData.status === 'Contrato Fechado') && (
-             <CamposFinanceiros values={formData} onChange={handleChange} />
-           )}
-           {formData.status === 'Rejeitada' && (
-             <p className='text-gray-500 italic text-sm'>Preencha os motivos da rejeição nos campos acima (em desenvolvimento).</p>
-           )}
-        </div>
+        {/* Bloco Financeiro Dinâmico */}
+        {(formData.status === 'Proposta Enviada' || formData.status === 'Contrato Fechado') && (
+          <div className='bg-blue-50 p-6 rounded-xl border border-blue-100'>
+            <CamposFinanceiros values={formData} onChange={handleChange} />
+          </div>
+        )}
 
         <div className='flex justify-end'>
-          <button type='submit' disabled={saving} className='bg-[#0F2C4C] text-white px-8 py-3 rounded-lg hover:bg-blue-900 disabled:opacity-50 flex items-center gap-2'>
-            <Save size={20} /> {saving ? 'Salvando...' : 'Salvar Alterações'}
+          <button type='submit' disabled={saving} className='bg-[#0F2C4C] text-white px-8 py-3 rounded-lg hover:bg-blue-900 flex items-center gap-2'>
+            <Save size={20} /> {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>
