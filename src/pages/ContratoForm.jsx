@@ -388,8 +388,8 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <h3 className="text-sm font-bold text-gray-700 border-b pb-2">Dados de Prospecção</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Data Prospect</label>
-                <input type="date" value={formData.data_prospect} onChange={(e) => setFormData({...formData, data_prospect: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-xs font-medium text-gray-600 mb-1">Data Prospect *</label>
+                <input type="date" value={formData.data_prospect} onChange={(e) => setFormData({...formData, data_prospect: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Analisado por</label>
@@ -397,7 +397,7 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Obs Prospect</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações do Prospect</label>
               <textarea value={formData.obs_prospect} onChange={(e) => setFormData({...formData, obs_prospect: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Observações sobre a prospecção..." />
             </div>
           </div>
@@ -444,10 +444,6 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Descrição da Proposta</label>
               <textarea value={formData.descricao_proposta} onChange={(e) => setFormData({...formData, descricao_proposta: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Descreva os detalhes da proposta..." />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
-              <textarea value={formData.observacoes_proposta} onChange={(e) => setFormData({...formData, observacoes_proposta: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="2" />
             </div>
           </div>
         );
@@ -553,7 +549,7 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações da Rejeição</label>
               <textarea value={formData.observacoes_rejeicao} onChange={(e) => setFormData({...formData, observacoes_rejeicao: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Detalhes adicionais sobre a rejeição..." />
             </div>
           </div>
@@ -574,7 +570,7 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Observações do Probono</label>
               <textarea value={formData.observacoes_probono} onChange={(e) => setFormData({...formData, observacoes_probono: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Detalhes do caso probono..." />
             </div>
           </div>
@@ -744,11 +740,6 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Responsável</label>
                 <input type="text" value={formData.responsavel} onChange={(e) => setFormData({...formData, responsavel: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" placeholder="Advogado responsável" />
               </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição do Contrato</label>
-              <textarea value={formData.descricao_contrato} onChange={(e) => setFormData({...formData, descricao_contrato: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-medium outline-none focus:border-blue-500" rows="3" placeholder="Descreva os detalhes do contrato..." />
             </div>
           </div>
 
