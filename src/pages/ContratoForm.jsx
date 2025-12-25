@@ -663,7 +663,8 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
                     <option value="Contrato Fechado">Contrato Fechado</option>
                     <option value="Rejeitada">Rejeitada</option>
                     <option value="Probono">Probono</option>
-                </select>
+                  </select>
+                </div>
               </div>
             </div>
 
