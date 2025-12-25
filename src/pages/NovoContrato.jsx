@@ -10,7 +10,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 
-// Funções utilitárias para a máscara
+// --- FUNÇÕES DE MÁSCARA ---
 const aplicarMascaraMoeda = (valor) => {
   if (!valor && valor !== 0) return ''
   const apenasNumeros = valor.toString().replace(/\D/g, '')
@@ -28,6 +28,23 @@ const removerMascaraMoeda = (valor) => {
 
 // Componente de Campos Financeiros (Extraído)
 const CamposFinanceiros = ({ values, onChange }) => {
+  const handleKeyDown = (e) => {
+    if (
+      [46, 8, 9, 27, 13, 110, 190, 188].indexOf(e.keyCode) !== -1 ||
+      (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+      (e.keyCode >= 35 && e.keyCode <= 40)
+    ) {
+      return
+    }
+    if (
+      (e.shiftKey || e.keyCode < 48 || e.keyCode > 57) &&
+      (e.keyCode < 96 || e.keyCode > 105)
+    ) {
+      e.preventDefault()
+    }
+  }
+
+  // Função para tratar a mudança com máscara
   const tratarMudancaMoeda = (e) => {
     const { name, value } = e.target
     const valorComMascara = aplicarMascaraMoeda(value)
@@ -76,6 +93,7 @@ const CamposFinanceiros = ({ values, onChange }) => {
           name='proposta_exito_percentual'
           value={values.proposta_exito_percentual}
           onChange={onChange}
+          onKeyDown={handleKeyDown}
           className='w-full p-2 border rounded'
           placeholder='%'
         />
@@ -103,6 +121,7 @@ const CamposFinanceiros = ({ values, onChange }) => {
             name='proposta_fixo_parcelas'
             value={values.proposta_fixo_parcelas}
             onChange={onChange}
+            onKeyDown={handleKeyDown}
             className='w-full p-2 border border-blue-300 rounded bg-blue-50'
             placeholder='Ex: 12'
           />
