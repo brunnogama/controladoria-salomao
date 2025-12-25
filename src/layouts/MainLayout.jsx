@@ -6,8 +6,7 @@ const MainLayout = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
-      {/* Margem dinâmica: 0 no mobile, 64 (w-64) no desktop */}
-      <main className="flex-1 p-4 md:p-8 lg:ml-64 transition-all duration-300 pt-20 lg:pt-8">
+      <main className="flex-1 p-4 md:p-8 lg:ml-64 transition-all duration-300 pt-16 lg:pt-8">
         <div className="max-w-7xl mx-auto">
           <Outlet />
         </div>
