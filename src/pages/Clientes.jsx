@@ -98,18 +98,19 @@ const Clientes = () => {
     }
 
     try {
-      // Verificar se existe cliente "Sem Cliente"
-      let clienteSemCliente = null
-      const { data: clienteExistente, error: erroConsulta } = await supabase
+      // Buscar ou criar cliente "Sem Cliente"
+      const { data: clienteExistente } = await supabase
         .from('clientes')
         .select('id')
-        .eq('razao_social', 'Sem Cliente')
-        .single()
+        .eq('cnpj', '00000000000000')
+        .maybeSingle()
+
+      let clienteSemClienteId
 
       if (clienteExistente) {
-        clienteSemCliente = clienteExistente
+        clienteSemClienteId = clienteExistente.id
       } else {
-        // Criar cliente "Sem Cliente"
+        // Criar cliente "Sem Cliente" se não existir
         const { data: novoCliente, error: erroCriacao } = await supabase
           .from('clientes')
           .insert([{
@@ -121,14 +122,28 @@ const Clientes = () => {
           .select()
           .single()
 
-        if (erroCriacao) throw erroCriacao
-        clienteSemCliente = novoCliente
+        if (erroCriacao) {
+          // Se der erro de duplicate key, buscar novamente (race condition)
+          const { data: clienteRace } = await supabase
+            .from('clientes')
+            .select('id')
+            .eq('cnpj', '00000000000000')
+            .single()
+          
+          if (clienteRace) {
+            clienteSemClienteId = clienteRace.id
+          } else {
+            throw erroCriacao
+          }
+        } else {
+          clienteSemClienteId = novoCliente.id
+        }
       }
 
       // Atualizar contrato para o cliente "Sem Cliente"
       const { error } = await supabase
         .from('contratos')
-        .update({ cliente_id: clienteSemCliente.id })
+        .update({ cliente_id: clienteSemClienteId })
         .eq('id', contratoId)
 
       if (error) throw error
