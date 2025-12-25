@@ -140,18 +140,41 @@ const ContratoForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (formData.status === 'Contrato Fechado' && !formData.cliente_id && !formData.cliente_nome) {
-      alert("Para contratos fechados é obrigatório informar um cliente (por CNPJ ou manualmente).");
+    // Validação: Cliente sempre obrigatório
+    if (!formData.cliente_id && !formData.cliente_nome) {
+      alert("Por favor, informe um cliente (busque pelo CNPJ ou digite o nome manualmente).");
       return;
     }
     
     setLoading(true);
     try {
+      let clienteIdFinal = formData.cliente_id;
+      
+      // Se tem nome mas não tem ID, criar cliente rapidamente
+      if (!clienteIdFinal && formData.cliente_nome) {
+        const { data: novoCliente, error: erroCliente } = await supabase
+          .from('clientes')
+          .insert([{ 
+            razao_social: formData.cliente_nome,
+            cnpj: formData.cnpj_cliente || '00000000000000' // CNPJ temporário se não informado
+          }])
+          .select()
+          .single();
+        
+        if (erroCliente) {
+          alert("Erro ao criar cliente: " + erroCliente.message);
+          setLoading(false);
+          return;
+        }
+        
+        clienteIdFinal = novoCliente.id;
+      }
+      
       const { cnpj_cliente, cliente_nome, ...dadosParaSalvar } = formData;
       
       const dadosFinais = {
         ...dadosParaSalvar,
-        cliente_id: dadosParaSalvar.cliente_id || null,
+        cliente_id: clienteIdFinal,
         
         // Converter datas vazias para null
         data_prospect: dadosParaSalvar.data_prospect || null,
@@ -431,9 +454,9 @@ const ContratoForm = () => {
               
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                  Cliente {formData.status === 'Contrato Fechado' && '*'}
+                  Cliente *
                 </label>
-                <input type="text" placeholder="Nome do cliente" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formData.cliente_nome} onChange={(e) => setFormData({...formData, cliente_nome: e.target.value})} required={formData.status === 'Contrato Fechado'} />
+                <input type="text" placeholder="Nome do cliente" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formData.cliente_nome} onChange={(e) => setFormData({...formData, cliente_nome: e.target.value})} required />
                 {clienteEncontrado && (
                   <p className="text-xs text-green-600 font-bold mt-1">✓ {clienteEncontrado.razao_social}</p>
                 )}
@@ -442,10 +465,10 @@ const ContratoForm = () => {
 
             <div className="mt-4">
               <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                CNPJ {formData.status === 'Contrato Fechado' && '*'}
+                CNPJ (opcional)
               </label>
               <div className="relative">
-                <input type="text" placeholder="00.000.000/0000-00" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formatCNPJ(formData.cnpj_cliente)} onChange={(e) => setFormData({...formData, cnpj_cliente: e.target.value})} onBlur={(e) => buscarClientePorCNPJ(e.target.value)} required={formData.status === 'Contrato Fechado'} />
+                <input type="text" placeholder="00.000.000/0000-00" className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" value={formatCNPJ(formData.cnpj_cliente)} onChange={(e) => setFormData({...formData, cnpj_cliente: e.target.value})} onBlur={(e) => buscarClientePorCNPJ(e.target.value)} />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {buscandoCNPJ ? <Loader2 size={18} className="animate-spin text-blue-500"/> : <Search size={18} className="text-gray-300"/>}
                 </div>
