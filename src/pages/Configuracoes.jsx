@@ -2,16 +2,15 @@ import React, { useState, useEffect } from 'react'
 import { Save, Image as ImageIcon, CheckCircle, Monitor, Lock } from 'lucide-react'
 
 const Configuracoes = () => {
-  const [logoInterno, setLogoInterno] = useState('/logo-default.png')
-  const [logoLogin, setLogoLogin] = useState('/logo-default.png')
+  const [logoInterno, setLogoInterno] = useState('')
+  const [logoLogin, setLogoLogin] = useState('')
   
-  // Lista dos logos que estão na sua pasta PUBLIC
-  // Adicione aqui os caminhos exatos dos ficheiros que estão em /public
+  // Lista dos arquivos que devem estar na pasta /public do seu projeto
   const opcoesLogos = [
     { id: 1, nome: 'Logo Cor', path: '/logo-color.png' },
     { id: 2, nome: 'Logo Branco', path: '/logo-white.png' },
     { id: 3, nome: 'Logo Horizontal', path: '/logo-horizontal.png' },
-    { id: 4, nome: 'Ícone/Favicon', path: '/favicon.png' },
+    { id: 4, nome: 'Ícone Sistema', path: '/favicon.png' },
   ]
 
   useEffect(() => {
@@ -40,7 +39,7 @@ const Configuracoes = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* CONFIGURAÇÃO LOGO INTERNO */}
+        {/* LOGO INTERNO (SIDEBAR) */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
           <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-3">
             <Monitor size={20} className="text-blue-600" />
@@ -66,7 +65,7 @@ const Configuracoes = () => {
           </div>
         </div>
 
-        {/* CONFIGURAÇÃO LOGO LOGIN */}
+        {/* LOGO LOGIN */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-6">
           <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-3">
             <Lock size={20} className="text-orange-500" />
