@@ -1,18 +1,19 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import React from 'react'
+import { Outlet } from 'react-router-dom'
+import Sidebar from '../components/Sidebar'
 
 const MainLayout = () => {
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className='flex h-screen bg-gray-50 overflow-hidden'>
+      {/* Sidebar fixa à esquerda */}
       <Sidebar />
-      <main className="flex-1 p-4 md:p-8 md:ml-64 transition-all duration-300 pt-16 md:pt-8">
-        <div className="max-w-7xl mx-auto">
-          <Outlet />
-        </div>
+
+      {/* ÁREA DO CONTEÚDO PRINCIPAL */}
+      <main className='flex-1 ml-64 h-full overflow-y-auto p-8 w-full transition-all duration-300'>
+        <Outlet />
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default MainLayout;
+export default MainLayout
