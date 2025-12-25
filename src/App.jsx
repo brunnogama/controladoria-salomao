@@ -3,8 +3,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 // Layout e Páginas
 import MainLayout from './layouts/MainLayout'
-import Login from './pages/Login' // Importação do Login
+import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Kanban from './pages/Kanban' // <-- Importando o Kanban novo
 import Contratos from './pages/Contratos'
 import NovoContrato from './pages/NovoContrato'
 import EditarContrato from './pages/EditarContrato'
@@ -25,26 +26,34 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* --- ROTA DE LOGIN (SEM SIDEBAR) --- */}
-        {/* Esta rota precisa ficar FORA do MainLayout para ocupar a tela toda */}
         <Route path='/login' element={<Login />} />
 
         {/* --- ROTAS DO SISTEMA (COM SIDEBAR) --- */}
         <Route path='/' element={<MainLayout />}>
+          {/* Dashboard como página inicial */}
           <Route index element={<Dashboard />} />
 
+          {/* Kanban de Casos */}
+          <Route path='kanban' element={<Kanban />} />
+
+          {/* Gestão de Contratos */}
           <Route path='contratos' element={<Contratos />} />
           <Route path='contratos/novo' element={<NovoContrato />} />
           <Route path='contratos/editar/:id' element={<EditarContrato />} />
 
+          {/* Gestão de Clientes */}
           <Route path='clientes' element={<Clientes />} />
 
+          {/* Histórico e Logs */}
           <Route path='historico' element={<Historico />} />
 
+          {/* Volumetria (Em construção) */}
           <Route
             path='volumetria'
             element={<PaginaEmConstrucao nome='Volumetria' />}
           />
 
+          {/* Configurações do Sistema */}
           <Route path='configuracoes' element={<Configuracoes />} />
         </Route>
       </Routes>
