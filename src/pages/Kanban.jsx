@@ -16,42 +16,37 @@ const Kanban = () => {
   const [loading, setLoading] = useState(true)
   const [draggedItem, setDraggedItem] = useState(null)
 
-  // COLUNAS EXATAS
+  // CONFIGURAÇÃO DAS COLUNAS E CORES SOLICITADAS
   const colunas = [
     {
       id: 'Sob Análise',
       titulo: 'Sob Análise',
       cor: 'bg-orange-500',
       border: 'border-orange-500',
-      bg: 'bg-orange-50',
     },
     {
       id: 'Proposta Enviada',
       titulo: 'Proposta Enviada',
-      cor: 'bg-yellow-500',
+      cor: 'bg-yellow-400',
       border: 'border-yellow-400',
-      bg: 'bg-yellow-50',
     },
     {
-      id: 'Contratos Fechados',
-      titulo: 'Contratos Fechados',
+      id: 'Contrato Fechado',
+      titulo: 'Contrato Fechado',
       cor: 'bg-green-600',
-      border: 'border-green-500',
-      bg: 'bg-green-50',
-    },
-    {
-      id: 'Rejeitados',
-      titulo: 'Rejeitados',
-      cor: 'bg-red-600',
-      border: 'border-red-500',
-      bg: 'bg-red-50',
+      border: 'border-green-600',
     },
     {
       id: 'Probono',
       titulo: 'Probono',
       cor: 'bg-blue-500',
       border: 'border-blue-500',
-      bg: 'bg-blue-50',
+    },
+    {
+      id: 'Rejeitada',
+      titulo: 'Rejeitados',
+      cor: 'bg-red-600',
+      border: 'border-red-600',
     },
   ]
 
@@ -64,12 +59,7 @@ const Kanban = () => {
       setLoading(true)
       const { data, error } = await supabase
         .from('contratos')
-        .select(
-          `
-          *,
-          clientes (razao_social)
-        `
-        )
+        .select(`*, clientes (razao_social)`)
         .order('updated_at', { ascending: false })
 
       if (error) throw error
@@ -81,57 +71,37 @@ const Kanban = () => {
     }
   }
 
-  // --- INTELIGÊNCIA: Corrige nomes errados vindos do banco ---
-  const mapearStatus = (statusBanco) => {
-    if (!statusBanco) return 'Outros'
-    const s = statusBanco
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-
-    if (s.includes('analise')) return 'Sob Análise'
-    if (s.includes('proposta')) return 'Proposta Enviada'
-    if (s.includes('fechado')) return 'Contratos Fechados'
-    if (s.includes('rejeita')) return 'Rejeitados'
-    if (s.includes('bono')) return 'Probono'
-
-    return 'Outros'
-  }
-
   const handleDrop = async (e, colunaDestinoID) => {
     e.preventDefault()
-    if (!draggedItem) return
+    if (!draggedItem || draggedItem.status === colunaDestinoID) return
 
-    // 1. Atualiza na TELA imediatamente (para você ver mudando)
-    const contratosAtualizados = contratos.map((c) =>
+    // Atualização Otimista na Interface
+    const novosContratos = contratos.map((c) =>
       c.id === draggedItem.id ? { ...c, status: colunaDestinoID } : c
     )
-    setContratos(contratosAtualizados)
+    setContratos(novosContratos)
 
     try {
-      // 2. Atualiza no BANCO DE DADOS (Aqui que estava faltando na versão Mock)
+      // Persistência no Banco de Dados
       const { error } = await supabase
         .from('contratos')
-        .update({ status: colunaDestinoID }) // Salva o nome novo e correto da coluna
+        .update({ status: colunaDestinoID })
         .eq('id', draggedItem.id)
 
       if (error) throw error
 
-      // 3. Grava no Histórico
+      // Registro no Histórico de Atividades
       await supabase.from('logs_sistema').insert([
         {
           categoria: 'Kanban',
           acao: 'Movimentação',
-          detalhes: `"${
-            draggedItem.clientes?.razao_social || 'Contrato'
-          }" movido para "${colunaDestinoID}"`,
+          detalhes: `"${draggedItem.clientes?.razao_social || 'Contrato'}" movido para "${colunaDestinoID}"`,
           referencia_id: draggedItem.id,
         },
       ])
     } catch (error) {
-      console.error('Erro ao salvar no banco:', error)
-      alert('Erro ao salvar alteração: ' + error.message) // Avisa se der erro
-      fetchContratos() // Volta como estava
+      console.error('Erro ao salvar movimentação:', error)
+      fetchContratos() // Reverte em caso de erro
     } finally {
       setDraggedItem(null)
     }
@@ -155,9 +125,7 @@ const Kanban = () => {
       <div className='flex justify-between items-center mb-6 px-2'>
         <div>
           <h1 className='text-3xl font-bold text-[#0F2C4C]'>Kanban de Casos</h1>
-          <p className='text-gray-500'>
-            Gestão visual e movimentação de contratos.
-          </p>
+          <p className='text-gray-500'>Gestão visual e movimentação de contratos.</p>
         </div>
         <Link
           to='/contratos/novo'
@@ -169,50 +137,81 @@ const Kanban = () => {
 
       <div className='flex-1 flex gap-4 overflow-x-auto pb-4 px-2'>
         {colunas.map((coluna) => {
-          // Filtra os cards usando o mapeamento inteligente
-          const itens = contratos.filter(
-            (c) => mapearStatus(c.status) === coluna.id
-          )
-          const totalValor = itens.reduce(
-            (acc, curr) => acc + (Number(curr.proposta_pro_labore) || 0),
-            0
-          )
+          const itens = contratos.filter((c) => c.status === coluna.id)
+          const totalPL = itens.reduce((acc, curr) => acc + (Number(curr.proposta_pro_labore) || 0), 0)
 
           return (
             <div
               key={coluna.id}
-              className='flex-shrink-0 w-80 flex flex-col bg-gray-50/50 rounded-xl border border-gray-200 h-full max-h-full'
+              className='flex-shrink-0 w-80 flex flex-col bg-gray-50/50 rounded-xl border border-gray-200 h-full'
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, coluna.id)}
             >
-              <div
-                className={`p-4 border-b border-gray-100 rounded-t-xl bg-white sticky top-0 z-10 shadow-sm border-t-4 ${coluna.border}`}
-              >
+              <div className={`p-4 border-b border-gray-100 rounded-t-xl bg-white sticky top-0 z-10 shadow-sm border-t-4 ${coluna.border}`}>
                 <div className='flex justify-between items-center mb-1'>
                   <h3 className='font-bold text-gray-700 flex items-center gap-2'>
-                    <span
-                      className={`w-3 h-3 rounded-full ${coluna.cor}`}
-                    ></span>
+                    <span className={`w-3 h-3 rounded-full ${coluna.cor}`}></span>
                     {coluna.titulo}
                   </h3>
                   <span className='bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold'>
                     {itens.length}
                   </span>
                 </div>
-                {totalValor > 0 && (
-                  <p className='text-xs text-gray-400 font-mono mt-1 ml-5'>
-                    PL: {formatMoney(totalValor)}
+                {totalPL > 0 && (
+                  <p className='text-[10px] text-gray-400 font-mono mt-1'>
+                    Total PL: {formatMoney(totalPL)}
                   </p>
                 )}
               </div>
 
               <div className='flex-1 p-3 space-y-3 overflow-y-auto min-h-[100px]'>
                 {itens.map((item) => (
-                  <CardKanban
+                  <div
                     key={item.id}
-                    item={item}
-                    setDraggedItem={setDraggedItem}
-                  />
+                    draggable
+                    onDragStart={() => setDraggedItem(item)}
+                    className='bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-move hover:shadow-md hover:border-blue-300 transition-all group relative'
+                  >
+                    <Link to={`/contratos/editar/${item.id}`} className='absolute top-3 right-3 text-gray-300 hover:text-blue-600'>
+                      <MoreHorizontal size={16} />
+                    </Link>
+
+                    <div className='flex items-start gap-3 mb-3 pr-6'>
+                      <div className='w-8 h-8 rounded bg-blue-50 flex items-center justify-center text-blue-700 font-bold text-xs shrink-0 uppercase'>
+                        {item.clientes?.razao_social?.substring(0, 2) || '?'}
+                      </div>
+                      <div className='overflow-hidden'>
+                        <h4 className='font-bold text-sm text-gray-800 truncate' title={item.clientes?.razao_social}>
+                          {item.clientes?.razao_social || 'Cliente s/ nome'}
+                        </h4>
+                        <p className='text-[11px] text-gray-500 truncate flex items-center gap-1'>
+                          <Briefcase size={10} /> {item.parte_contraria || 'Não informada'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className='space-y-2'>
+                      {item.proposta_pro_labore > 0 ? (
+                        <div className='text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-1 rounded w-fit'>
+                          PL: {formatMoney(item.proposta_pro_labore)}
+                        </div>
+                      ) : (
+                        <span className='text-[10px] text-gray-400 italic'>Valores a definir</span>
+                      )}
+
+                      <div className='flex items-center justify-between pt-2 border-t border-gray-50 mt-2'>
+                        <span className='text-[10px] text-gray-400 flex items-center gap-1'>
+                          <Calendar size={10} /> {new Date(item.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+
+                        {item.status === 'Contrato Fechado' && !item.contrato_assinado && (
+                          <span className='text-[9px] text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold animate-pulse'>
+                            <AlertCircle size={10} /> ASSINAR
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -222,83 +221,5 @@ const Kanban = () => {
     </div>
   )
 }
-
-// Componente do Card
-const CardKanban = ({ item, setDraggedItem }) => (
-  <div
-    draggable
-    onDragStart={() => setDraggedItem(item)}
-    className='bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-move hover:shadow-md hover:border-blue-300 transition-all group relative'
-  >
-    <Link
-      to={`/contratos/editar/${item.id}`}
-      className='absolute top-3 right-3 text-gray-300 hover:text-blue-600'
-    >
-      <MoreHorizontal size={16} />
-    </Link>
-
-    <div className='flex items-start gap-3 mb-3 pr-6'>
-      <div className='w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs shrink-0'>
-        {item.clientes?.razao_social?.substring(0, 2).toUpperCase() || '?'}
-      </div>
-      <div className='overflow-hidden'>
-        <h4
-          className='font-bold text-sm text-gray-800 truncate'
-          title={item.clientes?.razao_social}
-        >
-          {item.clientes?.razao_social || 'Cliente sem nome'}
-        </h4>
-        <p className='text-xs text-gray-500 truncate flex items-center gap-1'>
-          <Briefcase size={10} />{' '}
-          {item.parte_contraria || 'Sem parte contrária'}
-        </p>
-      </div>
-    </div>
-
-    <div className='space-y-1.5'>
-      {item.proposta_pro_labore > 0 || item.proposta_exito_total > 0 ? (
-        <div className='flex flex-wrap gap-2 text-xs'>
-          {item.proposta_pro_labore > 0 && (
-            <span className='bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-100'>
-              PL:{' '}
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(item.proposta_pro_labore)}
-            </span>
-          )}
-          {item.proposta_exito_total > 0 && (
-            <span className='bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-100'>
-              Êxito:{' '}
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(item.proposta_exito_total)}
-            </span>
-          )}
-        </div>
-      ) : (
-        <span className='text-xs text-gray-400 italic flex items-center gap-1'>
-          <DollarSign size={10} /> Valores a definir
-        </span>
-      )}
-
-      <div className='flex items-center justify-between pt-2 border-t border-gray-50 mt-2'>
-        <span className='text-[10px] text-gray-400 flex items-center gap-1'>
-          <Calendar size={10} />{' '}
-          {new Date(item.created_at).toLocaleDateString('pt-BR')}
-        </span>
-
-        {/* Alerta de Assinatura */}
-        {item.status.toLowerCase().includes('fechado') &&
-          !item.contrato_assinado && (
-            <span className='text-[10px] text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold'>
-              <AlertCircle size={10} /> Assinar
-            </span>
-          )}
-      </div>
-    </div>
-  </div>
-)
 
 export default Kanban
