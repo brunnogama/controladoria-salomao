@@ -79,6 +79,7 @@ const Dashboard = () => {
   })
 
   const [evolucaoMensal, setEvolucaoMensal] = useState([])
+  const [ultimosCasos, setUltimosCasos] = useState([])
 
   useEffect(() => {
     fetchDashboardData()
@@ -89,22 +90,12 @@ const Dashboard = () => {
       setLoading(true)
 
       const { data: contratos } = await supabase.from('contratos').select(`
-          status, 
-          proposta_pro_labore, 
-          proposta_fixo_mensal, 
-          proposta_exito_total,
-          proposta_exito_percentual,
-          contrato_pro_labore,
-          contrato_fixo_mensal,
-          contrato_exito_total,
-          contrato_exito_percentual,
-          contrato_assinado,
-          created_at, 
-          data_prospect,
-          data_proposta,
-          data_contrato,
-          data_rejeicao
-        `)
+          *,
+          cliente:clientes(razao_social, cnpj)
+        `).order('created_at', { ascending: false })
+
+      console.log('📊 Dashboard - Contratos carregados:', contratos?.length || 0)
+      console.log('📊 Dashboard - Primeiros 3 contratos:', contratos?.slice(0, 3))
 
       if (!contratos) return
 
@@ -317,6 +308,16 @@ const Dashboard = () => {
       setMetrics({ semana: mSemana, mes: mMes, geral: mGeral })
       setFunil(funilTemp)
       setEvolucaoMensal(ultimos6Meses)
+      
+      // Preparar últimos 10 casos cadastrados
+      const casos10 = contratos.slice(0, 10).map(c => ({
+        id: c.id,
+        cliente: c.cliente?.razao_social || 'Sem cliente',
+        status: c.status,
+        data: c.data_prospect || c.created_at,
+        numero_hon: c.numero_hon
+      }))
+      setUltimosCasos(casos10)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
@@ -792,6 +793,68 @@ Controladoria Jurídica
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 6. ÚLTIMOS CASOS CADASTRADOS */}
+      <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
+        <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+          <History className='text-blue-600' size={24} />
+          <div>
+            <h2 className='text-xl font-bold text-gray-800'>Últimos 10 Casos Cadastrados</h2>
+            <p className='text-xs text-gray-500'>Casos mais recentes no sistema</p>
+          </div>
+        </div>
+
+        {ultimosCasos.length === 0 ? (
+          <div className='text-center py-8 text-gray-400'>
+            <FileText size={48} className='mx-auto mb-2 opacity-20' />
+            <p>Nenhum caso cadastrado ainda</p>
+          </div>
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className='w-full'>
+              <thead>
+                <tr className='border-b border-gray-200'>
+                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>Cliente</th>
+                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>Status</th>
+                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>Data</th>
+                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>HON</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ultimosCasos.map((caso, index) => {
+                  const statusColors = {
+                    'Sob Análise': 'bg-orange-100 text-orange-700',
+                    'Proposta Enviada': 'bg-yellow-100 text-yellow-700',
+                    'Contrato Fechado': 'bg-green-100 text-green-700',
+                    'Rejeitada': 'bg-red-100 text-red-700',
+                    'Probono': 'bg-blue-100 text-blue-700',
+                  }
+                  
+                  const dataFormatada = new Date(caso.data).toLocaleDateString('pt-BR')
+                  
+                  return (
+                    <tr key={caso.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${index === 0 ? 'bg-blue-50/30' : ''}`}>
+                      <td className='py-3 px-4'>
+                        <div className='flex items-center gap-2'>
+                          {index === 0 && <span className='text-xs bg-blue-600 text-white px-2 py-0.5 rounded font-bold'>NOVO</span>}
+                          <span className='text-sm font-semibold text-gray-800'>{caso.cliente}</span>
+                        </div>
+                      </td>
+                      <td className='py-3 px-4'>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[caso.status] || 'bg-gray-100 text-gray-700'}`}>
+                          {caso.status}
+                        </span>
+                      </td>
+                      <td className='py-3 px-4 text-sm text-gray-600'>{dataFormatada}</td>
+                      <td className='py-3 px-4 text-sm font-mono text-gray-600'>{caso.numero_hon || '-'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
