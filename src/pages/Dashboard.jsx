@@ -51,6 +51,7 @@ const Dashboard = () => {
       propostasAtivas: 0,
       fechados: 0,
       rejeitados: 0,
+      probono: 0,
       valorEmNegociacaoPL: 0,
       valorEmNegociacaoExito: 0,
       receitaRecorrenteAtiva: 0,
@@ -143,6 +144,7 @@ const Dashboard = () => {
       propostasAtivas: 0,
       fechados: 0,
       rejeitados: 0,
+      probono: 0,
       valorEmNegociacaoPL: 0,
       valorEmNegociacaoExito: 0,
       receitaRecorrenteAtiva: 0,
@@ -188,6 +190,7 @@ const Dashboard = () => {
       mGeral.totalCasos++
       if (c.status === 'Sob Análise') mGeral.emAnalise++
       if (c.status === 'Rejeitada') mGeral.rejeitados++
+      if (c.status === 'Probono') mGeral.probono++
       if (c.status === 'Proposta Enviada') {
         mGeral.propostasAtivas++
         mGeral.valorEmNegociacaoPL += pl
@@ -633,7 +636,7 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+          <div className='grid grid-cols-2 md:grid-cols-6 gap-4'>
             <div className='col-span-2 md:col-span-1 bg-[#0F2C4C] text-white p-4 rounded-lg flex flex-col justify-center items-center text-center'>
               <span className='text-4xl font-bold'>
                 {metrics.geral.totalCasos}
@@ -676,6 +679,15 @@ const Dashboard = () => {
               </p>
               <p className='text-xs text-red-700 font-bold uppercase mt-1'>
                 Rejeitados
+              </p>
+            </div>
+            <div className='bg-purple-50 p-4 rounded-lg border border-purple-100 text-center'>
+              <Target className='mx-auto text-purple-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-purple-800'>
+                {metrics.geral.probono}
+              </p>
+              <p className='text-xs text-purple-700 font-bold uppercase mt-1'>
+                Probono
               </p>
             </div>
           </div>
