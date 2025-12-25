@@ -151,6 +151,7 @@ const ContratoForm = () => {
       
       const dadosFinais = {
         ...dadosParaSalvar,
+        cliente_id: dadosParaSalvar.cliente_id || null,
         proposta_pro_labore: dadosParaSalvar.proposta_pro_labore ? removerMascaraMoeda(dadosParaSalvar.proposta_pro_labore) : null,
         proposta_honorario_fixo: dadosParaSalvar.proposta_honorario_fixo ? removerMascaraMoeda(dadosParaSalvar.proposta_honorario_fixo) : null,
         proposta_exito_total: dadosParaSalvar.proposta_exito_total ? removerMascaraMoeda(dadosParaSalvar.proposta_exito_total) : null,
@@ -160,14 +161,22 @@ const ContratoForm = () => {
         valor_causa: dadosParaSalvar.valor_causa ? removerMascaraMoeda(dadosParaSalvar.valor_causa) : null,
       };
       
+      console.log('Dados a salvar:', dadosFinais);
+      
       if (id) {
-        await supabase.from('contratos').update(dadosFinais).eq('id', id);
+        const { data, error } = await supabase.from('contratos').update(dadosFinais).eq('id', id);
+        if (error) throw error;
+        console.log('Contrato atualizado:', data);
       } else {
-        await supabase.from('contratos').insert([dadosFinais]);
+        const { data, error } = await supabase.from('contratos').insert([dadosFinais]);
+        if (error) throw error;
+        console.log('Contrato criado:', data);
       }
       
+      alert('Contrato salvo com sucesso!');
       navigate('/contratos');
     } catch (error) {
+      console.error('Erro completo:', error);
       alert("Erro ao salvar: " + error.message);
     } finally {
       setLoading(false);
