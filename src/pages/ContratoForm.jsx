@@ -99,35 +99,51 @@ const ContratoForm = () => {
     setBuscandoCNPJ(true);
     try {
       const cnpjLimpo = cnpj.replace(/\D/g, '');
+      console.log('🔍 Buscando CNPJ:', cnpjLimpo);
+      
       const { data, error } = await supabase
         .from('clientes')
         .select('id, razao_social, cnpj')
-        .eq('cnpj', cnpjLimpo)
-        .single();
+        .eq('cnpj', cnpjLimpo);
 
-      if (data) {
-        setClienteEncontrado(data);
+      console.log('📊 Resultado da busca:', data, error);
+
+      if (error) {
+        console.error('❌ Erro na busca:', error);
+        alert('Erro ao buscar cliente: ' + error.message);
+        setClienteEncontrado(null);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const cliente = data[0];
+        console.log('✅ Cliente encontrado:', cliente);
+        setClienteEncontrado(cliente);
         setFormData(prev => ({ 
           ...prev, 
-          cliente_id: data.id,
-          cliente_nome: data.razao_social
+          cliente_id: cliente.id,
+          cliente_nome: cliente.razao_social
         }));
+        alert(`✅ Cliente encontrado: ${cliente.razao_social}`);
       } else {
+        console.log('⚠️ Nenhum cliente encontrado com CNPJ:', cnpjLimpo);
         setClienteEncontrado(null);
         setFormData(prev => ({ 
           ...prev, 
           cliente_id: '',
           cliente_nome: ''
         }));
+        alert('⚠️ Nenhum cliente encontrado com este CNPJ. Você pode digitar o nome manualmente.');
       }
     } catch (err) {
-      console.error('Erro ao buscar cliente:', err);
+      console.error('💥 Exceção ao buscar cliente:', err);
       setClienteEncontrado(null);
       setFormData(prev => ({ 
         ...prev, 
         cliente_id: '',
         cliente_nome: ''
       }));
+      alert('Erro inesperado ao buscar cliente.');
     } finally {
       setBuscandoCNPJ(false);
     }
