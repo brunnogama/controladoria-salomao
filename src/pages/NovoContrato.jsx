@@ -124,12 +124,19 @@ const NovoContrato = () => {
     status: 'Sob Análise',
     responsavel_socio: '',
     parte_contraria: '',
+    data_prospect: '',
+    analisado_por: '',
+    obs_prospect: '',
+    data_proposta: '',
     proposta_pro_labore: '',
     proposta_exito_total: '',
     proposta_exito_percentual: '',
     proposta_fixo_mensal: '',
     proposta_fixo_parcelas: '',
     proposta_obs: '',
+    rejeitado_por: '',
+    motivo_rejeicao_categoria: '',
+    motivo_rejeicao: '',
   })
 
   useEffect(() => {
@@ -160,27 +167,21 @@ const NovoContrato = () => {
     setLoading(true)
 
     try {
-      // 1. Salva o Contrato
       const { data: contrato, error: errContrato } = await supabase
         .from('contratos')
         .insert([{
-          cliente_id: formData.cliente_id,
-          status: formData.status,
-          responsavel_socio: formData.responsavel_socio,
-          parte_contraria: formData.parte_contraria,
+          ...formData,
           proposta_pro_labore: removerMascaraMoeda(formData.proposta_pro_labore),
           proposta_exito_total: removerMascaraMoeda(formData.proposta_exito_total),
-          proposta_exito_percentual: formData.proposta_exito_percentual || null,
           proposta_fixo_mensal: removerMascaraMoeda(formData.proposta_fixo_mensal),
-          proposta_fixo_parcelas: formData.proposta_fixo_parcelas || null,
-          proposta_obs: formData.proposta_obs,
+          data_prospect: formData.data_prospect || null,
+          data_proposta: formData.data_proposta || null,
         }])
         .select()
         .single()
 
       if (errContrato) throw errContrato
 
-      // 2. Salva os Processos Vinculados
       const procsParaSalvar = processos
         .filter(p => p.numero)
         .map(p => ({
@@ -192,11 +193,9 @@ const NovoContrato = () => {
         }))
 
       if (procsParaSalvar.length > 0) {
-        const { error: errProc } = await supabase.from('processos').insert(procsParaSalvar)
-        if (errProc) throw errProc
+        await supabase.from('processos').insert(procsParaSalvar)
       }
 
-      // 3. Registra no Log do Sistema
       await supabase.from('logs_sistema').insert([{
         categoria: 'Contrato',
         acao: 'Criação',
@@ -207,7 +206,6 @@ const NovoContrato = () => {
       alert('Contrato cadastrado com sucesso!')
       navigate('/contratos')
     } catch (err) {
-      console.error(err)
       alert('Erro ao salvar: ' + err.message)
     } finally {
       setLoading(false)
@@ -217,125 +215,118 @@ const NovoContrato = () => {
   return (
     <div className='w-full max-w-5xl mx-auto space-y-6 pb-20'>
       <div className='flex items-center gap-4 mb-6'>
-        <button 
-          onClick={() => navigate('/contratos')} 
-          className='p-2 hover:bg-gray-200 rounded-full'
-        >
-          <ArrowLeft size={24} className='text-gray-600' />
-        </button>
+        <button onClick={() => navigate('/contratos')} className='p-2 hover:bg-gray-200 rounded-full'><ArrowLeft size={24} /></button>
         <h1 className='text-2xl font-bold text-[#0F2C4C]'>Novo Contrato</h1>
       </div>
 
       <form onSubmit={handleSubmit} className='space-y-6'>
-        {/* Bloco 1: Cliente e Status */}
+        {/* BLOCO 1: CLIENTE E STATUS */}
         <div className='bg-white p-6 rounded-xl border shadow-sm space-y-4'>
+          <h2 className='font-semibold text-gray-700 border-b pb-2'>Informações Iniciais</h2>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>Cliente</label>
-              <select 
-                name='cliente_id' 
-                required 
-                value={formData.cliente_id} 
-                onChange={handleChange} 
-                className='w-full p-2.5 border rounded-lg'
-              >
+              <select name='cliente_id' required value={formData.cliente_id} onChange={handleChange} className='w-full p-2.5 border rounded-lg'>
                 <option value=''>Selecione um cliente...</option>
-                {clientes.map(c => (
-                  <option key={c.id} value={c.id}>{c.razao_social}</option>
-                ))}
+                {clientes.map(c => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
               </select>
             </div>
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-1'>Status Inicial</label>
-              <select 
-                name='status' 
-                value={formData.status} 
-                onChange={handleChange} 
-                className='w-full p-2.5 border rounded-lg font-bold'
-              >
+              <select name='status' value={formData.status} onChange={handleChange} className='w-full p-2.5 border rounded-lg font-bold text-[#0F2C4C]'>
                 <option value='Sob Análise'>Sob Análise</option>
                 <option value='Proposta Enviada'>Proposta Enviada</option>
                 <option value='Contrato Fechado'>Contrato Fechado</option>
+                <option value='Rejeitada'>Rejeitada</option>
               </select>
             </div>
             <div className='md:col-span-2'>
               <label className='block text-sm font-medium text-gray-700 mb-1'>Sócio Responsável</label>
-              <input 
-                name='responsavel_socio' 
-                value={formData.responsavel_socio} 
-                onChange={handleChange} 
-                className='w-full p-2.5 border rounded-lg'
-                placeholder='Nome do sócio'
-              />
+              <input name='responsavel_socio' value={formData.responsavel_socio} onChange={handleChange} className='w-full p-2.5 border rounded-lg' placeholder='Nome do sócio' />
             </div>
           </div>
         </div>
 
-        {/* Bloco 2: Processos */}
+        {/* BLOCO 2: PROCESSOS */}
         <div className='bg-white p-6 rounded-xl border shadow-sm space-y-4'>
-          <h2 className='font-semibold border-b pb-2 text-gray-700'>Informações Jurídicas</h2>
-          <div className='mb-4'>
+          <div className='flex justify-between items-center border-b pb-2'>
+            <h2 className='font-semibold text-gray-700'>Informações Jurídicas</h2>
+            <button type='button' onClick={() => setProcessos([...processos, { numero: '', tribunal: '', juiz: '', valor_causa: '' }])} className='text-xs text-blue-600 hover:underline'>+ Adicionar Processo</button>
+          </div>
+          <div className='mb-2'>
             <label className='block text-sm font-medium text-gray-700 mb-1'>Parte Contrária</label>
-            <input 
-              name='parte_contraria' 
-              value={formData.parte_contraria} 
-              onChange={handleChange} 
-              className='w-full p-2.5 border rounded-lg'
-              placeholder='Ex: Banco X, Empresa Y...'
-            />
+            <input name='parte_contraria' value={formData.parte_contraria} onChange={handleChange} className='w-full p-2.5 border rounded-lg' placeholder='Ex: Banco X, Empresa Y...' />
           </div>
-          
-          <div className='flex justify-between items-center'>
-            <h3 className='text-sm font-bold text-gray-600'>Processos</h3>
-            <button 
-              type='button' 
-              onClick={() => setProcessos([...processos, { numero: '', tribunal: '', juiz: '', valor_causa: '' }])}
-              className='text-xs text-blue-600 hover:underline'
-            >
-              + Adicionar Processo
-            </button>
-          </div>
-
           {processos.map((p, i) => (
             <div key={i} className='grid grid-cols-1 md:grid-cols-3 gap-3 bg-gray-50 p-3 rounded-lg border'>
-              <input 
-                placeholder='Nº Processo' 
-                value={p.numero}
-                onChange={e => handleProcessoChange(i, 'numero', e.target.value)} 
-                className='p-2 border rounded' 
-              />
-              <input 
-                placeholder='Tribunal' 
-                value={p.tribunal}
-                onChange={e => handleProcessoChange(i, 'tribunal', e.target.value)} 
-                className='p-2 border rounded' 
-              />
-              <input 
-                placeholder='Valor da Causa (R$)' 
-                value={p.valor_causa}
-                onChange={e => handleProcessoChange(i, 'valor_causa', e.target.value)} 
-                className='p-2 border rounded font-mono' 
-              />
+              <input placeholder='Nº Processo' value={p.numero} onChange={e => handleProcessoChange(i, 'numero', e.target.value)} className='p-2 border rounded' />
+              <input placeholder='Tribunal' value={p.tribunal} onChange={e => handleProcessoChange(i, 'tribunal', e.target.value)} className='p-2 border rounded' />
+              <input placeholder='Valor Causa' value={p.valor_causa} onChange={e => handleProcessoChange(i, 'valor_causa', e.target.value)} className='p-2 border rounded font-mono' />
             </div>
           ))}
         </div>
 
-        {/* Bloco 3: Financeiro (Apenas se houver proposta ou contrato) */}
-        {(formData.status === 'Proposta Enviada' || formData.status === 'Contrato Fechado') && (
-          <div className='bg-blue-50 p-6 rounded-xl border border-blue-100'>
-            <CamposFinanceiros values={formData} onChange={handleChange} />
-          </div>
-        )}
+        {/* BLOCO 3: CONDICIONAIS DE FASE */}
+        <div className='bg-blue-50 p-6 rounded-xl border border-blue-100 space-y-4'>
+          <h2 className='font-semibold text-[#0F2C4C]'>Detalhes da Fase: {formData.status.toUpperCase()}</h2>
 
-        <div className='pt-4'>
-          <button 
-            type='submit' 
-            disabled={loading} 
-            className='w-full bg-[#0F2C4C] text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-900 shadow-lg disabled:opacity-50 transition-all'
-          >
-            {loading ? 'Processando Cadastro...' : 'Cadastrar Novo Contrato'}
-          </button>
+          {formData.status === 'Sob Análise' && (
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div>
+                <label className='block text-sm text-gray-600 mb-1'>Data do Prospect</label>
+                <input type='date' name='data_prospect' value={formData.data_prospect} onChange={handleChange} className='w-full p-2 border rounded' />
+              </div>
+              <div>
+                <label className='block text-sm text-gray-600 mb-1'>Analisado por</label>
+                <input type='text' name='analisado_por' value={formData.analisado_por} onChange={handleChange} className='w-full p-2 border rounded' />
+              </div>
+              <div className='col-span-2'>
+                <label className='block text-sm text-gray-600 mb-1'>Obs Prospect</label>
+                <textarea name='obs_prospect' value={formData.obs_prospect} onChange={handleChange} className='w-full p-2 border rounded h-24'></textarea>
+              </div>
+            </div>
+          )}
+
+          {(formData.status === 'Proposta Enviada' || formData.status === 'Contrato Fechado') && (
+            <div className='space-y-4'>
+              <div>
+                <label className='block text-sm text-gray-600 mb-1'>Data da Proposta</label>
+                <input type='date' name='data_proposta' value={formData.data_proposta} onChange={handleChange} className='w-full md:w-1/3 p-2 border rounded' />
+              </div>
+              <CamposFinanceiros values={formData} onChange={handleChange} />
+            </div>
+          )}
+
+          {formData.status === 'Rejeitada' && (
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <div>
+                <label className='block text-sm text-gray-600 mb-1'>Rejeitado Por</label>
+                <select name='rejeitado_por' value={formData.rejeitado_por} onChange={handleChange} className='w-full p-2.5 border rounded-lg'>
+                  <option value=''>Selecione...</option>
+                  <option value='Cliente'>Cliente</option>
+                  <option value='Escritório'>Escritório</option>
+                </select>
+              </div>
+              <div>
+                <label className='block text-sm text-gray-600 mb-1'>Motivo Principal</label>
+                <select name='motivo_rejeicao_categoria' value={formData.motivo_rejeicao_categoria} onChange={handleChange} className='w-full p-2.5 border rounded-lg'>
+                  <option value=''>Selecione...</option>
+                  <option value='Caso Ruim/Sem Êxito'>Caso Ruim / Sem Êxito</option>
+                  <option value='Cliente Declinou'>Cliente Declinou / Não Retornou</option>
+                  <option value='Conflito de Interesses'>Conflito de Interesses</option>
+                </select>
+              </div>
+              <div className='col-span-2'>
+                <label className='block text-sm text-gray-600 mb-1'>Observações Adicionais</label>
+                <textarea name='motivo_rejeicao' value={formData.motivo_rejeicao} onChange={handleChange} className='w-full p-2 border rounded h-24'></textarea>
+              </div>
+            </div>
+          )}
         </div>
+
+        <button type='submit' disabled={loading} className='w-full bg-[#0F2C4C] text-white py-4 rounded-xl font-bold shadow-lg disabled:opacity-50'>
+          {loading ? 'Cadastrando...' : 'Cadastrar Contrato'}
+        </button>
       </form>
     </div>
   )
