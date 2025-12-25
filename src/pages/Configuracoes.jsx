@@ -9,8 +9,8 @@ const Configuracoes = () => {
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
 
-  // VERSIONAMENTO SEMÂNTICO: 1.4.0
-  const versaoAtual = "1.4.0"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.4.1
+  const versaoAtual = "1.4.1"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -28,6 +28,19 @@ const Configuracoes = () => {
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
+    {
+      versao: "1.4.1",
+      data: "25/12/2025",
+      tipo: "Correção de Bug",
+      mudancas: [
+        "Restauração completa dos campos condicionais por Status no formulário de Novo Contrato.",
+        "Implementação de todos os campos específicos: Sob Análise, Proposta Enviada, Contrato Fechado, Rejeitada e Probono.",
+        "Adição de campos obrigatórios: Contrário, Processo, Valor da Causa, Tribunal, Juiz, UF, Área e Responsável.",
+        "Integração do PDFUpload nos status Proposta Enviada e Contrato Fechado.",
+        "Máscaras monetárias aplicadas em todos os campos financeiros com formatação automática.",
+        "Validação de CNPJ com busca automática de cliente via hook useClienteByCnpj."
+      ]
+    },
     {
       versao: "1.4.0",
       data: "25/12/2025",
