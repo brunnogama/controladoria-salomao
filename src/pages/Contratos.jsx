@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck } from 'lucide-react'
+import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck, Trash2 } from 'lucide-react'
 
 const Contratos = () => {
   const navigate = useNavigate()
@@ -102,6 +102,33 @@ const Contratos = () => {
   const irParaEdicao = (id) => {
     navigate(`/contratos/editar/${id}`)
   }
+
+  const excluirContrato = async (id, nomeCliente) => {
+    if (!confirm(`⚠️ TEM CERTEZA que deseja EXCLUIR este contrato?\n\nCliente: ${nomeCliente}\n\nEsta ação NÃO pode ser desfeita!`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('contratos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      alert('✅ Contrato excluído com sucesso!');
+      buscarContratos(); // Recarregar lista
+      
+      // Se o modal estiver aberto, fechar
+      if (showModal) {
+        setShowModal(false);
+        setContratoSelecionado(null);
+      }
+    } catch (error) {
+      console.error('Erro ao excluir contrato:', error);
+      alert('❌ Erro ao excluir contrato: ' + error.message);
+    }
+  };
 
   const formatarMoeda = (valor) => {
     if (!valor) return 'R$ 0,00'
@@ -227,16 +254,28 @@ const Contratos = () => {
                       )}
                     </td>
                     <td className='px-6 py-4 text-center'>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          irParaEdicao(contrato.id)
-                        }}
-                        className='inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all'
-                      >
-                        <Edit2 size={14} />
-                        Editar
-                      </button>
+                      <div className='flex items-center justify-center gap-2'>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            irParaEdicao(contrato.id)
+                          }}
+                          className='p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all'
+                          title='Editar contrato'
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            excluirContrato(contrato.id, contrato.clientes?.razao_social || 'Desconhecido')
+                          }}
+                          className='p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all'
+                          title='Excluir contrato'
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -271,8 +310,18 @@ const Contratos = () => {
                   <Edit2 size={20} />
                 </button>
                 <button
+                  onClick={() => {
+                    excluirContrato(contratoSelecionado.id, contratoSelecionado.clientes?.razao_social || 'Desconhecido')
+                  }}
+                  className='p-2 hover:bg-red-500 rounded-lg transition-colors'
+                  title='Excluir'
+                >
+                  <Trash2 size={20} />
+                </button>
+                <button
                   onClick={fecharModal}
                   className='p-2 hover:bg-white/20 rounded-lg transition-colors'
+                  title='Fechar'
                 >
                   <X size={20} />
                 </button>
