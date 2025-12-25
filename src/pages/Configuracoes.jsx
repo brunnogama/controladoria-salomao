@@ -9,8 +9,8 @@ const Configuracoes = () => {
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
 
-  // VERSIONAMENTO SEMÂNTICO: 1.4.1
-  const versaoAtual = "1.4.1"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.4.2
+  const versaoAtual = "1.4.2"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -28,6 +28,17 @@ const Configuracoes = () => {
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
+    {
+      versao: "1.4.2",
+      data: "25/12/2025",
+      tipo: "Correção de Bug",
+      mudancas: [
+        "Melhoria no tratamento de erro ao excluir cliente com contratos vinculados.",
+        "Modal visual amigável substituindo alert genérico de erro de foreign key.",
+        "Mensagem clara: 'Não é possível excluir este cliente pois existem contratos vinculados a ele.'",
+        "Adição de dica visual para orientar o usuário sobre como proceder."
+      ]
+    },
     {
       versao: "1.4.1",
       data: "25/12/2025",
