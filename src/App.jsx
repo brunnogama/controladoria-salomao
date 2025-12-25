@@ -16,7 +16,8 @@ import Clientes from './pages/Clientes';
 import Historico from './pages/Historico';
 import Configuracoes from './pages/Configuracoes';
 import GED from './pages/GED';
-import DiagnosticoCNPJ from './pages/DiagnosticoCNPJ';
+import Kanban from './pages/Kanban';
+// import DiagnosticoCNPJ from './pages/DiagnosticoCNPJ';
 
 /**
  * Componente principal da aplicação
@@ -38,8 +39,9 @@ const App = () => {
           <Route path="clientes" element={<Clientes />} />
           <Route path="ged" element={<GED />} />
           <Route path="historico" element={<Historico />} />
+          <Route path="kanban" element={<Kanban />} />
           <Route path="configuracoes" element={<Configuracoes />} />
-          <Route path="diagnostico-cnpj" element={<DiagnosticoCNPJ />} />
+          {/* <Route path="diagnostico-cnpj" element={<DiagnosticoCNPJ />} /> */}
         </Route>
         
         {/* Fallback - Redireciona rotas não encontradas para home */}
