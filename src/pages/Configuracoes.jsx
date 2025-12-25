@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Save, Monitor, Lock, RefreshCw, History, 
-  Code, CheckCircle, User, Building2, Copyright 
+  Code, CheckCircle, User, Building2, Copyright, Trash2, AlertTriangle
 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const Configuracoes = () => {
   const [logoInterno, setLogoInterno] = useState('');
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetando, setResetando] = useState(false);
 
   // VERSIONAMENTO SEMÂNTICO: 1.4.4
   const versaoAtual = "1.4.4"; 
@@ -24,6 +27,44 @@ const Configuracoes = () => {
     localStorage.setItem(tipo === 'interno' ? 'app_logo_path' : 'app_login_logo_path', path);
     setStatus('Configuração salva com sucesso!');
     setTimeout(() => setStatus(''), 3000);
+  };
+
+  const resetarDados = async () => {
+    setResetando(true);
+    try {
+      // Deletar contratos primeiro (dependência de clientes)
+      const { error: errorContratos } = await supabase
+        .from('contratos')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Deletar todos
+      
+      if (errorContratos) throw errorContratos;
+
+      // Deletar clientes
+      const { error: errorClientes } = await supabase
+        .from('clientes')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Deletar todos
+      
+      if (errorClientes) throw errorClientes;
+
+      // Deletar logs
+      const { error: errorLogs } = await supabase
+        .from('logs_sistema')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Deletar todos
+      
+      if (errorLogs) throw errorLogs;
+
+      alert('✅ Todos os dados foram resetados com sucesso!');
+      setShowResetModal(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro ao resetar dados:', error);
+      alert('❌ Erro ao resetar dados: ' + error.message);
+    } finally {
+      setResetando(false);
+    }
   };
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
@@ -287,6 +328,71 @@ const Configuracoes = () => {
       <button onClick={() => window.location.reload()} className="w-full py-5 bg-gray-50 border-2 border-dashed border-gray-100 rounded-[2rem] text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] hover:bg-[#0F2C4C] hover:text-white hover:border-[#0F2C4C] transition-all duration-300">
         <RefreshCw size={18} className="inline mr-2" /> Sincronizar Painel e Aplicar Modificações
       </button>
+
+      {/* Botão Resetar Dados */}
+      <button 
+        onClick={() => setShowResetModal(true)} 
+        className="w-full py-5 bg-red-50 border-2 border-red-200 rounded-[2rem] text-[10px] font-black text-red-600 uppercase tracking-[0.3em] hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-300 mt-4"
+      >
+        <Trash2 size={18} className="inline mr-2" /> Resetar Todos os Dados (Perigo!)
+      </button>
+
+      {/* Modal de Confirmação de Reset */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm" onClick={() => setShowResetModal(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-red-600 p-6 rounded-t-2xl flex items-center gap-3 text-white">
+              <AlertTriangle size={32} />
+              <div>
+                <h2 className="text-xl font-bold">⚠️ ATENÇÃO - AÇÃO IRREVERSÍVEL</h2>
+                <p className="text-sm text-red-100">Esta ação não pode ser desfeita!</p>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6">
+                <p className="text-sm font-bold text-red-800 mb-2">Esta ação irá DELETAR PERMANENTEMENTE:</p>
+                <ul className="space-y-1 text-sm text-red-700">
+                  <li>✗ Todos os contratos cadastrados</li>
+                  <li>✗ Todos os clientes cadastrados</li>
+                  <li>✗ Todo o histórico de logs</li>
+                </ul>
+              </div>
+
+              <p className="text-sm font-bold text-gray-700 mb-4">
+                Você tem certeza ABSOLUTA que deseja resetar TODOS os dados do sistema?
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowResetModal(false)}
+                  disabled={resetando}
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={resetarDados}
+                  disabled={resetando}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {resetando ? (
+                    <>
+                      <RefreshCw size={18} className="animate-spin" />
+                      Resetando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={18} />
+                      Sim, Resetar Tudo
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
