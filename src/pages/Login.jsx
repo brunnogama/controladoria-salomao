@@ -13,7 +13,6 @@ const Login = () => {
   const [shake, setShake] = useState(false)
 
   useEffect(() => {
-    // Carrega a logo salva no localStorage
     const savedLoginLogo = localStorage.getItem('app_login_logo_path')
     if (savedLoginLogo && savedLoginLogo !== '/') {
       setCustomLogo(savedLoginLogo)
@@ -56,14 +55,14 @@ const Login = () => {
 
       {/* LADO ESQUERDO */}
       <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 z-10'>
-        <div className='w-full max-w-sm space-y-8'>
+        <div className='w-full max-w-sm space-y-12'>
           
           <div className='flex justify-center'>
             {customLogo ? (
               <img
                 src={customLogo}
                 alt='Logo'
-                className='h-24 object-contain'
+                className='h-28 object-contain'
                 onError={() => setCustomLogo(null)}
               />
             ) : (
@@ -75,33 +74,28 @@ const Login = () => {
             )}
           </div>
 
-          <div className='text-center'>
-            <h2 className='text-2xl font-bold text-gray-800 tracking-tight'>Acesso Restrito</h2>
-            <p className='text-sm text-gray-500 mt-2'>Identifique-se para acessar o painel de gestão.</p>
-          </div>
-
-          <form className='space-y-5' onSubmit={handleLogin}>
+          <form className='space-y-6' onSubmit={handleLogin}>
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Usuário Corporativo</label>
-              <div className='flex border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#0F2C4C] transition-all'>
-                <div className='flex items-center pl-3 bg-white'><User size={18} className='text-gray-400'/></div>
-                <input type='text' required value={userPrefix} onChange={(e)=>setUserPrefix(e.target.value)} className='flex-1 p-3 outline-none text-sm bg-transparent' placeholder='nome.sobrenome' />
-                <div className='bg-gray-50 px-3 flex items-center border-l text-[10px] font-black text-gray-400'>@salomaoadv.com.br</div>
+              <label className='block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide'>Usuário Corporativo</label>
+              <div className='flex border border-gray-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#0F2C4C] transition-all bg-gray-50'>
+                <div className='flex items-center pl-4 bg-transparent'><User size={20} className='text-gray-400'/></div>
+                <input type='text' required value={userPrefix} onChange={(e)=>setUserPrefix(e.target.value)} className='flex-1 p-4 outline-none text-base bg-transparent text-gray-900 font-medium' placeholder='nome.sobrenome' />
+                <div className='bg-gray-100 px-4 flex items-center border-l text-[11px] font-black text-gray-500 uppercase'>@salomaoadv</div>
               </div>
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>Senha</label>
-              <div className='relative border border-gray-300 rounded-lg flex items-center focus-within:ring-2 focus-within:ring-[#0F2C4C] transition-all'>
-                <div className='pl-3'><Lock size={18} className='text-gray-400'/></div>
-                <input type='password' required value={password} onChange={(e)=>setPassword(e.target.value)} className='flex-1 p-3 outline-none text-sm bg-transparent' placeholder='••••••••' />
+              <label className='block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide'>Senha</label>
+              <div className='relative border border-gray-300 rounded-xl flex items-center focus-within:ring-2 focus-within:ring-[#0F2C4C] transition-all bg-gray-50'>
+                <div className='pl-4'><Lock size={20} className='text-gray-400'/></div>
+                <input type='password' required value={password} onChange={(e)=>setPassword(e.target.value)} className='flex-1 p-4 outline-none text-base bg-transparent text-gray-900' placeholder='••••••••' />
               </div>
             </div>
 
-            {error && <div className='bg-red-50 text-red-600 p-3 rounded-lg text-xs text-center border border-red-200 animate-pulse'>{error}</div>}
+            {error && <div className='bg-red-50 text-red-600 p-4 rounded-xl text-sm text-center border border-red-200 animate-pulse font-medium'>{error}</div>}
 
-            <button type='submit' disabled={loading} className={`w-full py-3.5 rounded-lg text-white font-bold transition-all shadow-lg flex items-center justify-center gap-2 ${shake ? 'animate-shake bg-red-600' : 'bg-[#0F2C4C] hover:bg-blue-900'}`}>
-              {loading ? <Loader2 className='animate-spin' size={20} /> : <>Acessar Sistema <ArrowRight size={18} /></>}
+            <button type='submit' disabled={loading} className={`w-full py-4 rounded-xl text-white font-black text-lg transition-all shadow-xl flex items-center justify-center gap-3 ${shake ? 'animate-shake bg-red-600' : 'bg-[#0F2C4C] hover:bg-blue-900'}`}>
+              {loading ? <Loader2 className='animate-spin' size={24} /> : <>ACESSAR PAINEL <ArrowRight size={22} /></>}
             </button>
           </form>
         </div>
@@ -113,7 +107,7 @@ const Login = () => {
         <div className='absolute inset-0 bg-gradient-to-tr from-[#0F2C4C] to-transparent opacity-80'></div>
         <div className='relative z-10 p-16 text-white'>
           <h2 className='text-4xl font-bold mb-4 leading-tight'>Controladoria Jurídica <br /><span className='text-blue-300'>Estratégica</span></h2>
-          <div className='h-1 w-20 bg-yellow-500 mb-6'></div>
+          <div className='h-1.5 w-20 bg-yellow-500 mb-6'></div>
           <p className='text-gray-300 text-lg font-light leading-relaxed max-w-md'>Gestão inteligente de processos e contratos com foco em eficiência e segurança jurídica.</p>
         </div>
       </div>
