@@ -12,8 +12,8 @@ const Configuracoes = () => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetando, setResetando] = useState(false);
 
-  // VERSIONAMENTO SEMÂNTICO: 1.4.4
-  const versaoAtual = "1.4.4"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.5.0
+  const versaoAtual = "1.5.0"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -70,6 +70,39 @@ const Configuracoes = () => {
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
     {
+      versao: "1.5.0",
+      data: "25/12/2025",
+      tipo: "Nova Funcionalidade",
+      mudancas: [
+        "Dashboard completamente reorganizado com nova estrutura otimizada para relatório executivo.",
+        "Nova ordem: (1) Resumo da Semana, (2) Distribuição + Entrada de Casos (lado a lado), (3) Funil, (4) Valores, (5) Fotografia Financeira.",
+        "Resumo da Semana: contador de rejeitados e texto explicativo automático.",
+        "Entrada de Casos (6 Meses): CORRIGIDO para usar datas corretas de cada fase (data_prospect, data_proposta, data_contrato, data_rejeicao).",
+        "Entrada de Casos: agora exibe 4 métricas por mês (Prospects, Propostas, Fechados, Rejeitados) com visual detalhado.",
+        "Seção 'Valores' (renomeada): detalhamento completo com Pro Labore, Êxito e Recorrente separados.",
+        "Valores: 3 cards (Mês Atual, Em Negociação, Carteira Total) com breakdowns financeiros.",
+        "Fotografia Financeira Total: Pipeline Total consolidado, Contratos Assinados vs Não Assinados.",
+        "Fotografia Financeira: valores detalhados por tipo com visual destacado (gradiente purple/indigo).",
+        "Informações mais claras e objetivas para envio semanal ao sócio.",
+        "Visual aprimorado com gradientes, ícones representativos e hierarquização de informações.",
+        "Botão 'Enviar por Email' para capturar dashboard como imagem e enviar."
+      ]
+    },
+    {
+      versao: "1.4.5",
+      data: "25/12/2025",
+      tipo: "Nova Funcionalidade",
+      mudancas: [
+        "Módulo Clientes: modal de visualização completo ao clicar no card.",
+        "Modal exibe todas as informações do cliente e contratos vinculados.",
+        "Botão para desvincular contrato do cliente (move para cliente genérico 'Sem Cliente').",
+        "Botões de editar e excluir no modal de visualização.",
+        "Impede exclusão de cliente com contratos vinculados (validação robusta).",
+        "Tratamento de race conditions na criação do cliente genérico.",
+        "Verificação de duplicate key com fallback automático."
+      ]
+    },
+    {
       versao: "1.4.4",
       data: "25/12/2025",
       tipo: "Correção de Bug",
@@ -86,7 +119,10 @@ const Configuracoes = () => {
         "Dashboard: adicionado card 'Probono' na Distribuição da Carteira.",
         "Dashboard: padronização de cores - Sob Análise (laranja), Propostas (amarelo), Fechados (verde), Rejeitados (vermelho), Probono (azul).",
         "Dashboard: correção na contagem de status com normalização de strings.",
-        "Módulo Contratos: cores das tags de status atualizadas seguindo o mesmo padrão do Dashboard."
+        "Módulo Contratos: cores das tags de status atualizadas seguindo o mesmo padrão do Dashboard.",
+        "ContratoForm: campos vazios agora salvam como NULL (datas, numéricos, texto).",
+        "ContratoForm: Cliente sempre obrigatório com criação automática se apenas nome fornecido.",
+        "Configurações: botão 'Resetar Todos os Dados' com modal de confirmação em duas etapas."
       ]
     },
     {
