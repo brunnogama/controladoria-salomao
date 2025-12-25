@@ -16,6 +16,7 @@ import Clientes from './pages/Clientes';
 import Historico from './pages/Historico';
 import Configuracoes from './pages/Configuracoes';
 import GED from './pages/GED';
+import DiagnosticoCNPJ from './pages/DiagnosticoCNPJ';
 
 /**
  * Componente principal da aplicação
@@ -38,6 +39,7 @@ const App = () => {
           <Route path="ged" element={<GED />} />
           <Route path="historico" element={<Historico />} />
           <Route path="configuracoes" element={<Configuracoes />} />
+          <Route path="diagnostico-cnpj" element={<DiagnosticoCNPJ />} />
         </Route>
         
         {/* Fallback - Redireciona rotas não encontradas para home */}
