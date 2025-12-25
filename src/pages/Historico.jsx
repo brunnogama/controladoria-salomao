@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { supabase } from '../supabaseClient'
+import React, { useState } from 'react';
+import { useLogs } from '../hooks/useLogs';
 import {
   History,
   FileText,
@@ -7,99 +7,339 @@ import {
   ArrowRight,
   Clock,
   CheckCircle2,
-  AlertCircle,
-} from 'lucide-react'
+  Edit2,
+  Trash2,
+  Upload,
+  Filter,
+  Calendar,
+  MapPin,
+  Monitor,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
+import { formatDate } from '../utils/formatters';
 
 const Historico = () => {
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { logs, loading, fetchLogs, fetchLogsPorAcao, getEstatisticas } = useLogs({ 
+    autoFetch: true,
+    limit: 100 
+  });
+  
+  const [filtroAcao, setFiltroAcao] = useState('');
+  const [logExpandido, setLogExpandido] = useState(null);
 
-  useEffect(() => {
-    fetchLogs()
-  }, [])
+  const estatisticas = getEstatisticas();
 
-  const fetchLogs = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('logs_sistema')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50) // Pega os últimos 50 eventos
+  /**
+   * Retorna ícone baseado na ação
+   */
+  const getIcon = (acao) => {
+    const icones = {
+      'Criação': <CheckCircle2 size={20} className='text-green-500' />,
+      'Edição': <Edit2 size={20} className='text-blue-500' />,
+      'Exclusão': <Trash2 size={20} className='text-red-500' />,
+      'Mudança de Status': <ArrowRight size={20} className='text-orange-500' />,
+      'Upload de Documento': <Upload size={20} className='text-purple-500' />,
+      'Login': <User size={20} className='text-cyan-500' />,
+      'Logout': <User size={20} className='text-gray-500' />
+    };
+    return icones[acao] || <FileText size={20} className='text-gray-500' />;
+  };
 
-      if (error) throw error
-      setLogs(data || [])
-    } catch (error) {
-      console.error('Erro ao buscar logs:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  /**
+   * Retorna cor do badge baseado na categoria
+   */
+  const getCategoriaColor = (categoria) => {
+    const cores = {
+      'Cliente': 'bg-purple-100 text-purple-700',
+      'Contrato': 'bg-blue-100 text-blue-700',
+      'GED': 'bg-green-100 text-green-700',
+      'Sistema': 'bg-gray-100 text-gray-700',
+      'Autenticação': 'bg-cyan-100 text-cyan-700',
+      'Kanban': 'bg-orange-100 text-orange-700'
+    };
+    return cores[categoria] || 'bg-gray-100 text-gray-700';
+  };
 
-  const getIcon = (categoria, acao) => {
-    if (acao === 'Mudança de Status')
-      return <ArrowRight className='text-blue-500' />
-    if (categoria === 'Cliente') return <User className='text-purple-500' />
-    if (acao === 'Criação') return <CheckCircle2 className='text-green-500' />
-    return <FileText className='text-gray-500' />
-  }
+  /**
+   * Formata data e hora
+   */
+  const formatarDataHora = (data) => {
+    return formatDate(data, true);
+  };
+
+  /**
+   * Filtra logs
+   */
+  const logsFiltrados = filtroAcao 
+    ? logs.filter(log => log.acao === filtroAcao)
+    : logs;
+
+  /**
+   * Toggle expansão de log
+   */
+  const toggleExpansao = (logId) => {
+    setLogExpandido(logExpandido === logId ? null : logId);
+  };
+
+  /**
+   * Renderiza diff de dados (antes/depois)
+   */
+  const renderizarDiff = (log) => {
+    if (!log.dados_anteriores && !log.dados_novos) return null;
+
+    return (
+      <div className='mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200'>
+        <h5 className='text-xs font-bold text-gray-600 mb-2'>Alterações:</h5>
+        
+        <div className='grid grid-cols-2 gap-3 text-xs'>
+          {log.dados_anteriores && (
+            <div>
+              <span className='font-semibold text-red-600'>Antes:</span>
+              <pre className='mt-1 p-2 bg-red-50 rounded border border-red-200 overflow-x-auto'>
+                {JSON.stringify(log.dados_anteriores, null, 2)}
+              </pre>
+            </div>
+          )}
+          
+          {log.dados_novos && (
+            <div>
+              <span className='font-semibold text-green-600'>Depois:</span>
+              <pre className='mt-1 p-2 bg-green-50 rounded border border-green-200 overflow-x-auto'>
+                {JSON.stringify(log.dados_novos, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className='w-full space-y-6'>
-      <div className='flex items-center gap-3'>
-        <div className='bg-[#0F2C4C] p-2 rounded-lg text-white'>
-          <History size={24} />
+    <div className='w-full space-y-6 p-6'>
+      {/* Header */}
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-3'>
+          <div className='bg-[#0F2C4C] p-3 rounded-xl text-white'>
+            <History size={28} />
+          </div>
+          <div>
+            <h1 className='text-3xl font-bold text-[#0F2C4C]'>
+              Histórico de Atividades
+            </h1>
+            <p className='text-gray-500'>
+              Auditoria completa das operações do sistema
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className='text-3xl font-bold text-[#0F2C4C]'>
-            Histórico de Atividades
-          </h1>
-          <p className='text-gray-500'>
-            Linha do tempo das operações do escritório.
-          </p>
+
+        <button
+          onClick={fetchLogs}
+          disabled={loading}
+          className='flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50'
+        >
+          <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+          Atualizar
+        </button>
+      </div>
+
+      {/* Estatísticas */}
+      {estatisticas && (
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          <div className='bg-white p-4 rounded-xl border border-gray-200'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <p className='text-xs text-gray-500 uppercase font-semibold'>Total de Logs</p>
+                <p className='text-2xl font-bold text-gray-800'>{estatisticas.total}</p>
+              </div>
+              <FileText className='text-gray-300' size={32} />
+            </div>
+          </div>
+
+          <div className='bg-white p-4 rounded-xl border border-gray-200'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <p className='text-xs text-gray-500 uppercase font-semibold'>Criações</p>
+                <p className='text-2xl font-bold text-green-600'>
+                  {estatisticas.porAcao['Criação'] || 0}
+                </p>
+              </div>
+              <CheckCircle2 className='text-green-300' size={32} />
+            </div>
+          </div>
+
+          <div className='bg-white p-4 rounded-xl border border-gray-200'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <p className='text-xs text-gray-500 uppercase font-semibold'>Edições</p>
+                <p className='text-2xl font-bold text-blue-600'>
+                  {estatisticas.porAcao['Edição'] || 0}
+                </p>
+              </div>
+              <Edit2 className='text-blue-300' size={32} />
+            </div>
+          </div>
+
+          <div className='bg-white p-4 rounded-xl border border-gray-200'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <p className='text-xs text-gray-500 uppercase font-semibold'>Exclusões</p>
+                <p className='text-2xl font-bold text-red-600'>
+                  {estatisticas.porAcao['Exclusão'] || 0}
+                </p>
+              </div>
+              <Trash2 className='text-red-300' size={32} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtros */}
+      <div className='bg-white p-4 rounded-xl border border-gray-200'>
+        <div className='flex items-center gap-4'>
+          <Filter size={20} className='text-gray-400' />
+          
+          <select
+            value={filtroAcao}
+            onChange={(e) => setFiltroAcao(e.target.value)}
+            className='flex-1 p-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500'
+          >
+            <option value=''>Todas as Ações</option>
+            <option value='Criação'>Criação</option>
+            <option value='Edição'>Edição</option>
+            <option value='Exclusão'>Exclusão</option>
+            <option value='Mudança de Status'>Mudança de Status</option>
+            <option value='Upload de Documento'>Upload de Documento</option>
+            <option value='Login'>Login</option>
+            <option value='Logout'>Logout</option>
+          </select>
+
+          {filtroAcao && (
+            <button
+              onClick={() => setFiltroAcao('')}
+              className='px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+            >
+              Limpar
+            </button>
+          )}
         </div>
       </div>
 
-      <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+      {/* Lista de Logs */}
+      <div className='bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden'>
         {loading ? (
           <div className='p-10 text-center text-gray-500'>
+            <RefreshCw className='animate-spin mx-auto mb-4' size={32} />
             Carregando histórico...
           </div>
-        ) : logs.length === 0 ? (
+        ) : logsFiltrados.length === 0 ? (
           <div className='p-16 flex flex-col items-center justify-center text-gray-400'>
             <Clock size={48} className='mb-4 opacity-20' />
-            <p>Nenhuma atividade registrada ainda.</p>
+            <p className='font-semibold'>Nenhuma atividade registrada</p>
             <p className='text-xs mt-2'>
-              As ações aparecerão aqui conforme você usar o sistema.
+              {filtroAcao 
+                ? 'Nenhum log encontrado com este filtro'
+                : 'As ações aparecerão aqui conforme você usar o sistema'
+              }
             </p>
           </div>
         ) : (
           <div className='divide-y divide-gray-100'>
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className='p-4 flex items-start gap-4 hover:bg-gray-50 transition-colors'
-              >
-                <div className='mt-1 p-2 bg-gray-50 rounded-full border border-gray-200'>
-                  {getIcon(log.categoria, log.acao)}
-                </div>
-
-                <div className='flex-1'>
-                  <div className='flex justify-between items-start'>
-                    <h4 className='font-bold text-gray-800 text-sm'>
-                      {log.acao}
-                    </h4>
-                    <span className='text-xs text-gray-400 whitespace-nowrap'>
-                      {new Date(log.created_at).toLocaleString('pt-BR')}
-                    </span>
+            {logsFiltrados.map((log) => (
+              <div key={log.id} className='hover:bg-gray-50 transition-colors'>
+                <div className='p-4 flex items-start gap-4'>
+                  {/* Ícone */}
+                  <div className='mt-1 p-2 bg-gray-100 rounded-full border border-gray-200 shrink-0'>
+                    {getIcon(log.acao)}
                   </div>
 
-                  <p className='text-sm text-gray-600 mt-1'>{log.detalhes}</p>
+                  {/* Conteúdo Principal */}
+                  <div className='flex-1 min-w-0'>
+                    <div className='flex justify-between items-start gap-4'>
+                      <div className='flex-1'>
+                        {/* Ação */}
+                        <h4 className='font-bold text-gray-800 text-sm'>
+                          {log.acao}
+                        </h4>
+                        
+                        {/* Detalhes */}
+                        <p className='text-sm text-gray-600 mt-1'>{log.detalhes}</p>
 
-                  <div className='mt-2 flex gap-2'>
-                    <span className='text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 bg-gray-100 text-gray-500 rounded'>
-                      {log.categoria}
-                    </span>
+                        {/* Metadados */}
+                        <div className='mt-3 flex flex-wrap gap-2 text-xs'>
+                          {/* Categoria */}
+                          <span className={`px-2 py-1 rounded-full font-semibold ${getCategoriaColor(log.categoria)}`}>
+                            {log.categoria}
+                          </span>
+
+                          {/* Usuário */}
+                          <div className='flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-gray-700'>
+                            <User size={12} />
+                            <span className='font-medium'>{log.usuario_nome || log.usuario_email}</span>
+                          </div>
+
+                          {/* Data e Hora */}
+                          <div className='flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-gray-700'>
+                            <Clock size={12} />
+                            <span>{formatarDataHora(log.created_at)}</span>
+                          </div>
+
+                          {/* IP */}
+                          {log.ip_address && (
+                            <div className='flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-gray-700'>
+                              <MapPin size={12} />
+                              <span>{log.ip_address}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Botão Expandir */}
+                      {(log.dados_anteriores || log.dados_novos || log.user_agent) && (
+                        <button
+                          onClick={() => toggleExpansao(log.id)}
+                          className='p-2 hover:bg-gray-200 rounded-lg transition-colors'
+                        >
+                          {logExpandido === log.id ? (
+                            <ChevronUp size={18} className='text-gray-600' />
+                          ) : (
+                            <ChevronDown size={18} className='text-gray-600' />
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Detalhes Expandidos */}
+                    {logExpandido === log.id && (
+                      <div className='mt-4 space-y-3'>
+                        {/* User Agent */}
+                        {log.user_agent && (
+                          <div className='p-3 bg-blue-50 rounded-lg border border-blue-200'>
+                            <div className='flex items-center gap-2 mb-2'>
+                              <Monitor size={14} className='text-blue-600' />
+                              <span className='text-xs font-semibold text-blue-700'>Navegador/Sistema:</span>
+                            </div>
+                            <p className='text-xs text-blue-800 font-mono break-all'>
+                              {log.user_agent}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Diff de Dados */}
+                        {renderizarDiff(log)}
+
+                        {/* Metadados Adicionais */}
+                        {log.metadados && (
+                          <div className='p-3 bg-purple-50 rounded-lg border border-purple-200'>
+                            <span className='text-xs font-semibold text-purple-700'>Metadados:</span>
+                            <pre className='mt-1 text-xs text-purple-800 overflow-x-auto'>
+                              {JSON.stringify(log.metadados, null, 2)}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -108,7 +348,7 @@ const Historico = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Historico
+export default Historico;
