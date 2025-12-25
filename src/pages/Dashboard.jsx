@@ -20,6 +20,7 @@ import {
   Users,
   FileText,
   TrendingDown,
+  AlertCircle,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -80,6 +81,10 @@ const Dashboard = () => {
 
   const [evolucaoMensal, setEvolucaoMensal] = useState([])
   const [ultimosCasos, setUltimosCasos] = useState([])
+  const [dadosRejeicao, setDadosRejeicao] = useState({
+    porMotivo: [],
+    porIniciativa: []
+  })
 
   useEffect(() => {
     fetchDashboardData()
@@ -318,6 +323,37 @@ const Dashboard = () => {
         numero_hon: c.numero_hon
       }))
       setUltimosCasos(casos10)
+
+      // Processar dados de rejeição
+      const rejeitados = contratos.filter(c => c.status?.trim() === 'Rejeitada')
+      
+      // Contar por motivo
+      const motivoCount = {}
+      rejeitados.forEach(c => {
+        const motivo = c.motivo_rejeicao || 'Não informado'
+        motivoCount[motivo] = (motivoCount[motivo] || 0) + 1
+      })
+      
+      const porMotivo = Object.entries(motivoCount).map(([motivo, count]) => ({
+        motivo,
+        count,
+        percentual: rejeitados.length > 0 ? Math.round((count / rejeitados.length) * 100) : 0
+      })).sort((a, b) => b.count - a.count)
+
+      // Contar por iniciativa
+      const iniciativaCount = {}
+      rejeitados.forEach(c => {
+        const iniciativa = c.iniciativa_rejeicao || 'Não informado'
+        iniciativaCount[iniciativa] = (iniciativaCount[iniciativa] || 0) + 1
+      })
+      
+      const porIniciativa = Object.entries(iniciativaCount).map(([iniciativa, count]) => ({
+        iniciativa,
+        count,
+        percentual: rejeitados.length > 0 ? Math.round((count / rejeitados.length) * 100) : 0
+      })).sort((a, b) => b.count - a.count)
+
+      setDadosRejeicao({ porMotivo, porIniciativa })
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
@@ -843,6 +879,111 @@ Controladoria Jurídica
           </div>
         </div>
       </div>
+
+      {/* 6. ANÁLISE DE REJEIÇÕES */}
+      {metrics.geral.rejeitados > 0 && (
+        <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
+          <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+            <XCircle className='text-red-600' size={24} />
+            <div>
+              <h2 className='text-xl font-bold text-gray-800'>Análise de Rejeições</h2>
+              <p className='text-xs text-gray-500'>Breakdown detalhado dos casos rejeitados ({metrics.geral.rejeitados} total)</p>
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            {/* Por Motivo */}
+            <div>
+              <h3 className='text-sm font-bold text-gray-700 mb-4 flex items-center gap-2'>
+                <AlertCircle className='text-red-500' size={18} />
+                Por Motivo da Rejeição
+              </h3>
+              {dadosRejeicao.porMotivo.length === 0 ? (
+                <div className='text-center py-8 text-gray-400'>
+                  <p className='text-sm'>Dados de motivo não informados</p>
+                </div>
+              ) : (
+                <div className='space-y-3'>
+                  {dadosRejeicao.porMotivo.map((item, index) => (
+                    <div key={index} className='bg-gray-50 rounded-lg p-4 border border-gray-200'>
+                      <div className='flex items-center justify-between mb-2'>
+                        <span className='text-sm font-bold text-gray-800'>{item.motivo}</span>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-lg font-bold text-red-600'>{item.count}</span>
+                          <span className='text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold'>
+                            {item.percentual}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className='w-full bg-gray-200 rounded-full h-2'>
+                        <div 
+                          className='bg-gradient-to-r from-red-400 to-red-600 h-2 rounded-full transition-all'
+                          style={{ width: `${item.percentual}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Por Iniciativa */}
+            <div>
+              <h3 className='text-sm font-bold text-gray-700 mb-4 flex items-center gap-2'>
+                <Users className='text-red-500' size={18} />
+                Por Iniciativa da Rejeição
+              </h3>
+              {dadosRejeicao.porIniciativa.length === 0 ? (
+                <div className='text-center py-8 text-gray-400'>
+                  <p className='text-sm'>Dados de iniciativa não informados</p>
+                </div>
+              ) : (
+                <div className='space-y-3'>
+                  {dadosRejeicao.porIniciativa.map((item, index) => {
+                    const cores = {
+                      'Cliente': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', badge: 'bg-blue-100 text-blue-700', bar: 'from-blue-400 to-blue-600' },
+                      'Escritório': { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', badge: 'bg-orange-100 text-orange-700', bar: 'from-orange-400 to-orange-600' },
+                    }
+                    const cor = cores[item.iniciativa] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', badge: 'bg-gray-100 text-gray-700', bar: 'from-gray-400 to-gray-600' }
+                    
+                    return (
+                      <div key={index} className={`${cor.bg} rounded-lg p-4 border ${cor.border}`}>
+                        <div className='flex items-center justify-between mb-2'>
+                          <span className={`text-sm font-bold ${cor.text}`}>{item.iniciativa}</span>
+                          <div className='flex items-center gap-2'>
+                            <span className={`text-lg font-bold ${cor.text}`}>{item.count}</span>
+                            <span className={`text-xs ${cor.badge} px-2 py-1 rounded-full font-bold`}>
+                              {item.percentual}%
+                            </span>
+                          </div>
+                        </div>
+                        <div className='w-full bg-white/50 rounded-full h-2'>
+                          <div 
+                            className={`bg-gradient-to-r ${cor.bar} h-2 rounded-full transition-all`}
+                            style={{ width: `${item.percentual}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className='mt-6 pt-4 border-t bg-red-50 rounded-lg p-4'>
+            <p className='text-sm text-gray-700'>
+              <span className='font-bold text-red-700'>Insight:</span> {' '}
+              {dadosRejeicao.porMotivo.length > 0 && dadosRejeicao.porMotivo[0] && (
+                <>O principal motivo de rejeição é "{dadosRejeicao.porMotivo[0].motivo}" ({dadosRejeicao.porMotivo[0].count} casos, {dadosRejeicao.porMotivo[0].percentual}%). </>
+              )}
+              {dadosRejeicao.porIniciativa.length > 0 && dadosRejeicao.porIniciativa[0] && (
+                <>A maioria das rejeições parte do(a) {dadosRejeicao.porIniciativa[0].iniciativa} ({dadosRejeicao.porIniciativa[0].count} casos, {dadosRejeicao.porIniciativa[0].percentual}%).</>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
