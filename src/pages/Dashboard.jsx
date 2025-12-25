@@ -481,8 +481,8 @@ Controladoria Jurídica
         </div>
       </div>
 
-      {/* 2. DISTRIBUIÇÃO DA CARTEIRA + ENTRADA DE CASOS (LADO A LADO) */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+      {/* 2. DISTRIBUIÇÃO DA CARTEIRA + ENTRADA DE CASOS + ÚLTIMOS 10 CASOS (GRID) */}
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
         {/* Distribuição da Carteira */}
         <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
           <div className='flex items-center gap-2 mb-6 border-b pb-4'>
@@ -493,7 +493,7 @@ Controladoria Jurídica
             </div>
           </div>
 
-          <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+          <div className='grid grid-cols-2 gap-3'>
             <div className='bg-orange-50 p-4 rounded-xl border border-orange-100 text-center'>
               <p className='text-xs font-bold text-orange-600 uppercase mb-1'>Sob Análise</p>
               <p className='text-3xl font-bold text-orange-900'>{metrics.geral.emAnalise}</p>
@@ -536,7 +536,7 @@ Controladoria Jurídica
             </div>
           </div>
 
-          <div className='space-y-4'>
+          <div className='space-y-4 max-h-[400px] overflow-y-auto pr-2'>
             {evolucaoMensal.map((item, index) => (
               <div key={index} className='border-b border-gray-100 pb-3 last:border-0'>
                 <div className='flex items-center justify-between mb-2'>
@@ -564,6 +564,55 @@ Controladoria Jurídica
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Últimos 10 Casos Cadastrados */}
+        <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
+          <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+            <History className='text-blue-600' size={24} />
+            <div>
+              <h2 className='text-xl font-bold text-gray-800'>Últimos 10 Casos</h2>
+              <p className='text-xs text-gray-500'>Casos mais recentes</p>
+            </div>
+          </div>
+
+          {ultimosCasos.length === 0 ? (
+            <div className='text-center py-8 text-gray-400'>
+              <FileText size={48} className='mx-auto mb-2 opacity-20' />
+              <p className='text-sm'>Nenhum caso cadastrado</p>
+            </div>
+          ) : (
+            <div className='space-y-3 max-h-[400px] overflow-y-auto pr-2'>
+              {ultimosCasos.map((caso, index) => {
+                const statusColors = {
+                  'Sob Análise': 'bg-orange-100 text-orange-700',
+                  'Proposta Enviada': 'bg-yellow-100 text-yellow-700',
+                  'Contrato Fechado': 'bg-green-100 text-green-700',
+                  'Rejeitada': 'bg-red-100 text-red-700',
+                  'Probono': 'bg-blue-100 text-blue-700',
+                }
+                
+                const dataFormatada = new Date(caso.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                
+                return (
+                  <div key={caso.id} className={`p-3 rounded-lg border transition-colors ${index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
+                    <div className='flex items-start justify-between gap-2 mb-2'>
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-center gap-2 mb-1'>
+                          {index === 0 && <span className='text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold'>NOVO</span>}
+                          <p className='text-sm font-bold text-gray-800 truncate'>{caso.cliente}</p>
+                        </div>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${statusColors[caso.status] || 'bg-gray-100 text-gray-700'}`}>
+                          {caso.status}
+                        </span>
+                      </div>
+                      <span className='text-[11px] text-gray-500 font-semibold whitespace-nowrap'>{dataFormatada}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -615,8 +664,8 @@ Controladoria Jurídica
           <p className='text-sm text-gray-600'>
             <span className='font-bold'>Análise:</span> De {funil.totalEntrada} casos que entraram, {funil.qualificadosProposta} geraram propostas ({funil.taxaConversaoProposta}%) 
             e {funil.fechados} foram fechados ({funil.taxaConversaoFechamento}% das propostas).
-            {funil.perdaAnalise > 0 && ` Perdidos em análise: ${funil.perdaAnalise}.`}
-            {funil.perdaNegociacao > 0 && ` Perdidos em negociação: ${funil.perdaNegociacao}.`}
+            {funil.perdaAnalise > 0 && ` Rejeitados em análise: ${funil.perdaAnalise}.`}
+            {funil.perdaNegociacao > 0 && ` Rejeitados em negociação: ${funil.perdaNegociacao}.`}
           </p>
         </div>
       </div>
@@ -779,7 +828,7 @@ Controladoria Jurídica
           </h3>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <div className='text-center p-4 bg-purple-50 rounded-lg border border-purple-200'>
-              <p className='text-sm text-purple-700 font-semibold mb-1'>Pipeline Total</p>
+              <p className='text-sm text-purple-700 font-semibold mb-1'>Valor Total</p>
               <p className='text-3xl font-bold text-purple-900'>{formatMoney(totalNegociacao + totalCarteira)}</p>
             </div>
             <div className='text-center p-4 bg-blue-50 rounded-lg border border-blue-200'>
@@ -793,68 +842,6 @@ Controladoria Jurídica
             </div>
           </div>
         </div>
-      </div>
-
-      {/* 6. ÚLTIMOS CASOS CADASTRADOS */}
-      <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
-        <div className='flex items-center gap-2 mb-6 border-b pb-4'>
-          <History className='text-blue-600' size={24} />
-          <div>
-            <h2 className='text-xl font-bold text-gray-800'>Últimos 10 Casos Cadastrados</h2>
-            <p className='text-xs text-gray-500'>Casos mais recentes no sistema</p>
-          </div>
-        </div>
-
-        {ultimosCasos.length === 0 ? (
-          <div className='text-center py-8 text-gray-400'>
-            <FileText size={48} className='mx-auto mb-2 opacity-20' />
-            <p>Nenhum caso cadastrado ainda</p>
-          </div>
-        ) : (
-          <div className='overflow-x-auto'>
-            <table className='w-full'>
-              <thead>
-                <tr className='border-b border-gray-200'>
-                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>Cliente</th>
-                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>Status</th>
-                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>Data</th>
-                  <th className='text-left py-3 px-4 text-xs font-bold text-gray-600 uppercase'>HON</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ultimosCasos.map((caso, index) => {
-                  const statusColors = {
-                    'Sob Análise': 'bg-orange-100 text-orange-700',
-                    'Proposta Enviada': 'bg-yellow-100 text-yellow-700',
-                    'Contrato Fechado': 'bg-green-100 text-green-700',
-                    'Rejeitada': 'bg-red-100 text-red-700',
-                    'Probono': 'bg-blue-100 text-blue-700',
-                  }
-                  
-                  const dataFormatada = new Date(caso.data).toLocaleDateString('pt-BR')
-                  
-                  return (
-                    <tr key={caso.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${index === 0 ? 'bg-blue-50/30' : ''}`}>
-                      <td className='py-3 px-4'>
-                        <div className='flex items-center gap-2'>
-                          {index === 0 && <span className='text-xs bg-blue-600 text-white px-2 py-0.5 rounded font-bold'>NOVO</span>}
-                          <span className='text-sm font-semibold text-gray-800'>{caso.cliente}</span>
-                        </div>
-                      </td>
-                      <td className='py-3 px-4'>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[caso.status] || 'bg-gray-100 text-gray-700'}`}>
-                          {caso.status}
-                        </span>
-                      </td>
-                      <td className='py-3 px-4 text-sm text-gray-600'>{dataFormatada}</td>
-                      <td className='py-3 px-4 text-sm font-mono text-gray-600'>{caso.numero_hon || '-'}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
   )
