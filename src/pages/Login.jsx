@@ -10,13 +10,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [customLogo, setCustomLogo] = useState(null)
-
-  // Estado para controlar a animação de "tremida"
   const [shake, setShake] = useState(false)
 
   useEffect(() => {
-    // Busca a logo específica para a tela de login definida nas configurações
-    const savedLoginLogo = localStorage.getItem('login_logo_path')
+    // Busca a logo configurada especificamente para o LOGIN
+    const savedLoginLogo = localStorage.getItem('app_login_logo_path')
     if (savedLoginLogo) setCustomLogo(savedLoginLogo)
   }, [])
 
@@ -58,26 +56,12 @@ const Login = () => {
     } catch (err) {
       console.error('Erro de login:', err.message)
       setError('Credenciais inválidas. Verifique usuário e senha.')
-
-      // Ativa a animação de erro
       setShake(true)
-      // Remove a animação após 500ms para poder tremer de novo se errar outra vez
       setTimeout(() => setShake(false), 500)
     } finally {
       setLoading(false)
     }
   }
-
-  // Classes condicionais para erro (Vermelho) ou normal (Cinza/Azul)
-  const inputContainerClass = error
-    ? 'flex rounded-lg shadow-sm border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500 transition-all'
-    : 'flex rounded-lg shadow-sm border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C] focus-within:border-transparent transition-all'
-
-  const passwordContainerClass = error
-    ? 'relative rounded-lg shadow-sm border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500 transition-all'
-    : 'relative rounded-lg shadow-sm border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C] focus-within:border-transparent transition-all'
-
-  const iconClass = error ? 'h-5 w-5 text-red-400' : 'h-5 w-5 text-gray-400'
 
   return (
     <div className='min-h-screen flex w-full bg-white'>
@@ -87,9 +71,7 @@ const Login = () => {
           10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
           20%, 40%, 60%, 80% { transform: translateX(4px); }
         }
-        .animate-shake {
-          animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-        }
+        .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
       `}</style>
 
       {/* LADO ESQUERDO */}
@@ -101,10 +83,7 @@ const Login = () => {
                 src={customLogo}
                 alt='Logo'
                 className='h-20 object-contain'
-                onError={(e) => {
-                    e.target.style.display = 'none';
-                    setCustomLogo(null);
-                }}
+                onError={(e) => { e.target.style.display = 'none'; setCustomLogo(null); }}
               />
             ) : (
               <div className='text-center'>
@@ -120,12 +99,8 @@ const Login = () => {
           </div>
 
           <div className='text-center'>
-            <h2 className='text-2xl font-bold text-gray-800'>
-              Acesso Restrito
-            </h2>
-            <p className='mt-2 text-sm text-gray-500'>
-              Identifique-se para acessar o painel.
-            </p>
+            <h2 className='text-2xl font-bold text-gray-800'>Acesso Restrito</h2>
+            <p className='mt-2 text-sm text-gray-500'>Identifique-se para acessar o painel.</p>
           </div>
 
           <form className='mt-8 space-y-5' onSubmit={handleLogin}>
@@ -133,81 +108,50 @@ const Login = () => {
               <label className={`block text-sm font-medium mb-1 ${error ? 'text-red-600' : 'text-gray-700'}`}>
                 Usuário Corporativo
               </label>
-
-              <div className={inputContainerClass}>
+              <div className={error ? 'flex rounded-lg border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500' : 'flex rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C]'}>
                 <div className='relative flex-grow'>
                   <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                    <User className={iconClass} />
+                    <User className={error ? 'text-red-400' : 'text-gray-400'} size={18} />
                   </div>
                   <input
                     type='text'
                     required
-                    className='block w-full rounded-none rounded-l-lg pl-10 sm:text-sm border-0 py-3 focus:ring-0 text-gray-900 placeholder-gray-400 bg-transparent'
+                    className='block w-full pl-10 py-3 sm:text-sm border-0 bg-transparent text-gray-900'
                     placeholder='nome.sobrenome'
                     value={userPrefix}
-                    onChange={(e) => {
-                      setUserPrefix(e.target.value)
-                      if (error) setError(null)
-                    }}
+                    onChange={(e) => { setUserPrefix(e.target.value); if (error) setError(null); }}
                   />
                 </div>
-                <div className={`flex items-center px-4 border-l rounded-r-lg ${error ? 'bg-red-100 border-red-200 text-red-800' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
-                  <span className='sm:text-sm font-medium select-none'>
-                    @salomaoadv.com.br
-                  </span>
+                <div className='flex items-center px-4 border-l bg-gray-50 text-gray-500 sm:text-sm font-medium'>
+                  @salomaoadv.com.br
                 </div>
               </div>
             </div>
 
             <div>
-              <label className={`block text-sm font-medium mb-1 ${error ? 'text-red-600' : 'text-gray-700'}`}>
-                Senha
-              </label>
-              <div className={passwordContainerClass}>
+              <label className={`block text-sm font-medium mb-1 ${error ? 'text-red-600' : 'text-gray-700'}`}>Senha</label>
+              <div className={error ? 'relative rounded-lg border border-red-300 bg-red-50 focus-within:ring-2 focus-within:ring-red-500' : 'relative rounded-lg border border-gray-300 focus-within:ring-2 focus-within:ring-[#0F2C4C]'}>
                 <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <Lock className={iconClass} />
+                  <Lock className={error ? 'text-red-400' : 'text-gray-400'} size={18} />
                 </div>
                 <input
                   type='password'
                   required
-                  className='block w-full rounded-lg pl-10 pr-3 py-3 sm:text-sm border-0 focus:ring-0 text-gray-900 placeholder-gray-400 bg-transparent'
+                  className='block w-full pl-10 pr-3 py-3 sm:text-sm border-0 bg-transparent text-gray-900'
                   placeholder='••••••••'
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value)
-                    if (error) setError(null)
-                  }}
+                  onChange={(e) => { setPassword(e.target.value); if (error) setError(null); }}
                 />
               </div>
             </div>
 
-            {error && (
-              <div className='text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200 text-center flex items-center justify-center gap-2 animate-pulse'>
-                <AlertCircle size={16} /> {error}
-              </div>
-            )}
-
             <button
               type='submit'
               disabled={loading}
-              className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg text-white transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed ${
-                shake
-                  ? 'animate-shake bg-red-600 hover:bg-red-700'
-                  : 'bg-[#0F2C4C] hover:bg-blue-900'
-              }`}
+              className={`w-full flex justify-center py-3 px-4 text-sm font-bold rounded-lg text-white transition-all shadow-lg ${shake ? 'animate-shake bg-red-600' : 'bg-[#0F2C4C] hover:bg-blue-900'}`}
             >
-              {loading ? (
-                <Loader2 className='animate-spin h-5 w-5' />
-              ) : (
-                'Acessar Sistema'
-              )}
+              {loading ? <Loader2 className='animate-spin h-5 w-5' /> : 'Acessar Sistema'}
             </button>
-
-            <div className='text-center mt-4'>
-              <span className='text-xs text-gray-400'>
-                © 2025 Flow Metrics. v1.2.0
-              </span>
-            </div>
           </form>
         </div>
       </div>
@@ -215,32 +159,13 @@ const Login = () => {
       {/* LADO DIREITO */}
       <div className='hidden lg:flex w-1/2 bg-[#0F2C4C] relative overflow-hidden items-center justify-center'>
         <div className='absolute inset-0 bg-[#0F2C4C]'>
-          <img
-            src='https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop'
-            alt='Jurídico'
-            className='w-full h-full object-cover opacity-20 mix-blend-luminosity'
-          />
+          <img src='https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop' className='w-full h-full object-cover opacity-20 mix-blend-luminosity' alt='Jurídico' />
           <div className='absolute inset-0 bg-gradient-to-tr from-[#0F2C4C] via-[#0F2C4C]/90 to-blue-900/40'></div>
         </div>
-
-        <div className='relative z-10 p-16 max-w-xl'>
-          <div className='inline-flex items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 mb-8 backdrop-blur-sm shadow-2xl'>
-            <ArrowRight className='text-yellow-400 w-6 h-6' />
-          </div>
-
-          <h2 className='text-4xl font-bold text-white mb-6 leading-tight'>
-            Controladoria Jurídica <br />
-            <span className='text-blue-200'>Estratégica</span>
-          </h2>
+        <div className='relative z-10 p-16 max-w-xl text-white'>
+          <h2 className='text-4xl font-bold mb-6 leading-tight'>Controladoria Jurídica <br /><span className='text-blue-200'>Estratégica</span></h2>
           <div className='h-1 w-24 bg-yellow-500 mb-8'></div>
-          <p className='text-gray-300 text-lg leading-relaxed font-light mb-8'>
-            Gestão inteligente de processos e contratos. A tecnologia garantindo
-            a segurança e eficiência do{' '}
-            <strong className='text-white font-medium'>
-              Salomão Advogados
-            </strong>
-            .
-          </p>
+          <p className='text-gray-300 text-lg leading-relaxed font-light'>Gestão inteligente de processos e contratos. A tecnologia garantindo a segurança e eficiência do <strong>Salomão Advogados</strong>.</p>
         </div>
       </div>
     </div>
