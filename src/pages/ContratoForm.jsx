@@ -51,6 +51,7 @@ const ContratoForm = () => {
     contrato_outros: '',
     descricao_contrato: '',
     observacoes_contrato: '',
+    contrato_assinado: '', // NOVO CAMPO
     data_rejeicao: '',
     motivo_rejeicao: '',
     iniciativa_rejeicao: '',
@@ -187,6 +188,54 @@ const ContratoForm = () => {
       alert("Por favor, informe o CNPJ ou marque 'CNPJ não disponível'.");
       return;
     }
+
+    // Validação: Data obrigatória para o status atual
+    const validacoesPorStatus = {
+      'Sob Análise': {
+        data: 'data_prospect',
+        nome: 'Data do Prospect'
+      },
+      'Proposta Enviada': {
+        data: 'data_proposta',
+        nome: 'Data da Proposta'
+      },
+      'Contrato Fechado': {
+        data: 'data_contrato',
+        nome: 'Data do Contrato',
+        extras: ['contrato_assinado'] // Campo extra obrigatório
+      },
+      'Rejeitada': {
+        data: 'data_rejeicao',
+        nome: 'Data da Rejeição',
+        extras: ['motivo_rejeicao', 'iniciativa_rejeicao']
+      },
+      'Probono': {
+        data: 'data_probono',
+        nome: 'Data do Probono'
+      }
+    };
+
+    const validacao = validacoesPorStatus[formData.status];
+    if (validacao) {
+      // Validar data do status
+      if (!formData[validacao.data]) {
+        alert(`❌ O status "${formData.status}" requer o preenchimento de: ${validacao.nome}`);
+        return;
+      }
+
+      // Validar campos extras (se existirem)
+      if (validacao.extras) {
+        for (const campo of validacao.extras) {
+          if (!formData[campo]) {
+            const nomeCampo = campo === 'motivo_rejeicao' ? 'Motivo da Rejeição' :
+                             campo === 'iniciativa_rejeicao' ? 'Iniciativa da Rejeição' :
+                             campo === 'contrato_assinado' ? 'Status de Assinatura do Contrato' : campo;
+            alert(`❌ O status "${formData.status}" requer o preenchimento de: ${nomeCampo}`);
+            return;
+          }
+        }
+      }
+    }
     
     setLoading(true);
     try {
@@ -275,14 +324,50 @@ const ContratoForm = () => {
       
       console.log('Dados a salvar:', dadosFinais);
       
+      let contratoId = id;
+      
       if (id) {
         const { data, error } = await supabase.from('contratos').update(dadosFinais).eq('id', id);
         if (error) throw error;
         console.log('Contrato atualizado:', data);
       } else {
-        const { data, error } = await supabase.from('contratos').insert([dadosFinais]);
+        const { data, error } = await supabase.from('contratos').insert([dadosFinais]).select();
         if (error) throw error;
         console.log('Contrato criado:', data);
+        contratoId = data?.[0]?.id;
+      }
+
+      // Se status é Contrato Fechado e não está assinado, criar tarefa no Kanban
+      if (formData.status === 'Contrato Fechado' && formData.contrato_assinado === 'nao') {
+        const dataCobranca = new Date();
+        dataCobranca.setDate(dataCobranca.getDate() + 5); // 5 dias após hoje
+
+        const tarefaTitulo = `Cobrar assinatura do contrato - ${formData.cliente_nome || 'Cliente'}`;
+        const tarefaDescricao = `Contrato cadastrado em ${new Date().toLocaleDateString('pt-BR')} sem assinatura.
+        
+Cliente: ${formData.cliente_nome}
+Número HON: ${formData.numero_hon || 'Não informado'}
+Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
+
+⚠️ IMPORTANTE: Verificar e cobrar assinatura do contrato!`;
+
+        try {
+          await supabase
+            .from('tarefas_kanban')
+            .insert([{
+              titulo: tarefaTitulo,
+              descricao: tarefaDescricao,
+              status: 'a_fazer',
+              prioridade: 'alta',
+              responsavel: formData.responsavel || 'Equipe Jurídica',
+              ordem: 0
+            }]);
+          
+          console.log('✅ Tarefa de cobrança criada no Kanban');
+        } catch (kanbanError) {
+          console.error('Erro ao criar tarefa no Kanban:', kanbanError);
+          // Não bloqueia o salvamento do contrato
+        }
       }
       
       alert('Contrato salvo com sucesso!');
@@ -381,6 +466,29 @@ const ContratoForm = () => {
                 <input type="text" value={formData.numero_hon} onChange={(e) => setFormData({...formData, numero_hon: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="HON-XXXX" />
               </div>
             </div>
+            
+            {/* NOVO: Campo de Status de Assinatura */}
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Contrato Assinado? *
+              </label>
+              <select 
+                value={formData.contrato_assinado} 
+                onChange={(e) => setFormData({...formData, contrato_assinado: e.target.value})} 
+                className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Selecione...</option>
+                <option value="sim">Sim - Contrato Assinado</option>
+                <option value="nao">Não - Aguardando Assinatura</option>
+              </select>
+              {formData.contrato_assinado === 'nao' && (
+                <p className="mt-2 text-xs text-orange-600 font-bold">
+                  ⚠️ Uma tarefa será criada no Kanban para cobrar a assinatura em 5 dias
+                </p>
+              )}
+            </div>
+            
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Vincular Contrato (PDF)</label>
               <PDFUpload onUpload={async (file) => { console.log('Upload contrato:', file); }} loading={loading} buttonText="Anexar PDF do Contrato" />
