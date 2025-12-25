@@ -281,7 +281,7 @@ const Dashboard = () => {
     new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
-    }).format(val)
+    }).format(val || 0)
 
   const FinItem = ({ label, value, colorClass = 'text-gray-700' }) => {
     if (!value || value === 0) return null
