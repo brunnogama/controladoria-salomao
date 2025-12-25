@@ -40,7 +40,8 @@ const Configuracoes = () => {
         "Campos do processo agrupados em seção separada: Contrário, Processo, Valor da Causa, Tribunal, Juiz, UF.",
         "Módulo Contratos: botão 'Ver Detalhes' substituído por ícone de Editar.",
         "Módulo Contratos: clique na linha abre modal de visualização com todos os detalhes.",
-        "Modal de visualização com botão de editar e informações organizadas por seção."
+        "Modal de visualização com botão de editar e informações organizadas por seção.",
+        "Dashboard: correção do gráfico 'Entrada de Casos (6 Meses)' - agora atualiza corretamente com novos casos."
       ]
     },
     {
