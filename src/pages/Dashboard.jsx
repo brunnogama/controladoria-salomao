@@ -560,6 +560,113 @@ Controladoria Jurídica
               <p className='text-3xl font-bold text-purple-900'>{metrics.geral.totalCasos}</p>
             </div>
           </div>
+
+          {/* Gráfico de Linha - Evolução Total 6 Meses */}
+          <div className='mt-4 pt-4 border-t border-gray-200'>
+            <h3 className='text-xs font-bold text-purple-700 mb-3 uppercase tracking-wide'>Evolução Total (6M)</h3>
+            <div className='relative h-24'>
+              {/* Calcular min e max para escala */}
+              {(() => {
+                const totais = evolucaoMensal.map(m => m.prospects + m.propostas + m.fechados + m.rejeitados)
+                const maxTotal = Math.max(...totais, 1)
+                const minTotal = Math.min(...totais, 0)
+                const range = maxTotal - minTotal || 1
+                
+                return (
+                  <>
+                    {/* Grid de fundo */}
+                    <div className='absolute inset-0 flex flex-col justify-between'>
+                      {[0, 1, 2, 3].map(i => (
+                        <div key={i} className='border-t border-purple-100 border-dashed'></div>
+                      ))}
+                    </div>
+                    
+                    {/* Linha do gráfico */}
+                    <svg className='absolute inset-0 w-full h-full' preserveAspectRatio='none'>
+                      <defs>
+                        <linearGradient id='lineGradient' x1='0%' y1='0%' x2='100%' y2='0%'>
+                          <stop offset='0%' style={{stopColor: '#9333ea', stopOpacity: 1}} />
+                          <stop offset='100%' style={{stopColor: '#c084fc', stopOpacity: 1}} />
+                        </linearGradient>
+                        <linearGradient id='areaGradient' x1='0%' y1='0%' x2='0%' y2='100%'>
+                          <stop offset='0%' style={{stopColor: '#9333ea', stopOpacity: 0.2}} />
+                          <stop offset='100%' style={{stopColor: '#9333ea', stopOpacity: 0}} />
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Área preenchida */}
+                      <path
+                        d={(() => {
+                          const points = totais.map((total, i) => {
+                            const x = (i / (totais.length - 1)) * 100
+                            const y = 100 - ((total - minTotal) / range * 100)
+                            return `${x},${y}`
+                          }).join(' ')
+                          return `M 0,100 L ${points} L 100,100 Z`
+                        })()}
+                        fill='url(#areaGradient)'
+                      />
+                      
+                      {/* Linha */}
+                      <polyline
+                        points={totais.map((total, i) => {
+                          const x = (i / (totais.length - 1)) * 100
+                          const y = 100 - ((total - minTotal) / range * 100)
+                          return `${x},${y}`
+                        }).join(' ')}
+                        fill='none'
+                        stroke='url(#lineGradient)'
+                        strokeWidth='2'
+                        vectorEffect='non-scaling-stroke'
+                      />
+                      
+                      {/* Pontos */}
+                      {totais.map((total, i) => {
+                        const x = (i / (totais.length - 1)) * 100
+                        const y = 100 - ((total - minTotal) / range * 100)
+                        return (
+                          <circle
+                            key={i}
+                            cx={`${x}%`}
+                            cy={`${y}%`}
+                            r='3'
+                            fill='#9333ea'
+                            stroke='white'
+                            strokeWidth='2'
+                          />
+                        )
+                      })}
+                    </svg>
+                    
+                    {/* Labels dos meses */}
+                    <div className='absolute -bottom-5 left-0 right-0 flex justify-between px-1'>
+                      {evolucaoMensal.map((item, i) => (
+                        <span key={i} className='text-[9px] text-purple-600 font-semibold'>
+                          {item.mes}
+                        </span>
+                      ))}
+                    </div>
+                    
+                    {/* Valores nos pontos */}
+                    <div className='absolute inset-0 flex justify-between items-end pb-1'>
+                      {totais.map((total, i) => (
+                        <div key={i} className='flex flex-col items-center' style={{
+                          position: 'absolute',
+                          left: `${(i / (totais.length - 1)) * 100}%`,
+                          bottom: `${((total - minTotal) / range * 100)}%`,
+                          transform: 'translate(-50%, -120%)'
+                        }}>
+                          <span className='text-[10px] font-bold text-purple-900 bg-white px-1 rounded shadow-sm'>
+                            {total}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
         </div>
 
         {/* Entrada de Casos (6 Meses) - SEM SCROLL */}
