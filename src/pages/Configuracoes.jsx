@@ -1,73 +1,86 @@
 import React, { useState, useEffect } from 'react'
-import { Save, Image as ImageIcon, CheckCircle } from 'lucide-react'
+import { Save, Image as ImageIcon, CheckCircle, Monitor, Lock } from 'lucide-react'
 
 const Configuracoes = () => {
-  const [currentLogo, setCurrentLogo] = useState('/logo-default.png')
+  const [logoInterno, setLogoInterno] = useState('/logo-default.png')
+  const [logoLogin, setLogoLogin] = useState('/logo-default.png')
   
-  // Lista dos logos disponíveis na sua pasta Public
-  // Você deve adicionar os nomes exatos dos arquivos aqui
+  // Lista dos logos que você tem na pasta PUBLIC
   const opcoesLogos = [
-    { id: 1, nome: 'Padrão', path: '/logo-default.png' },
-    { id: 2, nome: 'Variação Branca', path: '/logo-white.png' },
-    { id: 3, nome: 'Símbolo', path: '/favicon.png' },
+    { id: 1, nome: 'Padrão Colorido', path: '/logo-color.png' },
+    { id: 2, nome: 'Versão Branca', path: '/logo-white.png' },
+    { id: 3, nome: 'Horizontal', path: '/logo-horizontal.png' },
+    { id: 4, nome: 'Símbolo', path: '/favicon.png' },
   ]
 
   useEffect(() => {
-    const saved = localStorage.getItem('app_logo_path')
-    if (saved) setCurrentLogo(saved)
+    const savedInterno = localStorage.getItem('app_logo_path')
+    const savedLogin = localStorage.getItem('login_logo_path')
+    if (savedInterno) setLogoInterno(savedInterno)
+    if (savedLogin) setLogoLogin(savedLogin)
   }, [])
 
-  const selecionarLogo = (path) => {
-    localStorage.setItem('app_logo_path', path)
-    setCurrentLogo(path)
-    // Opcional: window.location.reload() para atualizar a Sidebar instantaneamente
+  const selecionarLogo = (tipo, path) => {
+    if (tipo === 'interno') {
+      localStorage.setItem('app_logo_path', path)
+      setLogoInterno(path)
+    } else {
+      localStorage.setItem('login_logo_path', path)
+      setLogoLogin(path)
+    }
   }
 
   return (
     <div className="p-6 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-[#0F2C4C] mb-6 flex items-center gap-2">
-          <ImageIcon /> Personalização do Sistema
-        </h1>
+      <h1 className="text-2xl font-bold text-[#0F2C4C] mb-6 flex items-center gap-2">
+        <ImageIcon /> Configurações de Identidade Visual
+      </h1>
 
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Logotipo do Sistema</h2>
-          <p className="text-sm text-gray-500 mb-6">Escolha o logo que será exibido no Login e na Barra Lateral.</p>
+      {/* SEÇÃO LOGO INTERNO */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-gray-700">
+          <Monitor size={20} /> Logotipo Interno (Menu Lateral)
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">Este logo aparece no topo da barra lateral esquerda.</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {opcoesLogos.map((logo) => (
+            <div 
+              key={`int-${logo.id}`}
+              onClick={() => selecionarLogo('interno', logo.path)}
+              className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${logoInterno === logo.path ? 'border-blue-500 bg-blue-50' : 'border-gray-100'}`}
+            >
+              <img src={logo.path} className="h-12 mx-auto object-contain mb-2" />
+              <p className="text-[10px] text-center font-bold uppercase">{logo.nome}</p>
+              {logoInterno === logo.path && <CheckCircle size={14} className="text-blue-500 mx-auto mt-1" />}
+            </div>
+          ))}
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {opcoesLogos.map((logo) => (
-              <div 
-                key={logo.id}
-                className={`relative p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                  currentLogo === logo.path 
-                  ? 'border-blue-500 bg-blue-50 shadow-md' 
-                  : 'border-gray-100 hover:border-gray-300'
-                }`}
-                onClick={() => selecionarLogo(logo.path)}
-              >
-                <div className="h-24 w-full flex items-center justify-center mb-3">
-                  <img src={logo.path} alt={logo.nome} className="max-h-full object-contain" />
-                </div>
-                <p className="text-center text-xs font-bold text-gray-700">{logo.nome}</p>
-                
-                {currentLogo === logo.path && (
-                  <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1 shadow-lg">
-                    <CheckCircle size={16} />
-                  </div>
-                )}
-                
-                <button className={`w-full mt-3 py-1.5 text-[10px] uppercase font-bold rounded ${
-                  currentLogo === logo.path ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'
-                }`}>
-                  {currentLogo === logo.path ? 'Selecionado' : 'Escolher'}
-                </button>
-              </div>
-            ))}
-          </div>
+      {/* SEÇÃO LOGO LOGIN */}
+      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2 text-gray-700">
+          <Lock size={20} /> Logotipo da Tela de Login
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">Este logo aparece na página de entrada do sistema.</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {opcoesLogos.map((logo) => (
+            <div 
+              key={`log-${logo.id}`}
+              onClick={() => selecionarLogo('login', logo.path)}
+              className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${logoLogin === logo.path ? 'border-[#0F2C4C] bg-gray-50' : 'border-gray-100'}`}
+            >
+              <img src={logo.path} className="h-12 mx-auto object-contain mb-2" />
+              <p className="text-[10px] text-center font-bold uppercase">{logo.nome}</p>
+              {logoLogin === logo.path && <CheckCircle size={14} className="text-[#0F2C4C] mx-auto mt-1" />}
+            </div>
+          ))}
         </div>
       </div>
       
-      {/* ... Resto das configurações (Versões, etc) ... */}
+      <button onClick={() => window.location.reload()} className="bg-[#0F2C4C] text-white px-6 py-2 rounded-lg font-bold">
+        Aplicar Mudanças
+      </button>
     </div>
   )
 }
