@@ -81,6 +81,7 @@ const Dashboard = () => {
 
   const [evolucaoMensal, setEvolucaoMensal] = useState([])
   const [ultimosCasos, setUltimosCasos] = useState([])
+  const [contratosSemAssinatura, setContratosSemAssinatura] = useState([])
   const [dadosRejeicao, setDadosRejeicao] = useState({
     porMotivo: [],
     porIniciativa: []
@@ -149,7 +150,7 @@ const Dashboard = () => {
         const exito = parseFloat(c.proposta_exito_total || 0)
         const mensal = parseFloat(c.proposta_fixo_mensal || 0)
 
-        const contratoAssinado = c.contrato_assinado === true || c.contrato_assinado === 'true'
+        const contratoAssinado = c.contrato_assinado === 'sim'
 
         // Contadores Gerais
         if (statusNormalizado === 'Sob Análise') mGeral.emAnalise++
@@ -354,6 +355,21 @@ const Dashboard = () => {
       })).sort((a, b) => b.count - a.count)
 
       setDadosRejeicao({ porMotivo, porIniciativa })
+
+      // Processar contratos sem assinatura
+      const semAssinatura = contratos
+        .filter(c => c.status?.trim() === 'Contrato Fechado' && c.contrato_assinado === 'nao')
+        .map(c => ({
+          id: c.id,
+          cliente: c.cliente?.razao_social || 'Sem cliente',
+          numero_hon: c.numero_hon || 'Não informado',
+          data_contrato: c.data_contrato,
+          responsavel: c.responsavel || 'Não informado',
+          dias_sem_assinar: c.data_contrato ? Math.floor((new Date() - new Date(c.data_contrato)) / (1000 * 60 * 60 * 24)) : 0
+        }))
+        .sort((a, b) => b.dias_sem_assinar - a.dias_sem_assinar)
+      
+      setContratosSemAssinatura(semAssinatura)
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
     } finally {
@@ -989,6 +1005,37 @@ Controladoria Jurídica
               <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
             </div>
           </div>
+
+          {/* Lista de Contratos Aguardando Assinatura */}
+          {contratosSemAssinatura.length > 0 && (
+            <div className='mt-4 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
+              <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
+                <AlertCircle className='text-orange-600' size={18} />
+                Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
+              </h4>
+              <div className='space-y-2'>
+                {contratosSemAssinatura.map((contrato) => (
+                  <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
+                    <div>
+                      <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
+                      <p className='text-xs text-gray-600'>
+                        HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
+                      </p>
+                    </div>
+                    <div className='text-right'>
+                      <p className='text-xs text-gray-500'>
+                        {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
+                      </p>
+                      <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
+                        {contrato.dias_sem_assinar} dia(s) sem assinar
+                        {contrato.dias_sem_assinar > 5 && ' ⚠️'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
