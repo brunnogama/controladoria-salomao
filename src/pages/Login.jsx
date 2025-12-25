@@ -13,9 +13,6 @@ const Login = () => {
   const [shake, setShake] = useState(false)
   const [bgImage, setBgImage] = useState('')
 
-  // Temas de imagens profissionais e sóbrias
-  const temas = ['law', 'office', 'architecture', 'legal', 'justice', 'corporate']
-
   useEffect(() => {
     // 1. Carrega a logo personalizada
     const savedLoginLogo = localStorage.getItem('app_login_logo_path')
@@ -23,10 +20,10 @@ const Login = () => {
       setCustomLogo(savedLoginLogo)
     }
 
-    // 2. Sorteia uma imagem dinâmica do Unsplash para o lado direito
-    const temaSorteado = temas[Math.floor(Math.random() * temas.length)]
-    const randomID = Math.floor(Math.random() * 1000)
-    setBgImage(`https://source.unsplash.com/featured/1080x1080?${temaSorteado}&sig=${randomID}`)
+    // 2. Imagem Dinâmica (Usando a nova URL da Unsplash)
+    // Temas: law, justice, office, skyscraper, corporate
+    const randomID = Math.floor(Math.random() * 500)
+    setBgImage(`https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1080&sig=${randomID}`)
   }, [])
 
   const handleLogin = async (e) => {
@@ -57,14 +54,14 @@ const Login = () => {
   }
 
   return (
-    <div className='min-h-screen flex w-full bg-white font-sans'>
+    <div className='min-h-screen flex w-full bg-white font-sans overflow-hidden'>
       <style>{`
         @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
       `}</style>
 
       {/* LADO ESQUERDO: 50% */}
-      <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 md:p-16 z-10 bg-white'>
+      <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 md:p-16 bg-white'>
         <div className='w-full max-w-md space-y-10'>
           
           <div className='flex justify-center'>
@@ -79,7 +76,7 @@ const Login = () => {
               <div className='text-center'>
                 <h1 className='text-4xl font-black text-[#0F2C4C] tracking-tighter uppercase'>Salomão</h1>
                 <div className='h-2 w-16 bg-yellow-500 mx-auto mt-2 rounded-full'></div>
-                <p className='text-xs text-gray-400 uppercase tracking-[0.4em] mt-3 font-bold'>Controladoria Jurídica</p>
+                <p className='text-[10px] text-gray-400 uppercase tracking-[0.4em] mt-3 font-bold'>Controladoria Jurídica</p>
               </div>
             )}
           </div>
@@ -97,7 +94,7 @@ const Login = () => {
                   className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent min-w-0' 
                   placeholder='nome.sobrenome' 
                 />
-                <div className='bg-gray-100 px-4 flex items-center border-l text-xs font-bold text-[#0F2C4C]/60 whitespace-nowrap'>
+                <div className='bg-gray-100 px-4 flex items-center border-l text-[11px] font-bold text-[#0F2C4C]/60 whitespace-nowrap bg-gray-100/80'>
                   @salomaoadv.com.br
                 </div>
               </div>
@@ -139,17 +136,15 @@ const Login = () => {
         </div>
       </div>
 
-      {/* LADO DIREITO: 50% - IMAGEM DINÂMICA */}
-      <div className='hidden lg:flex lg:w-1/2 bg-[#0F2C4C] relative items-center justify-center overflow-hidden'>
-        {/* Camada de Imagem de Fundo */}
-        <div className='absolute inset-0 transition-all duration-1000'>
+      {/* LADO DIREITO: 50% - IMAGEM DINÂMICA CORRIGIDA */}
+      <div className='hidden lg:flex lg:w-1/2 bg-[#0F2C4C] relative items-center justify-center'>
+        <div className='absolute inset-0'>
           <img 
             src={bgImage} 
-            className='absolute inset-0 w-full h-full object-cover opacity-30 grayscale transition-opacity duration-1000' 
+            className='absolute inset-0 w-full h-full object-cover opacity-20 grayscale transition-opacity duration-1000' 
             alt='Justiça'
-            onLoad={(e) => e.target.style.opacity = '0.3'}
           />
-          <div className='absolute inset-0 bg-gradient-to-br from-[#0F2C4C] via-[#0F2C4C]/95 to-transparent'></div>
+          <div className='absolute inset-0 bg-gradient-to-br from-[#0F2C4C] via-[#0F2C4C]/90 to-transparent'></div>
         </div>
         
         <div className='relative z-10 p-20 text-white max-w-2xl'>
@@ -171,12 +166,12 @@ const Login = () => {
           <div className='flex gap-12 pt-10 border-t border-white/10'>
             <div>
               <p className='text-3xl font-black text-white'>100%</p>
-              <p className='text-xs uppercase font-bold text-blue-400 tracking-widest'>Digital Case Management</p>
+              <p className='text-xs uppercase font-bold text-blue-400 tracking-widest'>Cloud Management</p>
             </div>
             <div className='w-px h-12 bg-white/10'></div>
             <div>
               <p className='text-3xl font-black text-white'>Secured</p>
-              <p className='text-xs uppercase font-bold text-blue-400 tracking-widest'>Enterprise Encryption</p>
+              <p className='text-xs uppercase font-bold text-blue-400 tracking-widest'>Enterprise Data</p>
             </div>
           </div>
         </div>
