@@ -11,21 +11,30 @@ import {
   History,
 } from 'lucide-react'
 
+// FUNÇÕES DE UTILIDADE PARA MOEDA
+const formatCurrencyInput = (value) => {
+  if (!value) return ''
+  const digits = value.toString().replace(/\D/g, '')
+  const amount = (Number(digits) / 100).toFixed(2)
+  return amount.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
+const cleanCurrency = (val) => {
+  if (!val || typeof val !== 'string') return val
+  const cleaned = val.replace(/\./g, '').replace(',', '.')
+  return parseFloat(cleaned)
+}
+
 const CamposFinanceiros = ({ values, onChange }) => {
-  const handleKeyDown = (e) => {
-    if (
-      [46, 8, 9, 27, 13, 110, 190, 188].indexOf(e.keyCode) !== -1 ||
-      (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
-      (e.keyCode >= 35 && e.keyCode <= 40)
-    ) {
-      return
-    }
-    if (
-      (e.shiftKey || e.keyCode < 48 || e.keyCode > 57) &&
-      (e.keyCode < 96 || e.keyCode > 105)
-    ) {
-      e.preventDefault()
-    }
+  const handleMoneyChange = (e) => {
+    const { name, value } = e.target
+    const formatted = formatCurrencyInput(value)
+    onChange({
+      target: {
+        name,
+        value: formatted,
+      },
+    })
   }
 
   return (
@@ -38,12 +47,11 @@ const CamposFinanceiros = ({ values, onChange }) => {
           Pró-labore (R$)
         </label>
         <input
-          type='number'
+          type='text'
           name='proposta_pro_labore'
           value={values.proposta_pro_labore}
-          onChange={onChange}
-          onKeyDown={handleKeyDown}
-          className='w-full p-2 border rounded'
+          onChange={handleMoneyChange}
+          className='w-full p-2 border rounded font-mono'
           placeholder='0,00'
         />
       </div>
@@ -52,13 +60,12 @@ const CamposFinanceiros = ({ values, onChange }) => {
           Êxito Total (R$)
         </label>
         <input
-          type='number'
+          type='text'
           name='proposta_exito_total'
           value={values.proposta_exito_total}
-          onChange={onChange}
-          onKeyDown={handleKeyDown}
-          className='w-full p-2 border rounded'
-          placeholder='Valor fixo'
+          onChange={handleMoneyChange}
+          className='w-full p-2 border rounded font-mono'
+          placeholder='0,00'
         />
       </div>
       <div>
@@ -70,7 +77,6 @@ const CamposFinanceiros = ({ values, onChange }) => {
           name='proposta_exito_percentual'
           value={values.proposta_exito_percentual}
           onChange={onChange}
-          onKeyDown={handleKeyDown}
           className='w-full p-2 border rounded'
           placeholder='%'
         />
@@ -80,16 +86,15 @@ const CamposFinanceiros = ({ values, onChange }) => {
           Fixo Mensal (R$)
         </label>
         <input
-          type='number'
+          type='text'
           name='proposta_fixo_mensal'
           value={values.proposta_fixo_mensal}
-          onChange={onChange}
-          onKeyDown={handleKeyDown}
-          className='w-full p-2 border rounded'
-          placeholder='Manutenção'
+          onChange={handleMoneyChange}
+          className='w-full p-2 border rounded font-mono'
+          placeholder='0,00'
         />
       </div>
-      {values.proposta_fixo_mensal && values.proposta_fixo_mensal > 0 && (
+      {values.proposta_fixo_mensal && values.proposta_fixo_mensal !== '0,00' && (
         <div className='animate-fade-in'>
           <label className='block text-xs font-medium text-blue-600 mb-1'>
             Em quantas vezes?
@@ -99,7 +104,6 @@ const CamposFinanceiros = ({ values, onChange }) => {
             name='proposta_fixo_parcelas'
             value={values.proposta_fixo_parcelas}
             onChange={onChange}
-            onKeyDown={handleKeyDown}
             className='w-full p-2 border border-blue-300 rounded bg-blue-50'
             placeholder='Ex: 12'
           />
@@ -155,21 +159,6 @@ const EditarContrato = () => {
 
   const [processos, setProcessos] = useState([])
 
-  const toTitleCase = (str) => {
-    if (!str) return ''
-    const exceptions = ['de', 'da', 'do', 'das', 'dos', 'e', 'em']
-    return str
-      .toLowerCase()
-      .split(' ')
-      .map((word, index) => {
-        if (index === 0 || !exceptions.includes(word)) {
-          return word.charAt(0).toUpperCase() + word.slice(1)
-        }
-        return word
-      })
-      .join(' ')
-  }
-
   useEffect(() => {
     const fetchContrato = async () => {
       try {
@@ -191,10 +180,10 @@ const EditarContrato = () => {
           analisado_por: data.analisado_por || '',
           obs_prospect: data.obs_prospect || '',
           data_proposta: data.data_proposta || '',
-          proposta_pro_labore: data.proposta_pro_labore || '',
-          proposta_exito_total: data.proposta_exito_total || '',
+          proposta_pro_labore: formatCurrencyInput(data.proposta_pro_labore || 0),
+          proposta_exito_total: formatCurrencyInput(data.proposta_exito_total || 0),
           proposta_exito_percentual: data.proposta_exito_percentual || '',
-          proposta_fixo_mensal: data.proposta_fixo_mensal || '',
+          proposta_fixo_mensal: formatCurrencyInput(data.proposta_fixo_mensal || 0),
           proposta_fixo_parcelas: data.proposta_fixo_parcelas || '',
           proposta_obs: data.proposta_obs || '',
           data_contrato: data.data_contrato || '',
@@ -206,13 +195,13 @@ const EditarContrato = () => {
           historico_negociacao: data.historico_negociacao || [],
         })
 
-        if (data.processos && data.processos.length > 0) {
+        if (data.processos) {
           setProcessos(
             data.processos.map((p) => ({
               numero: p.numero_processo,
               tribunal: p.tribunal,
               juiz: p.juiz,
-              valor_causa: p.valor_causa,
+              valor_causa: formatCurrencyInput(p.valor_causa || 0),
             }))
           )
         }
@@ -243,16 +232,12 @@ const EditarContrato = () => {
     setProcessos(processos.filter((_, i) => i !== index))
   const handleProcessoChange = (index, field, value) => {
     const novos = [...processos]
-    novos[index][field] = value
+    if (field === 'valor_causa') {
+      novos[index][field] = formatCurrencyInput(value)
+    } else {
+      novos[index][field] = value
+    }
     setProcessos(novos)
-  }
-
-  const formatMoney = (val) => {
-    if (!val) return 'R$ 0,00'
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(val)
   }
 
   const handleUpdate = async (e) => {
@@ -274,10 +259,10 @@ const EditarContrato = () => {
       ) {
         const snapshot = {
           data_registro: new Date().toISOString(),
-          pro_labore: formData.proposta_pro_labore,
-          exito_total: formData.proposta_exito_total,
+          pro_labore: cleanCurrency(formData.proposta_pro_labore),
+          exito_total: cleanCurrency(formData.proposta_exito_total),
           exito_percentual: formData.proposta_exito_percentual,
-          fixo_mensal: formData.proposta_fixo_mensal,
+          fixo_mensal: cleanCurrency(formData.proposta_fixo_mensal),
           obs: formData.proposta_obs || 'Atualização de valores',
         }
         novoHistorico.unshift(snapshot)
@@ -293,10 +278,10 @@ const EditarContrato = () => {
           analisado_por: formData.analisado_por,
           obs_prospect: formData.obs_prospect,
           data_proposta: formData.data_proposta || null,
-          proposta_pro_labore: formData.proposta_pro_labore || null,
-          proposta_exito_total: formData.proposta_exito_total || null,
+          proposta_pro_labore: cleanCurrency(formData.proposta_pro_labore),
+          proposta_exito_total: cleanCurrency(formData.proposta_exito_total),
           proposta_exito_percentual: formData.proposta_exito_percentual || null,
-          proposta_fixo_mensal: formData.proposta_fixo_mensal || null,
+          proposta_fixo_mensal: cleanCurrency(formData.proposta_fixo_mensal),
           proposta_fixo_parcelas: formData.proposta_fixo_parcelas || null,
           proposta_obs: formData.proposta_obs,
           data_contrato: formData.data_contrato || null,
@@ -319,13 +304,12 @@ const EditarContrato = () => {
           numero_processo: p.numero,
           tribunal: p.tribunal,
           juiz: p.juiz,
-          valor_causa: p.valor_causa || null,
+          valor_causa: cleanCurrency(p.valor_causa) || null,
         }))
       if (processosParaSalvar.length > 0) {
         await supabase.from('processos').insert(processosParaSalvar)
       }
 
-      // --- LOG AUTOMÁTICO ---
       let msgLog = `Contrato de ${formData.razao_social} atualizado.`
       if (antigo && antigo.status !== formData.status) {
         msgLog = `Mudança de Status: De "${antigo.status}" para "${formData.status}" - Cliente: ${formData.razao_social}`
@@ -378,7 +362,7 @@ const EditarContrato = () => {
       </div>
 
       <form onSubmit={handleUpdate} className='space-y-6'>
-        {/* BLOCO 1 */}
+        {/* BLOCO 1: Informações Iniciais */}
         <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-4'>
           <h2 className='font-semibold text-gray-700 border-b pb-2'>
             Informações Iniciais
@@ -472,6 +456,7 @@ const EditarContrato = () => {
               className='grid grid-cols-1 md:grid-cols-5 gap-3 items-end bg-gray-50 p-3 rounded-lg border border-gray-200'
             >
               <div className='md:col-span-2'>
+                <label className='block text-[10px] text-gray-400'>Nº Processo</label>
                 <input
                   type='text'
                   value={proc.numero}
@@ -482,6 +467,7 @@ const EditarContrato = () => {
                 />
               </div>
               <div>
+                <label className='block text-[10px] text-gray-400'>Tribunal</label>
                 <input
                   type='text'
                   value={proc.tribunal}
@@ -492,13 +478,15 @@ const EditarContrato = () => {
                 />
               </div>
               <div>
+                <label className='block text-[10px] text-gray-400'>Valor Causa (R$)</label>
                 <input
-                  type='number'
+                  type='text'
                   value={proc.valor_causa}
                   onChange={(e) =>
                     handleProcessoChange(index, 'valor_causa', e.target.value)
                   }
-                  className='w-full p-2 border rounded'
+                  className='w-full p-2 border rounded font-mono'
+                  placeholder='0,00'
                 />
               </div>
               <button
@@ -579,7 +567,6 @@ const EditarContrato = () => {
 
           {formData.status === 'Contrato Fechado' && (
             <div className='space-y-4'>
-              {/* CAMPO HON */}
               <div className='bg-white p-4 rounded-lg border border-blue-200 shadow-sm mb-4'>
                 <label className='block text-sm font-bold text-[#0F2C4C] mb-1'>
                   Número HON (LegalOne)
@@ -631,18 +618,6 @@ const EditarContrato = () => {
                   </select>
                 </div>
               </div>
-              {!formData.contrato_assinado && (
-                <div className='bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-sm text-yellow-800 flex items-start gap-3'>
-                  <AlertCircle size={20} className='shrink-0 mt-0.5' />
-                  <div>
-                    <p className='font-bold'>Atenção: Assinatura Pendente</p>
-                    <p>
-                      O sistema enviará alertas automáticos de cobrança 5 dias
-                      após a data do fechamento.
-                    </p>
-                  </div>
-                </div>
-              )}
               <CamposFinanceiros values={formData} onChange={handleChange} />
             </div>
           )}
@@ -718,29 +693,26 @@ const EditarContrato = () => {
                       <span>
                         {new Date(item.data_registro).toLocaleString('pt-BR')}
                       </span>
-                      <span className='font-medium text-xs bg-gray-100 px-2 py-0.5 rounded'>
-                        Versão anterior
-                      </span>
                     </div>
                     <div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-gray-700'>
                       <div>
                         <span className='block text-xs text-gray-400'>
                           Pró-labore
                         </span>
-                        {formatMoney(item.pro_labore)}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.pro_labore || 0)}
                       </div>
                       <div>
                         <span className='block text-xs text-gray-400'>
                           Êxito
                         </span>
-                        {formatMoney(item.exito_total)} ({item.exito_percentual}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.exito_total || 0)} ({item.exito_percentual}
                         %)
                       </div>
                       <div>
                         <span className='block text-xs text-gray-400'>
                           Mensal
                         </span>
-                        {formatMoney(item.fixo_mensal)}
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.fixo_mensal || 0)}
                       </div>
                       <div className='col-span-2 md:col-span-1'>
                         <span className='block text-xs text-gray-400'>Obs</span>
