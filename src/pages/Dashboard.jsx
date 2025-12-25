@@ -159,8 +159,6 @@ const Dashboard = () => {
     let fPerdaAnalise = 0
     let fPerdaNegociacao = 0
 
-    const mapaMeses = {}
-
     contratos.forEach((c) => {
       const dataCriacao = new Date(c.created_at)
       const dataProp = c.data_proposta ? new Date(c.data_proposta) : dataCriacao
@@ -237,13 +235,43 @@ const Dashboard = () => {
         mMes.fechMensal += mensal
       }
 
-      // Gráfico
-      const mesAno = dataCriacao.toLocaleDateString('pt-BR', {
-        month: 'short',
-        year: '2-digit',
+      // Gráfico de Evolução Mensal (últimos 6 meses)
+      const hoje = new Date()
+      const ultimos6Meses = []
+      
+      // Gerar array dos últimos 6 meses
+      for (let i = 5; i >= 0; i--) {
+        const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1)
+        const mesAno = data.toLocaleDateString('pt-BR', {
+          month: 'short',
+          year: '2-digit',
+        })
+        ultimos6Meses.push({
+          mes: mesAno,
+          qtd: 0,
+          mesNumero: data.getMonth(),
+          anoNumero: data.getFullYear()
+        })
+      }
+      
+      // Contar casos criados em cada mês
+      contratos.forEach((c) => {
+        const dataCriacao = new Date(c.created_at)
+        const mesContrato = dataCriacao.getMonth()
+        const anoContrato = dataCriacao.getFullYear()
+        
+        ultimos6Meses.forEach((item) => {
+          if (item.mesNumero === mesContrato && item.anoNumero === anoContrato) {
+            item.qtd++
+          }
+        })
       })
-      if (!mapaMeses[mesAno]) mapaMeses[mesAno] = 0
-      mapaMeses[mesAno]++
+      
+      // Calcular altura proporcional
+      const maxQtd = Math.max(...ultimos6Meses.map((m) => m.qtd), 1)
+      ultimos6Meses.forEach((m) => {
+        m.altura = (m.qtd / maxQtd) * 100
+      })
     })
 
     // Taxas
@@ -261,16 +289,8 @@ const Dashboard = () => {
       taxaConversaoFechamento: txFech,
     })
 
-    const mesesGrafico = Object.keys(mapaMeses).map((key) => ({
-      mes: key,
-      qtd: mapaMeses[key],
-      altura: 0,
-    }))
-    const maxQtd = Math.max(...mesesGrafico.map((m) => m.qtd), 1)
-    mesesGrafico.forEach((m) => (m.altura = (m.qtd / maxQtd) * 100))
-
     setMetrics({ semana: mSemana, mes: mMes, geral: mGeral })
-    setEvolucaoMensal(mesesGrafico.reverse().slice(0, 6).reverse())
+    setEvolucaoMensal(ultimos6Meses)
     const sorted = [...contratos]
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, 5)
@@ -598,7 +618,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ================= 4. DISTRIBUIÇÀO E GRÁFICO ================= */}
+      {/* ================= 4. DISTRIBUIÇÃO E GRÁFICO ================= */}
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
         {/* Card Grande de Volumetria */}
         <div className='lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100'>
@@ -716,7 +736,7 @@ const Dashboard = () => {
                   value={metrics.geral.valorEmNegociacaoExito}
                 />
 
-                {/* TOTAL GERAL NEGOCIAÇÀO */}
+                {/* TOTAL GERAL NEGOCIAÇÃO */}
                 <div className='flex justify-between items-end border-t border-gray-200 pt-2 mt-2'>
                   <span className='text-sm font-bold text-gray-700'>
                     TOTAL GERAL
