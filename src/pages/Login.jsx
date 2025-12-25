@@ -11,12 +11,22 @@ const Login = () => {
   const [error, setError] = useState(null)
   const [customLogo, setCustomLogo] = useState(null)
   const [shake, setShake] = useState(false)
+  const [bgImage, setBgImage] = useState('')
+
+  // Temas de imagens profissionais e sóbrias
+  const temas = ['law', 'office', 'architecture', 'legal', 'justice', 'corporate']
 
   useEffect(() => {
+    // 1. Carrega a logo personalizada
     const savedLoginLogo = localStorage.getItem('app_login_logo_path')
     if (savedLoginLogo && savedLoginLogo !== '/') {
       setCustomLogo(savedLoginLogo)
     }
+
+    // 2. Sorteia uma imagem dinâmica do Unsplash para o lado direito
+    const temaSorteado = temas[Math.floor(Math.random() * temas.length)]
+    const randomID = Math.floor(Math.random() * 1000)
+    setBgImage(`https://source.unsplash.com/featured/1080x1080?${temaSorteado}&sig=${randomID}`)
   }, [])
 
   const handleLogin = async (e) => {
@@ -53,95 +63,120 @@ const Login = () => {
         .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
       `}</style>
 
-      {/* LADO ESQUERDO: FORMULÁRIO */}
-      <div className='w-full lg:w-[500px] flex flex-col justify-center items-center p-10 z-10 shadow-2xl bg-white'>
-        <div className='w-full max-w-sm space-y-10'>
+      {/* LADO ESQUERDO: 50% */}
+      <div className='w-full lg:w-1/2 flex flex-col justify-center items-center p-8 md:p-16 z-10 bg-white'>
+        <div className='w-full max-w-md space-y-10'>
           
           <div className='flex justify-center'>
             {customLogo ? (
               <img
                 src={customLogo}
                 alt='Logo'
-                className='h-24 object-contain'
+                className='h-24 md:h-32 object-contain'
                 onError={() => setCustomLogo(null)}
               />
             ) : (
               <div className='text-center'>
-                <h1 className='text-3xl font-black text-[#0F2C4C] tracking-tight uppercase'>Salomão</h1>
-                <div className='h-1.5 w-12 bg-yellow-500 mx-auto mt-2'></div>
-                <p className='text-[10px] text-gray-400 uppercase tracking-[0.3em] mt-2 font-bold'>Controladoria Jurídica</p>
+                <h1 className='text-4xl font-black text-[#0F2C4C] tracking-tighter uppercase'>Salomão</h1>
+                <div className='h-2 w-16 bg-yellow-500 mx-auto mt-2 rounded-full'></div>
+                <p className='text-xs text-gray-400 uppercase tracking-[0.4em] mt-3 font-bold'>Controladoria Jurídica</p>
               </div>
             )}
           </div>
 
           <form className='space-y-6' onSubmit={handleLogin}>
-            <div className='space-y-1'>
-              <label className='block text-xs font-black text-[#0F2C4C] uppercase tracking-widest ml-1'>Usuário</label>
-              <div className='flex border-2 border-gray-100 rounded-xl overflow-hidden focus-within:border-[#0F2C4C] transition-all bg-gray-50/50'>
-                <div className='flex items-center pl-4'><User size={20} className='text-gray-400'/></div>
-                <input type='text' required value={userPrefix} onChange={(e)=>setUserPrefix(e.target.value)} className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent' placeholder='nome.sobrenome' />
-                <div className='bg-gray-100 px-4 flex items-center border-l text-[10px] font-bold text-gray-400 italic'>@salomaoadv</div>
+            <div className='space-y-2'>
+              <label className='block text-xs font-black text-[#0F2C4C] uppercase tracking-widest ml-1'>Usuário Corporativo</label>
+              <div className='flex border-2 border-gray-100 rounded-2xl overflow-hidden focus-within:border-[#0F2C4C] transition-all bg-gray-50/50 shadow-sm'>
+                <div className='flex items-center pl-4'><User size={22} className='text-gray-400'/></div>
+                <input 
+                  type='text' 
+                  required 
+                  value={userPrefix} 
+                  onChange={(e)=>setUserPrefix(e.target.value)} 
+                  className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent min-w-0' 
+                  placeholder='nome.sobrenome' 
+                />
+                <div className='bg-gray-100 px-4 flex items-center border-l text-xs font-bold text-[#0F2C4C]/60 whitespace-nowrap'>
+                  @salomaoadv.com.br
+                </div>
               </div>
             </div>
 
-            <div className='space-y-1'>
+            <div className='space-y-2'>
               <label className='block text-xs font-black text-[#0F2C4C] uppercase tracking-widest ml-1'>Senha</label>
-              <div className='relative border-2 border-gray-100 rounded-xl flex items-center focus-within:border-[#0F2C4C] transition-all bg-gray-50/50'>
-                <div className='pl-4'><Lock size={20} className='text-gray-400'/></div>
-                <input type='password' required value={password} onChange={(e)=>setPassword(e.target.value)} className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent' placeholder='••••••••' />
+              <div className='relative border-2 border-gray-100 rounded-2xl flex items-center focus-within:border-[#0F2C4C] transition-all bg-gray-50/50 shadow-sm'>
+                <div className='pl-4'><Lock size={22} className='text-gray-400'/></div>
+                <input 
+                  type='password' 
+                  required 
+                  value={password} 
+                  onChange={(e)=>setPassword(e.target.value)} 
+                  className='flex-1 p-4 outline-none text-base text-gray-900 bg-transparent' 
+                  placeholder='••••••••' 
+                />
               </div>
             </div>
 
             {error && (
-              <div className='bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 flex items-center gap-2 animate-pulse'>
-                <AlertCircle size={16} /> {error}
+              <div className='bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-bold border border-red-100 flex items-center gap-3 animate-shake'>
+                <AlertCircle size={20} /> {error}
               </div>
             )}
 
-            <button type='submit' disabled={loading} className={`w-full py-4 rounded-xl text-white font-black text-base tracking-widest transition-all shadow-xl flex items-center justify-center gap-3 ${shake ? 'animate-shake bg-red-600' : 'bg-[#0F2C4C] hover:bg-[#1a3a5c] hover:-translate-y-0.5'}`}>
-              {loading ? <Loader2 className='animate-spin' size={24} /> : <>ENTRAR NO SISTEMA <ArrowRight size={20} /></>}
+            <button 
+              type='submit' 
+              disabled={loading} 
+              className={`w-full py-5 rounded-2xl text-white font-black text-base tracking-[0.2em] transition-all shadow-xl flex items-center justify-center gap-3 ${shake ? 'bg-red-600' : 'bg-[#0F2C4C] hover:bg-[#153a63] hover:shadow-2xl'}`}
+            >
+              {loading ? <Loader2 className='animate-spin' size={24} /> : <>ENTRAR NO SISTEMA <ArrowRight size={22} /></>}
             </button>
           </form>
 
-          <p className='text-center text-[10px] text-gray-300 font-bold uppercase tracking-[0.2em] pt-4'>
-            © 2025 Salomão Advogados • v1.2.0
+          <p className='text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em] pt-8'>
+            © 2025 Salomão Advogados • Gestão de Performance
           </p>
         </div>
       </div>
 
-      {/* LADO DIREITO: UX APRIMORADA */}
-      <div className='hidden lg:flex flex-1 bg-[#0F2C4C] relative items-center justify-center overflow-hidden'>
-        {/* Elementos Decorativos de Fundo */}
-        <div className='absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px]'></div>
-        <div className='absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-yellow-500/10 rounded-full blur-[120px]'></div>
-        
-        <img src='https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=2070' className='absolute inset-0 w-full h-full object-cover opacity-10 grayscale' alt='Justiça' />
+      {/* LADO DIREITO: 50% - IMAGEM DINÂMICA */}
+      <div className='hidden lg:flex lg:w-1/2 bg-[#0F2C4C] relative items-center justify-center overflow-hidden'>
+        {/* Camada de Imagem de Fundo */}
+        <div className='absolute inset-0 transition-all duration-1000'>
+          <img 
+            src={bgImage} 
+            className='absolute inset-0 w-full h-full object-cover opacity-30 grayscale transition-opacity duration-1000' 
+            alt='Justiça'
+            onLoad={(e) => e.target.style.opacity = '0.3'}
+          />
+          <div className='absolute inset-0 bg-gradient-to-br from-[#0F2C4C] via-[#0F2C4C]/95 to-transparent'></div>
+        </div>
         
         <div className='relative z-10 p-20 text-white max-w-2xl'>
-          <div className='bg-white/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-md border border-white/10'>
-            <ShieldCheck size={32} className='text-yellow-400' />
+          <div className='bg-yellow-500/10 w-20 h-20 rounded-3xl flex items-center justify-center mb-10 backdrop-blur-xl border border-yellow-500/20 shadow-2xl'>
+            <ShieldCheck size={40} className='text-yellow-500' />
           </div>
           
-          <h2 className='text-5xl font-black mb-6 leading-[1.1] tracking-tight'>
+          <h2 className='text-5xl font-black mb-8 leading-[1.1] tracking-tighter'>
             Controladoria Jurídica <br />
-            <span className='text-yellow-400'>Inteligente.</span>
+            <span className='text-yellow-500'>Estratégica.</span>
           </h2>
           
-          <div className='h-1.5 w-24 bg-yellow-500 mb-8 rounded-full'></div>
+          <div className='h-2 w-32 bg-yellow-500 mb-10 rounded-full shadow-[0_0_20px_rgba(234,179,8,0.4)]'></div>
           
-          <p className='text-blue-50/80 text-xl font-light leading-relaxed mb-10'>
-            Gerencie processos, contratos e volumetria com a precisão que o Direito moderno exige. 
-            Segurança de dados e alta performance em uma única plataforma.
+          <p className='text-blue-50/70 text-2xl font-light leading-relaxed mb-12'>
+            A evolução da gestão jurídica. Dados precisos, volumetria em tempo real e segurança absoluta para a sua operação.
           </p>
 
-          <div className='grid grid-cols-2 gap-8 pt-8 border-t border-white/10'>
+          <div className='flex gap-12 pt-10 border-t border-white/10'>
             <div>
-              <p className='text-2xl font-black text-white'>100%</p>
-              <p className='text-[10px] uppercase font-bold text-blue-300 tracking-widest'>Cloud & Security</p>
+              <p className='text-3xl font-black text-white'>100%</p>
+              <p className='text-xs uppercase font-bold text-blue-400 tracking-widest'>Digital Case Management</p>
             </div>
+            <div className='w-px h-12 bg-white/10'></div>
             <div>
-              <p className='text-2xl font-black text-white'>Real-time</p>
-              <p className='text-[10px] uppercase font-bold text-blue-300 tracking-widest'>Data Analytics</p>
+              <p className='text-3xl font-black text-white'>Secured</p>
+              <p className='text-xs uppercase font-bold text-blue-400 tracking-widest'>Enterprise Encryption</p>
             </div>
           </div>
         </div>
