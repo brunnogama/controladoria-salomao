@@ -71,11 +71,11 @@ const Contratos = () => {
 
   const getStatusColor = (status) => {
     const cores = {
-      'Sob Análise': 'bg-yellow-100 text-yellow-700',
-      'Proposta Enviada': 'bg-blue-100 text-blue-700',
-      'Contrato Fechado': 'bg-emerald-100 text-emerald-700',
+      'Sob Análise': 'bg-orange-100 text-orange-700',
+      'Proposta Enviada': 'bg-yellow-100 text-yellow-700',
+      'Contrato Fechado': 'bg-green-100 text-green-700',
       'Rejeitada': 'bg-red-100 text-red-700',
-      'Probono': 'bg-purple-100 text-purple-700',
+      'Probono': 'bg-blue-100 text-blue-700',
     }
     return cores[status] || 'bg-gray-100 text-gray-700'
   }
