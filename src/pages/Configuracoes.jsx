@@ -9,8 +9,8 @@ const Configuracoes = () => {
   const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
 
-  // VERSIONAMENTO SEMÂNTICO: 1.3.6
-  const versaoAtual = "1.3.6"; 
+  // VERSIONAMENTO SEMÂNTICO: 1.4.0
+  const versaoAtual = "1.4.0"; 
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -28,6 +28,20 @@ const Configuracoes = () => {
 
   // Changelog estruturado conforme a regra: X (Grande), X.X (Funcionalidade), X.X.X (Bug/Ajuste)
   const changelog = [
+    {
+      versao: "1.4.0",
+      data: "25/12/2025",
+      tipo: "Nova Funcionalidade",
+      mudancas: [
+        "Criação da arquitetura de utilitários: /utils/formatters.js e /utils/validators.js",
+        "Implementação de hooks customizados: useClienteByCnpj, useContratos, useDashboardMetrics",
+        "Desenvolvimento do componente reutilizável PDFUpload com drag & drop",
+        "Centralização de constantes do sistema em /constants/index.js",
+        "Exportação modular facilitando imports: import { formatMoney } from '@/utils'",
+        "Validação robusta de CNPJ/CPF com algoritmos oficiais da Receita Federal",
+        "Sanitização automática de nomes de arquivo no upload para prevenir vulnerabilidades"
+      ]
+    },
     {
       versao: "1.3.6",
       data: "25/12/2025",
