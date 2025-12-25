@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import {
   CalendarDays,
@@ -15,13 +15,17 @@ import {
   PieChart,
   BarChart3,
   Camera,
-  FileSignature, // Ícone novo para assinatura
-  AlertCircle, // Ícone novo para pendência
+  FileSignature,
+  AlertCircle,
+  Mail,
+  Download,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true)
+  const [enviandoEmail, setEnviandoEmail] = useState(false)
+  const dashboardRef = useRef(null)
 
   // Estado Unificado das Métricas
   const [metrics, setMetrics] = useState({
@@ -328,16 +332,105 @@ const Dashboard = () => {
     metrics.geral.totalFechadoExito +
     metrics.geral.receitaRecorrenteAtiva
 
+  const enviarDashboardPorEmail = async () => {
+    setEnviandoEmail(true)
+    try {
+      // Importar html2canvas dinamicamente
+      const html2canvas = (await import('html2canvas')).default
+      
+      // Capturar o dashboard como canvas
+      const canvas = await html2canvas(dashboardRef.current, {
+        backgroundColor: '#f9fafb',
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      })
+      
+      // Converter para blob
+      canvas.toBlob(async (blob) => {
+        // Converter blob para base64
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const base64data = reader.result
+          
+          // Preparar conteúdo do email
+          const hoje = new Date().toLocaleDateString('pt-BR')
+          const assunto = `Dashboard Controladoria Jurídica - ${hoje}`
+          const corpo = `
+Olá,
+
+Segue em anexo o Dashboard completo da Controladoria Jurídica referente a ${hoje}.
+
+Dashboard em formato de imagem anexo.
+
+---
+Flow Metrics System
+Controladoria Jurídica
+          `.trim()
+          
+          // Criar link mailto com a imagem como data URI
+          const mailtoLink = `mailto:?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}%0A%0A[Dashboard em anexo - por favor, cole a imagem do clipboard]`
+          
+          // Copiar imagem para clipboard
+          canvas.toBlob((blob) => {
+            const item = new ClipboardItem({ 'image/png': blob })
+            navigator.clipboard.write([item]).then(() => {
+              alert('✅ Dashboard copiado para a área de transferência!\n\nO programa de email será aberto. Cole a imagem (Ctrl+V ou Cmd+V) no corpo do email.')
+              window.location.href = mailtoLink
+            }).catch(() => {
+              // Se não conseguir copiar, fazer download da imagem
+              const link = document.createElement('a')
+              link.download = `dashboard-${hoje.replace(/\//g, '-')}.png`
+              link.href = canvas.toDataURL()
+              link.click()
+              
+              alert('📷 Dashboard salvo como imagem!\n\nAnexe o arquivo baixado ao seu email.')
+              window.location.href = mailtoLink
+            })
+          })
+        }
+        reader.readAsDataURL(blob)
+      })
+    } catch (error) {
+      console.error('Erro ao capturar dashboard:', error)
+      alert('❌ Erro ao gerar imagem do dashboard. Tente novamente.')
+    } finally {
+      setEnviandoEmail(false)
+    }
+  }
+
   return (
-    <div className='w-full space-y-8 pb-10'>
+    <div className='w-full space-y-8 pb-10' ref={dashboardRef}>
       {/* TÍTULO E SUBTÍTULO */}
-      <div>
-        <h1 className='text-3xl font-bold text-[#0F2C4C]'>
-          Controladoria Jurídica
-        </h1>
-        <p className='text-gray-500'>
-          Visão estratégica de contratos e resultados.
-        </p>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h1 className='text-3xl font-bold text-[#0F2C4C]'>
+            Controladoria Jurídica
+          </h1>
+          <p className='text-gray-500'>
+            Visão estratégica de contratos e resultados.
+          </p>
+        </div>
+        
+        {/* Botão Enviar por Email */}
+        <button
+          onClick={enviarDashboardPorEmail}
+          disabled={enviandoEmail}
+          className='flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors shadow-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed'
+          title='Enviar Dashboard por Email'
+        >
+          {enviandoEmail ? (
+            <>
+              <Download size={20} className='animate-bounce' />
+              Capturando...
+            </>
+          ) : (
+            <>
+              <Mail size={20} />
+              Enviar por Email
+            </>
+          )}
+        </button>
       </div>
 
       {/* ================= 1. FUNIL ================= */}
