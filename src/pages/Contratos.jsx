@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { Plus, Search, FileText, Upload, CheckCircle2 } from 'lucide-react'
+import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck } from 'lucide-react'
 
 const Contratos = () => {
+  const navigate = useNavigate()
   const [contratos, setContratos] = useState([])
   const [loading, setLoading] = useState(true)
   const [busca, setBusca] = useState('')
+  const [contratoSelecionado, setContratoSelecionado] = useState(null)
+  const [showModal, setShowModal] = useState(false)
 
-  // Busca os dados assim que a tela abre
   useEffect(() => {
     buscarContratos()
   }, [])
@@ -16,15 +18,12 @@ const Contratos = () => {
   const buscarContratos = async () => {
     try {
       setLoading(true)
-      // Busca contratos e "junta" com a tabela de clientes para pegar o nome
       const { data, error } = await supabase
         .from('contratos')
-        .select(
-          `
+        .select(`
           *,
-          clientes ( razao_social )
-        `
-        )
+          clientes ( razao_social, cnpj )
+        `)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -37,7 +36,6 @@ const Contratos = () => {
     }
   }
 
-  // Função para vincular PDF ao GED
   const handleUploadPDF = async (event, contratoId) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -46,57 +44,80 @@ const Contratos = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `ged_${contratoId}_${Date.now()}.${fileExt}`;
 
-      // 1. Upload para o Storage
       const { error: uploadError } = await supabase.storage
         .from('contratos_ged')
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Pegar URL pública
-      const { data: urlData } = supabase.storage.from('contratos_ged').getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage
+        .from('contratos_ged')
+        .getPublicUrl(fileName);
 
-      // 3. Atualizar Banco de Dados
       const { error: updateError } = await supabase
         .from('contratos')
-        .update({ 
-          arquivo_pdf_url: urlData.publicUrl,
-          data_vinculo_pdf: new Date().toISOString()
-        })
+        .update({ arquivo_pdf_url: urlData.publicUrl })
         .eq('id', contratoId);
 
       if (updateError) throw updateError;
 
-      alert('Contrato PDF vinculado ao GED com sucesso!');
+      alert('PDF vinculado com sucesso!');
       buscarContratos();
     } catch (error) {
-      alert('Erro no upload: ' + error.message);
+      console.error('Erro ao fazer upload:', error);
+      alert('Erro ao vincular PDF!');
     }
   };
 
-  // Função para dar cor aos Status
   const getStatusColor = (status) => {
     const cores = {
-      'Sob Análise': 'bg-yellow-100 text-yellow-800',
-      'Proposta Enviada': 'bg-blue-100 text-blue-800',
-      'Contrato Fechado': 'bg-green-100 text-green-800',
-      Rejeitada: 'bg-red-100 text-red-800',
-      Probono: 'bg-purple-100 text-purple-800',
+      'Sob Análise': 'bg-yellow-100 text-yellow-700',
+      'Proposta Enviada': 'bg-blue-100 text-blue-700',
+      'Contrato Fechado': 'bg-emerald-100 text-emerald-700',
+      'Rejeitada': 'bg-red-100 text-red-700',
+      'Probono': 'bg-purple-100 text-purple-700',
     }
-    return cores[status] || 'bg-gray-100 text-gray-800'
+    return cores[status] || 'bg-gray-100 text-gray-700'
   }
 
-  // Filtragem simples no front-end
-  const contratosFiltrados = contratos.filter(
-    (c) =>
-      c.clientes?.razao_social?.toLowerCase().includes(busca.toLowerCase()) ||
-      c.responsavel_socio?.toLowerCase().includes(busca.toLowerCase()) ||
-      c.descricao_contrato?.toLowerCase().includes(busca.toLowerCase())
-  )
+  const contratosFiltrados = contratos.filter((c) => {
+    const termo = busca.toLowerCase()
+    return (
+      c.clientes?.razao_social?.toLowerCase().includes(termo) ||
+      c.descricao_contrato?.toLowerCase().includes(termo) ||
+      c.responsavel?.toLowerCase().includes(termo)
+    )
+  })
+
+  const abrirModal = (contrato) => {
+    setContratoSelecionado(contrato)
+    setShowModal(true)
+  }
+
+  const fecharModal = () => {
+    setShowModal(false)
+    setContratoSelecionado(null)
+  }
+
+  const irParaEdicao = (id) => {
+    navigate(`/contratos/editar/${id}`)
+  }
+
+  const formatarMoeda = (valor) => {
+    if (!valor) return 'R$ 0,00'
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor)
+  }
+
+  const formatarData = (data) => {
+    if (!data) return '-'
+    return new Date(data).toLocaleDateString('pt-BR')
+  }
 
   return (
     <div className='w-full space-y-6'>
-      {/* Cabeçalho */}
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
         <div>
           <h1 className='text-3xl font-bold text-[#0F2C4C]'>
@@ -107,7 +128,6 @@ const Contratos = () => {
           </p>
         </div>
 
-        {/* Botão Novo Contrato */}
         <Link
           to='/contratos/novo'
           className='flex items-center gap-2 bg-[#0F2C4C] text-white px-5 py-2.5 rounded-lg hover:bg-blue-900 transition-colors shadow-lg font-bold'
@@ -117,7 +137,6 @@ const Contratos = () => {
         </Link>
       </div>
 
-      {/* Filtros e Busca */}
       <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4'>
         <div className='relative flex-1'>
           <Search className='absolute left-3 top-3 text-gray-400' size={20} />
@@ -131,7 +150,6 @@ const Contratos = () => {
         </div>
       </div>
 
-      {/* Tabela de Contratos */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
         {loading ? (
           <div className='p-10 text-center text-gray-500 font-bold animate-pulse'>
@@ -160,7 +178,7 @@ const Contratos = () => {
                   <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest text-center'>
                     GED (PDF)
                   </th>
-                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest text-right'>
+                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest text-center'>
                     Ações
                   </th>
                 </tr>
@@ -169,7 +187,8 @@ const Contratos = () => {
                 {contratosFiltrados.map((contrato) => (
                   <tr
                     key={contrato.id}
-                    className='hover:bg-gray-50 transition-colors'
+                    className='hover:bg-gray-50 transition-colors cursor-pointer'
+                    onClick={() => abrirModal(contrato)}
                   >
                     <td className='px-6 py-4'>
                       <span
@@ -188,7 +207,7 @@ const Contratos = () => {
                     </td>
                     <td className='px-6 py-4 text-center'>
                       {contrato.status === 'Contrato Fechado' && (
-                        <div className="flex justify-center items-center">
+                        <div className="flex justify-center items-center" onClick={(e) => e.stopPropagation()}>
                           {contrato.arquivo_pdf_url ? (
                             <div className="text-emerald-600 flex items-center gap-1 text-[10px] font-black bg-emerald-50 px-2 py-1 rounded-lg">
                               <CheckCircle2 size={14} /> PDF OK
@@ -207,13 +226,17 @@ const Contratos = () => {
                         </div>
                       )}
                     </td>
-                    <td className='px-6 py-4 text-right'>
-                      <Link
-                        to={`/contratos/editar/${contrato.id}`}
-                        className='text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase hover:underline'
+                    <td className='px-6 py-4 text-center'>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          irParaEdicao(contrato.id)
+                        }}
+                        className='inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all'
                       >
-                        Ver Detalhes
-                      </Link>
+                        <Edit2 size={14} />
+                        Editar
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -222,6 +245,191 @@ const Contratos = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de Visualização */}
+      {showModal && contratoSelecionado && (
+        <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm' onClick={fecharModal}>
+          <div className='bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl' onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className='bg-gradient-to-r from-[#0F2C4C] to-blue-900 p-6 flex items-center justify-between text-white'>
+              <div className='flex items-center gap-3'>
+                <FileCheck size={28} />
+                <div>
+                  <h2 className='text-xl font-bold'>Detalhes do Contrato</h2>
+                  <p className='text-sm text-blue-100'>{contratoSelecionado.clientes?.razao_social}</p>
+                </div>
+              </div>
+              <div className='flex items-center gap-2'>
+                <button
+                  onClick={() => {
+                    fecharModal()
+                    irParaEdicao(contratoSelecionado.id)
+                  }}
+                  className='p-2 hover:bg-white/20 rounded-lg transition-colors'
+                  title='Editar'
+                >
+                  <Edit2 size={20} />
+                </button>
+                <button
+                  onClick={fecharModal}
+                  className='p-2 hover:bg-white/20 rounded-lg transition-colors'
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className='p-6 overflow-y-auto max-h-[calc(90vh-120px)]'>
+              {/* Status Badge */}
+              <div className='mb-6'>
+                <span className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${getStatusColor(contratoSelecionado.status)}`}>
+                  {contratoSelecionado.status}
+                </span>
+              </div>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                {/* Informações Básicas */}
+                <div className='space-y-4'>
+                  <h3 className='text-sm font-bold text-gray-700 border-b pb-2'>Informações Básicas</h3>
+                  
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Cliente</label>
+                    <p className='text-sm font-bold text-gray-800'>{contratoSelecionado.clientes?.razao_social || '-'}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>CNPJ</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.clientes?.cnpj || '-'}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Área</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.area || '-'}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Responsável</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.responsavel || '-'}</p>
+                  </div>
+                </div>
+
+                {/* Dados do Processo */}
+                <div className='space-y-4'>
+                  <h3 className='text-sm font-bold text-gray-700 border-b pb-2'>Dados do Processo</h3>
+                  
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Contrário</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.contrario || '-'}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Processo</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.processo || '-'}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Valor da Causa</label>
+                    <p className='text-sm text-gray-800 font-mono'>{formatarMoeda(contratoSelecionado.valor_causa)}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>Tribunal/Turma</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.tribunal_turma || '-'}</p>
+                  </div>
+
+                  <div>
+                    <label className='text-xs text-gray-500 font-semibold'>UF</label>
+                    <p className='text-sm text-gray-800'>{contratoSelecionado.uf || '-'}</p>
+                  </div>
+                </div>
+
+                {/* Descrição */}
+                <div className='md:col-span-2'>
+                  <h3 className='text-sm font-bold text-gray-700 border-b pb-2 mb-3'>Descrição</h3>
+                  <p className='text-sm text-gray-700 bg-gray-50 p-4 rounded-lg'>
+                    {contratoSelecionado.descricao_contrato || 'Sem descrição'}
+                  </p>
+                </div>
+
+                {/* Dados Financeiros (se Contrato Fechado) */}
+                {contratoSelecionado.status === 'Contrato Fechado' && (
+                  <div className='md:col-span-2 bg-green-50 p-4 rounded-lg'>
+                    <h3 className='text-sm font-bold text-green-800 border-b border-green-200 pb-2 mb-3'>Dados Financeiros</h3>
+                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                      <div>
+                        <label className='text-xs text-green-700 font-semibold'>Pró-labore</label>
+                        <p className='text-sm font-bold text-green-900 font-mono'>{formatarMoeda(contratoSelecionado.contrato_pro_labore)}</p>
+                      </div>
+                      <div>
+                        <label className='text-xs text-green-700 font-semibold'>Honorário Fixo</label>
+                        <p className='text-sm font-bold text-green-900 font-mono'>{formatarMoeda(contratoSelecionado.contrato_honorario_fixo)}</p>
+                      </div>
+                      <div>
+                        <label className='text-xs text-green-700 font-semibold'>Êxito Total</label>
+                        <p className='text-sm font-bold text-green-900 font-mono'>{formatarMoeda(contratoSelecionado.contrato_exito_total)}</p>
+                      </div>
+                      <div>
+                        <label className='text-xs text-green-700 font-semibold'>Êxito %</label>
+                        <p className='text-sm font-bold text-green-900'>{contratoSelecionado.contrato_exito_percentual || '-'}</p>
+                      </div>
+                    </div>
+                    <div className='mt-3'>
+                      <label className='text-xs text-green-700 font-semibold'>Número HON</label>
+                      <p className='text-sm font-bold text-green-900'>{contratoSelecionado.numero_hon || '-'}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Dados da Proposta (se Proposta Enviada) */}
+                {contratoSelecionado.status === 'Proposta Enviada' && (
+                  <div className='md:col-span-2 bg-blue-50 p-4 rounded-lg'>
+                    <h3 className='text-sm font-bold text-blue-800 border-b border-blue-200 pb-2 mb-3'>Dados da Proposta</h3>
+                    <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                      <div>
+                        <label className='text-xs text-blue-700 font-semibold'>Pró-labore</label>
+                        <p className='text-sm font-bold text-blue-900 font-mono'>{formatarMoeda(contratoSelecionado.proposta_pro_labore)}</p>
+                      </div>
+                      <div>
+                        <label className='text-xs text-blue-700 font-semibold'>Honorário Fixo</label>
+                        <p className='text-sm font-bold text-blue-900 font-mono'>{formatarMoeda(contratoSelecionado.proposta_honorario_fixo)}</p>
+                      </div>
+                      <div>
+                        <label className='text-xs text-blue-700 font-semibold'>Êxito Total</label>
+                        <p className='text-sm font-bold text-blue-900 font-mono'>{formatarMoeda(contratoSelecionado.proposta_exito_total)}</p>
+                      </div>
+                      <div>
+                        <label className='text-xs text-blue-700 font-semibold'>Data Proposta</label>
+                        <p className='text-sm font-bold text-blue-900'>{formatarData(contratoSelecionado.data_proposta)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className='p-4 bg-gray-50 border-t flex justify-end gap-3'>
+              <button
+                onClick={fecharModal}
+                className='px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg font-bold transition-colors'
+              >
+                Fechar
+              </button>
+              <button
+                onClick={() => {
+                  fecharModal()
+                  irParaEdicao(contratoSelecionado.id)
+                }}
+                className='px-6 py-2 bg-[#0F2C4C] text-white rounded-lg font-bold hover:bg-blue-900 transition-colors flex items-center gap-2'
+              >
+                <Edit2 size={16} />
+                Editar Contrato
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
