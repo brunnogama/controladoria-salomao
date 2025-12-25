@@ -467,28 +467,6 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
               </div>
             </div>
             
-            {/* NOVO: Campo de Status de Assinatura */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Contrato Assinado? *
-              </label>
-              <select 
-                value={formData.contrato_assinado} 
-                onChange={(e) => setFormData({...formData, contrato_assinado: e.target.value})} 
-                className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Selecione...</option>
-                <option value="sim">Sim - Contrato Assinado</option>
-                <option value="nao">Não - Aguardando Assinatura</option>
-              </select>
-              {formData.contrato_assinado === 'nao' && (
-                <p className="mt-2 text-xs text-orange-600 font-bold">
-                  ⚠️ Uma tarefa será criada no Kanban para cobrar a assinatura em 5 dias
-                </p>
-              )}
-            </div>
-            
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Vincular Contrato (PDF)</label>
               <PDFUpload onUpload={async (file) => { console.log('Upload contrato:', file); }} loading={loading} buttonText="Anexar PDF do Contrato" />
@@ -630,14 +608,61 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             </div>
             
             <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
-                <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
-                  <option value="Sob Análise">Sob Análise</option>
-                  <option value="Proposta Enviada">Proposta Enviada</option>
-                  <option value="Contrato Fechado">Contrato Fechado</option>
-                  <option value="Rejeitada">Rejeitada</option>
-                  <option value="Probono">Probono</option>
+              {/* Grid com 2 colunas: Status de Assinatura + Status do Caso */}
+              <div className="grid grid-cols-3 gap-4 items-start">
+                {/* Coluna 1: Status de Assinatura (só aparece se status for Contrato Fechado) */}
+                {formData.status === 'Contrato Fechado' && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Contrato Assinado? *</label>
+                    {!formData.contrato_assinado ? (
+                      <select 
+                        value={formData.contrato_assinado} 
+                        onChange={(e) => setFormData({...formData, contrato_assinado: e.target.value})} 
+                        className="w-full bg-white border-2 border-gray-300 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
+                        required
+                      >
+                        <option value="">Selecione...</option>
+                        <option value="sim">✓ Assinado</option>
+                        <option value="nao">✗ Não Assinado</option>
+                      </select>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span 
+                          className={`flex-1 px-4 py-3 rounded-xl font-bold text-sm text-center ${
+                            formData.contrato_assinado === 'sim' 
+                              ? 'bg-green-100 text-green-800 border-2 border-green-300' 
+                              : 'bg-red-100 text-red-800 border-2 border-red-300'
+                          }`}
+                        >
+                          {formData.contrato_assinado === 'sim' ? '✓ Assinado' : '✗ Não Assinado'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFormData({...formData, contrato_assinado: ''})}
+                          className="px-3 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                          title="Alterar"
+                        >
+                          ✎
+                        </button>
+                      </div>
+                    )}
+                    {formData.contrato_assinado === 'nao' && (
+                      <p className="mt-2 text-xs text-orange-600 font-bold">
+                        ⚠️ Tarefa será criada no Kanban
+                      </p>
+                    )}
+                  </div>
+                )}
+                
+                {/* Coluna 2 e 3: Status do Caso (ocupa 2 colunas ou 3 se não for Contrato Fechado) */}
+                <div className={formData.status === 'Contrato Fechado' ? 'col-span-2' : 'col-span-3'}>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
+                  <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                    <option value="Sob Análise">Sob Análise</option>
+                    <option value="Proposta Enviada">Proposta Enviada</option>
+                    <option value="Contrato Fechado">Contrato Fechado</option>
+                    <option value="Rejeitada">Rejeitada</option>
+                    <option value="Probono">Probono</option>
                 </select>
               </div>
             </div>
