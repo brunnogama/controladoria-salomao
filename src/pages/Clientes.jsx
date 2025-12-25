@@ -98,62 +98,90 @@ const Clientes = () => {
     }
 
     try {
-      // Buscar ou criar cliente "Sem Cliente"
-      const { data: clienteExistente } = await supabase
+      // Passo 1: Buscar cliente "Sem Cliente" existente
+      let clienteSemClienteId = null
+      
+      const { data: clientesEncontrados, error: erroBusca } = await supabase
         .from('clientes')
         .select('id')
         .eq('cnpj', '00000000000000')
-        .maybeSingle()
+        .limit(1)
 
-      let clienteSemClienteId
+      if (erroBusca) {
+        console.error('Erro ao buscar cliente:', erroBusca)
+        throw new Error('Erro ao buscar cliente genérico')
+      }
 
-      if (clienteExistente) {
-        clienteSemClienteId = clienteExistente.id
+      // Passo 2: Se encontrou, usar o ID
+      if (clientesEncontrados && clientesEncontrados.length > 0) {
+        clienteSemClienteId = clientesEncontrados[0].id
+        console.log('Cliente "Sem Cliente" encontrado:', clienteSemClienteId)
       } else {
-        // Criar cliente "Sem Cliente" se não existir
+        // Passo 3: Se não encontrou, tentar criar
+        console.log('Cliente "Sem Cliente" não encontrado, criando...')
+        
         const { data: novoCliente, error: erroCriacao } = await supabase
           .from('clientes')
           .insert([{
             razao_social: 'Sem Cliente',
             cnpj: '00000000000000',
             nome_contato: 'Sistema',
+            email: 'sistema@semcliente.com',
             observacoes: 'Cliente genérico para contratos desvinculados'
           }])
-          .select()
+          .select('id')
           .single()
 
         if (erroCriacao) {
-          // Se der erro de duplicate key, buscar novamente (race condition)
-          const { data: clienteRace } = await supabase
-            .from('clientes')
-            .select('id')
-            .eq('cnpj', '00000000000000')
-            .single()
+          console.error('Erro ao criar cliente:', erroCriacao)
           
-          if (clienteRace) {
-            clienteSemClienteId = clienteRace.id
+          // Se erro for de duplicate key, buscar novamente
+          if (erroCriacao.code === '23505') {
+            console.log('Duplicate key, buscando novamente...')
+            const { data: clienteRetry } = await supabase
+              .from('clientes')
+              .select('id')
+              .eq('cnpj', '00000000000000')
+              .single()
+            
+            if (clienteRetry) {
+              clienteSemClienteId = clienteRetry.id
+            } else {
+              throw new Error('Não foi possível criar ou encontrar cliente genérico')
+            }
           } else {
             throw erroCriacao
           }
         } else {
           clienteSemClienteId = novoCliente.id
+          console.log('Cliente "Sem Cliente" criado:', clienteSemClienteId)
         }
       }
 
-      // Atualizar contrato para o cliente "Sem Cliente"
-      const { error } = await supabase
+      // Passo 4: Verificar se conseguiu o ID
+      if (!clienteSemClienteId) {
+        throw new Error('Não foi possível obter ID do cliente genérico')
+      }
+
+      // Passo 5: Atualizar o contrato
+      console.log('Desvinculando contrato', contratoId, 'para cliente', clienteSemClienteId)
+      
+      const { error: erroUpdate } = await supabase
         .from('contratos')
         .update({ cliente_id: clienteSemClienteId })
         .eq('id', contratoId)
 
-      if (error) throw error
+      if (erroUpdate) {
+        console.error('Erro ao atualizar contrato:', erroUpdate)
+        throw erroUpdate
+      }
 
       alert('✅ Contrato desvinculado com sucesso!')
       await fetchContratosVinculados(clienteSelecionado.id)
       await fetchClientes()
     } catch (error) {
-      console.error('Erro ao desvincular contrato:', error)
-      alert('❌ Erro ao desvincular contrato: ' + error.message)
+      console.error('Erro completo ao desvincular:', error)
+      alert('❌ Erro ao desvincular contrato: ' + (error.message || error))
     }
   }
 
