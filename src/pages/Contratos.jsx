@@ -1,175 +1,120 @@
-import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { supabase } from '../supabaseClient'
-import { Plus, Search, FileText } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../supabaseClient';
+import { Search, Plus, FileText, Download, Upload, CheckCircle2 } from 'lucide-react';
 
 const Contratos = () => {
-  const [contratos, setContratos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [busca, setBusca] = useState('')
+  const [contratos, setContratos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Busca os dados assim que a tela abre
   useEffect(() => {
-    buscarContratos()
-  }, [])
+    fetchContratos();
+  }, []);
 
-  const buscarContratos = async () => {
+  const fetchContratos = async () => {
     try {
-      setLoading(true)
-      // Busca contratos e "junta" com a tabela de clientes para pegar o nome
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('contratos')
-        .select(
-          `
-          *,
-          clientes ( razao_social )
-        `
-        )
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setContratos(data || [])
-    } catch (error) {
-      console.error('Erro ao buscar contratos:', error)
-      alert('Erro ao carregar contratos!')
+        .select('*, clientes(razao_social)')
+        .order('created_at', { ascending: false });
+      setContratos(data || []);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Função para dar cor aos Status
-  const getStatusColor = (status) => {
-    const cores = {
-      'Sob Análise': 'bg-yellow-100 text-yellow-800',
-      'Proposta Enviada': 'bg-blue-100 text-blue-800',
-      'Contrato Fechado': 'bg-green-100 text-green-800',
-      Rejeitada: 'bg-red-100 text-red-800',
-      Probono: 'bg-purple-100 text-purple-800',
+  const handleUploadPDF = async (event, contratoId) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${contratoId}_${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // 1. Upload para o Storage
+      const { error: uploadError } = await supabase.storage
+        .from('contratos_ged')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Pegar URL pública
+      const { data: urlData } = supabase.storage.from('contratos_ged').getPublicUrl(filePath);
+
+      // 3. Atualizar Banco de Dados
+      const { error: updateError } = await supabase
+        .from('contratos')
+        .update({ 
+          arquivo_pdf_url: urlData.publicUrl,
+          data_vinculo_pdf: new Date().toISOString()
+        })
+        .eq('id', contratoId);
+
+      if (updateError) throw updateError;
+
+      alert('PDF vinculado com sucesso!');
+      fetchContratos();
+    } catch (error) {
+      alert('Erro no upload: ' + error.message);
     }
-    return cores[status] || 'bg-gray-100 text-gray-800'
-  }
-
-  // Filtragem simples no front-end
-  const contratosFiltrados = contratos.filter(
-    (c) =>
-      c.clientes?.razao_social?.toLowerCase().includes(busca.toLowerCase()) ||
-      c.responsavel_socio?.toLowerCase().includes(busca.toLowerCase())
-  )
+  };
 
   return (
-    <div className='w-full space-y-6'>
-      {/* Cabeçalho */}
-      <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
-        <div>
-          <h1 className='text-3xl font-bold text-[#0F2C4C]'>
-            Gestão de Contratos
-          </h1>
-          <p className='text-gray-500'>
-            Acompanhe o status de todas as demandas.
-          </p>
-        </div>
-
-        {/* Botão Novo Contrato */}
-        <Link
-          to='/contratos/novo'
-          className='flex items-center gap-2 bg-[#0F2C4C] text-white px-5 py-2.5 rounded-lg hover:bg-blue-900 transition-colors shadow-lg'
-        >
-          <Plus size={20} />
-          <span>Novo Contrato</span>
-        </Link>
+    <div className="p-8 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-black text-[#0F2C4C]">Gestão de Contratos</h1>
+        <button className="bg-[#0F2C4C] text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2">
+          <Plus size={20} /> Novo Caso
+        </button>
       </div>
 
-      {/* Filtros e Busca */}
-      <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4'>
-        <div className='relative flex-1'>
-          <Search className='absolute left-3 top-3 text-gray-400' size={20} />
-          <input
-            type='text'
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder='Buscar por cliente ou responsável...'
-            className='w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          />
-        </div>
-      </div>
-
-      {/* Tabela de Contratos */}
-      <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-        {loading ? (
-          <div className='p-10 text-center text-gray-500'>
-            Carregando dados...
-          </div>
-        ) : contratosFiltrados.length === 0 ? (
-          <div className='p-16 flex flex-col items-center justify-center text-gray-400'>
-            <FileText size={48} className='mb-4 opacity-20' />
-            <p className='text-lg'>Nenhum contrato encontrado.</p>
-            <p className='text-sm'>Clique em "Novo Contrato" para começar.</p>
-          </div>
-        ) : (
-          <div className='overflow-x-auto'>
-            <table className='w-full text-left'>
-              <thead className='bg-gray-50 border-b border-gray-100'>
-                <tr>
-                  <th className='px-6 py-4 font-semibold text-gray-600'>
-                    Status
-                  </th>
-                  <th className='px-6 py-4 font-semibold text-gray-600'>
-                    Cliente
-                  </th>
-                  <th className='px-6 py-4 font-semibold text-gray-600'>
-                    Responsável
-                  </th>
-                  <th className='px-6 py-4 font-semibold text-gray-600'>
-                    Data Cadastro
-                  </th>
-                  <th className='px-6 py-4 font-semibold text-gray-600 text-right'>
-                    Ações
-                  </th>
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Cliente</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Descrição do Contrato</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">GED (PDF)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {contratos.map((c) => (
+                <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 font-bold text-gray-800 text-sm">{c.clientes?.razao_social}</td>
+                  <td className="px-6 py-4 text-gray-500 text-sm">{c.descricao_contrato || '---'}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${
+                      c.status === 'Contrato Fechado' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {c.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {c.status === 'Contrato Fechado' && (
+                      <div className="flex items-center gap-2">
+                        {c.arquivo_pdf_url ? (
+                          <a href={c.arquivo_pdf_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 text-xs font-bold">
+                            <CheckCircle2 size={16} /> Ver PDF
+                          </a>
+                        ) : (
+                          <label className="cursor-pointer bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 hover:bg-blue-100">
+                            <Upload size={14} /> Vincular PDF
+                            <input type="file" accept=".pdf" className="hidden" onChange={(e) => handleUploadPDF(e, c.id)} />
+                          </label>
+                        )}
+                      </div>
+                    )}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-50'>
-                {contratosFiltrados.map((contrato) => (
-                  <tr
-                    key={contrato.id}
-                    className='hover:bg-gray-50 transition-colors'
-                  >
-                    <td className='px-6 py-4'>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                          contrato.status
-                        )}`}
-                      >
-                        {contrato.status}
-                      </span>
-                    </td>
-                    <td className='px-6 py-4 font-medium text-gray-800'>
-                      {contrato.clientes?.razao_social || 'Cliente sem nome'}
-                    </td>
-                    <td className='px-6 py-4 text-gray-600'>
-                      {contrato.responsavel_socio || '-'}
-                    </td>
-                    <td className='px-6 py-4 text-gray-500'>
-                      {new Date(contrato.created_at).toLocaleDateString(
-                        'pt-BR'
-                      )}
-                    </td>
-                    <td className='px-6 py-4 text-right'>
-                      <Link
-                        to={`/contratos/editar/${contrato.id}`}
-                        className='text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline'
-                      >
-                        Ver Detalhes
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Contratos
+export default Contratos;
