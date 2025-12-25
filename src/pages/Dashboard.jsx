@@ -244,7 +244,7 @@ const Dashboard = () => {
     })
 
     // Gráfico de Evolução Mensal (últimos 6 meses)
-    const hoje = new Date()
+    // Reutilizar variável 'hoje' já declarada no início da função
     const ultimos6Meses = []
     
     // Gerar array dos últimos 6 meses
