@@ -188,15 +188,19 @@ const Dashboard = () => {
 
       // --- GERAL ---
       mGeral.totalCasos++
-      if (c.status === 'Sob Análise') mGeral.emAnalise++
-      if (c.status === 'Rejeitada') mGeral.rejeitados++
-      if (c.status === 'Probono') mGeral.probono++
-      if (c.status === 'Proposta Enviada') {
+      
+      // Normalizar status removendo espaços extras
+      const statusNormalizado = c.status?.trim()
+      
+      if (statusNormalizado === 'Sob Análise') mGeral.emAnalise++
+      if (statusNormalizado === 'Rejeitada') mGeral.rejeitados++
+      if (statusNormalizado === 'Probono') mGeral.probono++
+      if (statusNormalizado === 'Proposta Enviada') {
         mGeral.propostasAtivas++
         mGeral.valorEmNegociacaoPL += pl
         mGeral.valorEmNegociacaoExito += exito
       }
-      if (c.status === 'Contrato Fechado') {
+      if (statusNormalizado === 'Contrato Fechado') {
         mGeral.fechados++
         mGeral.receitaRecorrenteAtiva += mensal
         mGeral.totalFechadoPL += pl
