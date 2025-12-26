@@ -14,7 +14,7 @@ export const LAST_UPDATE = "26/12/2025";
 // Changelog completo (usado em Configurações)
 export const RECENT_CHANGES = [
   {
-    version: "1.6.2",
+    versao: "1.6.2",
     data: "26/12/2025",
     tipo: "Business Intelligence",
     mudancas: [
@@ -27,8 +27,8 @@ export const RECENT_CHANGES = [
     ]
   },
   {
-    version: "1.6.1", 
-    date: "26/12/2025",
+    versao: "1.6.1", 
+    data: "26/12/2025",
     tipo: "UX Enhancement",
     mudancas: [
       "💡 Resumos Explicativos em cada bloco de status",
@@ -39,8 +39,8 @@ export const RECENT_CHANGES = [
     ]
   },
   {
-    version: "1.6.0",
-    date: "26/12/2025",
+    versao: "1.6.0",
+    data: "26/12/2025",
     tipo: "Melhoria de UX",
     mudancas: [
       "📝 Campo Descrição Universal criado",
