@@ -22,6 +22,7 @@ const ContratoForm = () => {
     status: 'Sob Análise',
     area: '',
     responsavel: '',
+    descricao: '', // Campo universal de descrição
     contrario: '',
     processo: '',
     valor_causa: '',
@@ -336,6 +337,7 @@ const ContratoForm = () => {
         // Converter strings vazias para null em campos de texto
         area: dadosParaSalvar.area || null,
         responsavel: dadosParaSalvar.responsavel || null,
+        descricao: dadosParaSalvar.descricao || null, // Campo universal de descrição
         contrario: dadosParaSalvar.contrario || null,
         processo: dadosParaSalvar.processo || null,
         tribunal_turma: dadosParaSalvar.tribunal_turma || null,
@@ -532,10 +534,6 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Outros</label>
               <input type="text" value={formData.proposta_outros} onChange={(e) => setFormData({...formData, proposta_outros: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Informações adicionais..." />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Descrição da Proposta</label>
-              <textarea value={formData.descricao_proposta} onChange={(e) => setFormData({...formData, descricao_proposta: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Descreva os detalhes da proposta..." />
             </div>
           </div>
         );
@@ -895,6 +893,20 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Responsável</label>
                 <input type="text" value={formData.responsavel} onChange={(e) => setFormData({...formData, responsavel: e.target.value})} className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold outline-none focus:border-blue-500" placeholder="Advogado responsável" />
               </div>
+            </div>
+
+            {/* Campo Descrição - Presente em todos os status */}
+            <div className="mt-4">
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                Descrição do Caso
+              </label>
+              <textarea 
+                value={formData.descricao} 
+                onChange={(e) => setFormData({...formData, descricao: e.target.value})} 
+                className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all" 
+                rows="3" 
+                placeholder="Descreva resumidamente o caso, objeto, contexto..."
+              />
             </div>
           </div>
 
