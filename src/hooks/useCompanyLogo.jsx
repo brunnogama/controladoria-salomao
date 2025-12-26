@@ -153,20 +153,22 @@ export const CompanyLogo = ({ cnpj, razaoSocial, clienteId, size = 'md' }) => {
 
   if (loading) {
     return (
-      <div className={`${sizeClass} rounded-full bg-gray-200 animate-pulse`} />
+      <div className={`${sizeClass} rounded-full bg-gray-200 animate-pulse shadow-sm`} />
     )
   }
 
   if (logoUrl) {
     return (
-      <div className={`${sizeClass} rounded-full bg-white border-2 border-gray-200 p-1 flex items-center justify-center overflow-hidden`}>
+      <div className={`${sizeClass} rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center p-1.5 border border-gray-100`}>
         <img 
           src={logoUrl} 
           alt={razaoSocial}
           className="w-full h-full object-contain"
           onError={(e) => {
             // Fallback para inicial se imagem falhar
-            e.target.style.display = 'none'
+            const parent = e.target.parentElement
+            parent.className = `${sizeClass} rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold shadow-md`
+            parent.innerHTML = razaoSocial?.charAt(0).toUpperCase() || '?'
           }}
         />
       </div>
@@ -175,7 +177,7 @@ export const CompanyLogo = ({ cnpj, razaoSocial, clienteId, size = 'md' }) => {
 
   // Fallback: mostrar inicial
   return (
-    <div className={`${sizeClass} rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold`}>
+    <div className={`${sizeClass} rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold shadow-md`}>
       {razaoSocial?.charAt(0).toUpperCase() || '?'}
     </div>
   )
