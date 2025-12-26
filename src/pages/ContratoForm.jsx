@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { Save, ArrowLeft, Briefcase, Search, Loader2, Clock, History } from 'lucide-react';
 import { formatCNPJ, aplicarMascaraMoeda, removerMascaraMoeda } from '../utils/formatters';
 import PDFUpload from '../components/PDFUpload';
+import { APP_VERSION } from '../version';
 
 const ContratoForm = () => {
   const { id } = useParams();
@@ -884,7 +885,7 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
           <h1 className="text-2xl font-black text-[#0F2C4C] uppercase tracking-tighter">
             {id ? 'Edição de Contrato' : 'Abertura de Novo Caso'}
           </h1>
-          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Flow Metrics System v1.4.4</p>
+          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Flow Metrics System v{APP_VERSION}</p>
         </div>
       </div>
 
