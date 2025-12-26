@@ -14,6 +14,10 @@ import {
   FileText,
   Hash,
   Unlink,
+  Clock,
+  History,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 
 const Clientes = () => {
@@ -32,6 +36,8 @@ const Clientes = () => {
   const [clienteSelecionado, setClienteSelecionado] = useState(null)
   const [contratosVinculados, setContratosVinculados] = useState([])
   const [loadingContratos, setLoadingContratos] = useState(false)
+  const [historicoPorContrato, setHistoricoPorContrato] = useState({}) // {contratoId: [historico]}
+  const [contratoExpandido, setContratoExpandido] = useState(null) // ID do contrato com histórico expandido
 
   // Formulário
   const [formData, setFormData] = useState({
@@ -79,6 +85,21 @@ const Clientes = () => {
 
       if (error) throw error
       setContratosVinculados(data || [])
+      
+      // Buscar histórico de cada contrato
+      if (data && data.length > 0) {
+        const historicos = {}
+        for (const contrato of data) {
+          const { data: hist } = await supabase
+            .from('historico_status_contratos')
+            .select('*')
+            .eq('contrato_id', contrato.id)
+            .order('data_mudanca', { ascending: false })
+          
+          historicos[contrato.id] = hist || []
+        }
+        setHistoricoPorContrato(historicos)
+      }
     } catch (error) {
       console.error('Erro ao buscar contratos:', error)
       alert('Erro ao carregar contratos vinculados!')
@@ -593,31 +614,109 @@ const Clientes = () => {
                   </div>
                 ) : (
                   <div className='space-y-3'>
-                    {contratosVinculados.map((contrato) => (
-                      <div key={contrato.id} className='bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-between'>
-                        <div className='flex-1'>
-                          <div className='flex items-center gap-2 mb-2'>
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(contrato.status)}`}>
-                              {contrato.status}
-                            </span>
-                            {contrato.numero_hon && (
-                              <span className='text-xs text-gray-500 font-mono'>HON: {contrato.numero_hon}</span>
-                            )}
+                    {contratosVinculados.map((contrato) => {
+                      const historico = historicoPorContrato[contrato.id] || []
+                      const isExpanded = contratoExpandido === contrato.id
+                      
+                      return (
+                        <div key={contrato.id} className='bg-gray-50 rounded-lg border border-gray-200'>
+                          {/* Cabeçalho do Contrato */}
+                          <div className='p-4 flex items-center justify-between'>
+                            <div className='flex-1'>
+                              <div className='flex items-center gap-2 mb-2'>
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(contrato.status)}`}>
+                                  {contrato.status}
+                                </span>
+                                {contrato.numero_hon && (
+                                  <span className='text-xs text-gray-500 font-mono'>HON: {contrato.numero_hon}</span>
+                                )}
+                                {historico.length > 0 && (
+                                  <button
+                                    onClick={() => setContratoExpandido(isExpanded ? null : contrato.id)}
+                                    className='text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1'
+                                  >
+                                    <History size={14} />
+                                    {historico.length} {historico.length === 1 ? 'mudança' : 'mudanças'}
+                                    {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                                  </button>
+                                )}
+                              </div>
+                              <p className='text-sm text-gray-700'>{contrato.descricao_contrato || 'Sem descrição'}</p>
+                              {contrato.area && (
+                                <p className='text-xs text-gray-500 mt-1'>Área: {contrato.area}</p>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleDesvincularContrato(contrato.id, contrato.numero_hon)}
+                              className='ml-4 p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors'
+                              title='Desvincular contrato'
+                            >
+                              <Unlink size={18} />
+                            </button>
                           </div>
-                          <p className='text-sm text-gray-700'>{contrato.descricao_contrato || 'Sem descrição'}</p>
-                          {contrato.area && (
-                            <p className='text-xs text-gray-500 mt-1'>Área: {contrato.area}</p>
+                          
+                          {/* Histórico Expansível */}
+                          {isExpanded && historico.length > 0 && (
+                            <div className='px-4 pb-4 border-t border-gray-200 pt-3 bg-white'>
+                              <div className='space-y-2'>
+                                {historico.map((item, index) => {
+                                  const data = new Date(item.data_mudanca)
+                                  const dataFormatada = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                  const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                  
+                                  const agora = new Date()
+                                  const diffMs = agora - data
+                                  const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+                                  
+                                  let tempoDecorrido = diffDias > 0 ? `há ${diffDias} ${diffDias === 1 ? 'dia' : 'dias'}` : 'hoje'
+                                  
+                                  const getCores = (status) => {
+                                    const cores = {
+                                      'Sob Análise': { badge: 'bg-blue-100 text-blue-700' },
+                                      'Proposta Enviada': { badge: 'bg-yellow-100 text-yellow-700' },
+                                      'Contrato Fechado': { badge: 'bg-green-100 text-green-700' },
+                                      'Rejeitada': { badge: 'bg-red-100 text-red-700' },
+                                      'Probono': { badge: 'bg-purple-100 text-purple-700' }
+                                    }
+                                    return cores[status] || { badge: 'bg-gray-100 text-gray-700' }
+                                  }
+                                  
+                                  return (
+                                    <div key={item.id} className='text-xs bg-gray-50 rounded p-3 border border-gray-200'>
+                                      <div className='flex items-center justify-between mb-1'>
+                                        <div className='flex items-center gap-2'>
+                                          {item.status_anterior ? (
+                                            <>
+                                              <span className={`px-2 py-0.5 rounded font-semibold ${getCores(item.status_anterior).badge}`}>
+                                                {item.status_anterior}
+                                              </span>
+                                              <span className='text-gray-400'>→</span>
+                                              <span className={`px-2 py-0.5 rounded font-semibold ${getCores(item.status_novo).badge}`}>
+                                                {item.status_novo}
+                                              </span>
+                                            </>
+                                          ) : (
+                                            <span className={`px-2 py-0.5 rounded font-semibold ${getCores(item.status_novo).badge}`}>
+                                              📝 Criado: {item.status_novo}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <span className='text-gray-500 font-medium'>{tempoDecorrido}</span>
+                                      </div>
+                                      <div className='text-gray-600 flex items-center gap-2'>
+                                        <span>📅 {dataFormatada}</span>
+                                        <span>•</span>
+                                        <span>🕐 {horaFormatada}</span>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <button
-                          onClick={() => handleDesvincularContrato(contrato.id, contrato.numero_hon)}
-                          className='ml-4 p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors'
-                          title='Desvincular contrato'
-                        >
-                          <Unlink size={18} />
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
