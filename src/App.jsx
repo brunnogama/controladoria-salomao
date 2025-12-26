@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Contratos from './pages/Contratos';
 import ContratoForm from './pages/ContratoForm';
+import Propostas from './pages/Propostas';
 import Clientes from './pages/Clientes';
 import Compliance from './pages/Compliance';
 import Historico from './pages/Historico';
@@ -37,6 +38,7 @@ const App = () => {
           <Route path="contratos" element={<Contratos />} />
           <Route path="contratos/novo" element={<ContratoForm />} />
           <Route path="contratos/editar/:id" element={<ContratoForm />} />
+          <Route path="propostas" element={<Propostas />} />
           <Route path="clientes" element={<Clientes />} />
           <Route path="compliance" element={<Compliance />} />
           <Route path="ged" element={<GED />} />
