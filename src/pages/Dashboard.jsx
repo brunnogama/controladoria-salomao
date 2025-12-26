@@ -497,7 +497,7 @@ Controladoria Jurídica
 
         <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
           <div className='bg-blue-50 p-4 rounded-xl border border-blue-100'>
-            <p className='text-xs font-bold text-blue-600 uppercase mb-1'>Novos Prospects</p>
+            <p className='text-xs font-bold text-blue-600 uppercase mb-1'>Novas Análises</p>
             <p className='text-2xl font-bold text-blue-900'>{metrics.semana.novos}</p>
           </div>
 
@@ -525,7 +525,7 @@ Controladoria Jurídica
 
         <div className='mt-4 pt-4 border-t border-gray-100'>
           <p className='text-sm text-gray-600'>
-            <span className='font-bold'>Resumo:</span> Esta semana entraram {metrics.semana.novos} novos prospects, 
+            <span className='font-bold'>Resumo:</span> Esta semana entraram {metrics.semana.novos} novos casos, 
             {metrics.semana.propQtd > 0 && ` foram enviadas ${metrics.semana.propQtd} propostas,`}
             {metrics.semana.fechQtd > 0 && ` ${metrics.semana.fechQtd} contrato(s) fechado(s)`}
             {metrics.semana.rejeitados > 0 && ` e ${metrics.semana.rejeitados} rejeitado(s)`}.
@@ -577,9 +577,9 @@ Controladoria Jurídica
             </div>
           </div>
 
-          {/* Gráfico de Linha - Evolução Total 6 Meses */}
+          {/* Gráfico de Linha - Evolução Total Últimos 6 Meses */}
           <div className='mt-4 pt-4 border-t border-gray-200'>
-            <h3 className='text-xs font-bold text-purple-700 mb-3 uppercase tracking-wide'>Evolução Total (6M)</h3>
+            <h3 className='text-xs font-bold text-purple-700 mb-3 uppercase tracking-wide'>Evolução Total (Últimos 6 Meses)</h3>
             <div className='relative h-24'>
               {/* Calcular min e max para escala */}
               {(() => {
@@ -685,12 +685,12 @@ Controladoria Jurídica
           </div>
         </div>
 
-        {/* Entrada de Casos (6 Meses) - SEM SCROLL */}
+        {/* Entrada de Casos (Últimos 6 Meses) - SEM SCROLL */}
         <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
           <div className='flex items-center gap-2 mb-4 border-b pb-3'>
             <BarChart3 className='text-blue-600' size={20} />
             <div>
-              <h2 className='text-lg font-bold text-gray-800'>Entrada de Casos (6M)</h2>
+              <h2 className='text-lg font-bold text-gray-800'>Entrada de Casos (Últimos 6 Meses)</h2>
               <p className='text-[10px] text-gray-500'>Evolução por fase</p>
             </div>
           </div>
@@ -782,7 +782,7 @@ Controladoria Jurídica
           <Filter className='text-blue-600' size={24} />
           <div>
             <h2 className='text-xl font-bold text-gray-800'>Funil de Eficiência</h2>
-            <p className='text-xs text-gray-500'>Fluxo completo de conversão incluindo rejeições</p>
+            <p className='text-xs text-gray-500'>Fluxo completo de conversão</p>
           </div>
         </div>
 
@@ -930,19 +930,22 @@ Controladoria Jurídica
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          {/* Card Em Negociação */}
           <div className='bg-white p-6 rounded-xl shadow-sm'>
-            <h3 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
-              <TrendingUp className='text-yellow-600' size={20} />
-              Em Negociação
-            </h3>
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-lg font-bold text-gray-800 flex items-center gap-2'>
+                <TrendingUp className='text-yellow-600' size={20} />
+                Em Negociação
+              </h3>
+              <div className='text-right'>
+                <p className='text-xs text-gray-500 mb-1'>Total (PL + Êxito)</p>
+                <p className='text-2xl font-bold text-yellow-900'>{formatMoney(totalNegociacao)}</p>
+              </div>
+            </div>
             <div className='space-y-3'>
               <div className='flex justify-between items-center border-b pb-2'>
                 <span className='text-gray-600'>Propostas Ativas:</span>
                 <span className='text-xl font-bold text-yellow-700'>{metrics.geral.propostasAtivas}</span>
-              </div>
-              <div className='flex justify-between items-center border-b pb-2'>
-                <span className='text-gray-600'>Valor Total:</span>
-                <span className='text-2xl font-bold text-yellow-900'>{formatMoney(totalNegociacao)}</span>
               </div>
               <div className='flex justify-between items-center text-sm'>
                 <span className='text-gray-500'>Pro Labore:</span>
@@ -952,22 +955,29 @@ Controladoria Jurídica
                 <span className='text-gray-500'>Êxito:</span>
                 <span className='font-semibold text-gray-700'>{formatMoney(metrics.geral.valorEmNegociacaoExito)}</span>
               </div>
+              <div className='flex justify-between items-center text-sm'>
+                <span className='text-gray-500'>Recorrente Mensal:</span>
+                <span className='font-semibold text-gray-700'>R$ 0,00</span>
+              </div>
             </div>
           </div>
 
+          {/* Card Contratos Fechados */}
           <div className='bg-white p-6 rounded-xl shadow-sm'>
-            <h3 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
-              <CheckCircle2 className='text-green-600' size={20} />
-              Contratos Fechados
-            </h3>
+            <div className='flex items-center justify-between mb-4'>
+              <h3 className='text-lg font-bold text-gray-800 flex items-center gap-2'>
+                <CheckCircle2 className='text-green-600' size={20} />
+                Contratos Fechados
+              </h3>
+              <div className='text-right'>
+                <p className='text-xs text-gray-500 mb-1'>Total (PL + Êxito)</p>
+                <p className='text-2xl font-bold text-green-900'>{formatMoney(metrics.geral.totalFechadoPL + metrics.geral.totalFechadoExito)}</p>
+              </div>
+            </div>
             <div className='space-y-3'>
               <div className='flex justify-between items-center border-b pb-2'>
                 <span className='text-gray-600'>Total de Contratos:</span>
                 <span className='text-xl font-bold text-green-700'>{metrics.geral.fechados}</span>
-              </div>
-              <div className='flex justify-between items-center border-b pb-2'>
-                <span className='text-gray-600'>Valor Total:</span>
-                <span className='text-2xl font-bold text-green-900'>{formatMoney(totalCarteira)}</span>
               </div>
               <div className='flex justify-between items-center text-sm'>
                 <span className='text-gray-500'>Pro Labore:</span>
@@ -985,58 +995,49 @@ Controladoria Jurídica
           </div>
         </div>
 
-        <div className='mt-6 bg-white p-6 rounded-xl shadow-sm'>
-          <h3 className='text-lg font-bold text-gray-800 mb-4 flex items-center gap-2'>
-            <DollarSign className='text-purple-600' size={20} />
-            Consolidado Total
-          </h3>
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='text-center p-4 bg-purple-50 rounded-lg border border-purple-200'>
-              <p className='text-sm text-purple-700 font-semibold mb-1'>Valor Total</p>
-              <p className='text-3xl font-bold text-purple-900'>{formatMoney(totalNegociacao + totalCarteira)}</p>
-            </div>
-            <div className='text-center p-4 bg-blue-50 rounded-lg border border-blue-200'>
-              <p className='text-sm text-blue-700 font-semibold mb-1'>Contratos Assinados</p>
-              <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
-              <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
-            </div>
-            <div className='text-center p-4 bg-orange-50 rounded-lg border border-orange-200'>
-              <p className='text-sm text-orange-700 font-semibold mb-1'>Aguardando Assinatura</p>
-              <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
+        {/* Cards de Status de Assinatura - Movidos para baixo dos cards principais */}
+        <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='text-center p-4 bg-blue-50 rounded-lg border border-blue-200'>
+            <p className='text-sm text-blue-700 font-semibold mb-1'>Contratos Assinados</p>
+            <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
+            <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
+          </div>
+          <div className='text-center p-4 bg-orange-50 rounded-lg border border-orange-200'>
+            <p className='text-sm text-orange-700 font-semibold mb-1'>Aguardando Assinatura</p>
+            <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
+          </div>
+        </div>
+
+        {/* Lista de Contratos Aguardando Assinatura */}
+        {contratosSemAssinatura.length > 0 && (
+          <div className='mt-4 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
+            <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
+              <AlertCircle className='text-orange-600' size={18} />
+              Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
+            </h4>
+            <div className='space-y-2'>
+              {contratosSemAssinatura.map((contrato) => (
+                <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
+                  <div>
+                    <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
+                    <p className='text-xs text-gray-600'>
+                      HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
+                    </p>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-xs text-gray-500'>
+                      {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
+                      {contrato.dias_sem_assinar} dia(s) sem assinar
+                      {contrato.dias_sem_assinar > 5 && ' ⚠️'}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Lista de Contratos Aguardando Assinatura */}
-          {contratosSemAssinatura.length > 0 && (
-            <div className='mt-4 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
-              <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
-                <AlertCircle className='text-orange-600' size={18} />
-                Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
-              </h4>
-              <div className='space-y-2'>
-                {contratosSemAssinatura.map((contrato) => (
-                  <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
-                    <div>
-                      <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
-                      <p className='text-xs text-gray-600'>
-                        HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
-                      </p>
-                    </div>
-                    <div className='text-right'>
-                      <p className='text-xs text-gray-500'>
-                        {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
-                      </p>
-                      <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
-                        {contrato.dias_sem_assinar} dia(s) sem assinar
-                        {contrato.dias_sem_assinar > 5 && ' ⚠️'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* 6. ANÁLISE DE REJEIÇÕES */}
