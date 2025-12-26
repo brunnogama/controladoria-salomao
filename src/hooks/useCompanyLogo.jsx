@@ -159,11 +159,11 @@ export const CompanyLogo = ({ cnpj, razaoSocial, clienteId, size = 'md' }) => {
 
   if (logoUrl) {
     return (
-      <div className={`${sizeClass} rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center p-1.5 border border-gray-100`}>
+      <div className={`${sizeClass} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border border-gray-100`}>
         <img 
           src={logoUrl} 
           alt={razaoSocial}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover rounded-full"
           onError={(e) => {
             // Fallback para inicial se imagem falhar
             const parent = e.target.parentElement
