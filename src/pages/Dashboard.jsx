@@ -620,8 +620,8 @@ Controladoria Jurídica
                 console.log('📊 Evolução Mensal:', evolucaoMensal)
                 console.log('📊 Totais:', totais)
                 const maxTotal = Math.max(...totais, 1)
-                const minTotal = Math.min(...totais, 0)
-                const range = maxTotal - minTotal || 1
+                const minTotal = 0 // Sempre começar do zero
+                const range = maxTotal || 1 // Se maxTotal é 0, usar 1 para evitar divisão por zero
                 
                 return (
                   <>
@@ -650,7 +650,7 @@ Controladoria Jurídica
                         d={(() => {
                           const points = totais.map((total, i) => {
                             const x = (i / (totais.length - 1)) * 100
-                            const y = 100 - ((total - minTotal) / range * 100)
+                            const y = 100 - ((total / range) * 100)
                             return `${x},${y}`
                           }).join(' ')
                           return `M 0,100 L ${points} L 100,100 Z`
@@ -662,7 +662,7 @@ Controladoria Jurídica
                       <polyline
                         points={totais.map((total, i) => {
                           const x = (i / (totais.length - 1)) * 100
-                          const y = 100 - ((total - minTotal) / range * 100)
+                          const y = 100 - ((total / range) * 100)
                           return `${x},${y}`
                         }).join(' ')}
                         fill='none'
@@ -674,7 +674,7 @@ Controladoria Jurídica
                       {/* Pontos */}
                       {totais.map((total, i) => {
                         const x = (i / (totais.length - 1)) * 100
-                        const y = 100 - ((total - minTotal) / range * 100)
+                        const y = 100 - ((total / range) * 100)
                         return (
                           <circle
                             key={i}
@@ -703,7 +703,7 @@ Controladoria Jurídica
                       {totais.map((total, i) => {
                         if (total === 0) return null // Não mostrar rótulo para valores zero
                         const x = (i / (totais.length - 1)) * 100
-                        const y = 100 - ((total - minTotal) / range * 100)
+                        const y = 100 - ((total / range) * 100)
                         return (
                           <div key={i} className='absolute' style={{
                             left: `${x}%`,
