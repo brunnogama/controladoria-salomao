@@ -266,15 +266,30 @@ const Dashboard = () => {
       contratos.forEach((c) => {
         const statusNormalizado = c.status?.trim()
         
-        // Contar entrada de casos (todos os casos, independente do status inicial)
-        // Usa created_at como data de entrada do caso no sistema
-        const dataEntrada = new Date(c.created_at)
+        // Contar entrada de casos baseado na data do PRIMEIRO STATUS preenchido
+        // Prioridade: data_prospect > data_proposta > data_contrato > data_rejeicao > data_probono > created_at
+        let dataEntrada = null
+        
+        if (c.data_prospect) {
+          dataEntrada = new Date(c.data_prospect)
+        } else if (c.data_proposta) {
+          dataEntrada = new Date(c.data_proposta)
+        } else if (c.data_contrato) {
+          dataEntrada = new Date(c.data_contrato)
+        } else if (c.data_rejeicao) {
+          dataEntrada = new Date(c.data_rejeicao)
+        } else if (c.data_probono) {
+          dataEntrada = new Date(c.data_probono)
+        } else {
+          dataEntrada = new Date(c.created_at) // Fallback
+        }
+        
         const mesEntrada = dataEntrada.getMonth()
         const anoEntrada = dataEntrada.getFullYear()
 
         ultimos6Meses.forEach((item) => {
           if (item.mesNumero === mesEntrada && item.anoNumero === anoEntrada) {
-            item.prospects++ // Renomeado mas conta todos os casos que entraram no sistema
+            item.prospects++ // Conta entrada do caso no sistema
           }
         })
 
@@ -696,12 +711,12 @@ Controladoria Jurídica
           </div>
         </div>
 
-        {/* Últimos 10 Casos Cadastrados - SEM SCROLL */}
+        {/* Últimos Casos Cadastrados - SEM SCROLL */}
         <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
           <div className='flex items-center gap-2 mb-4 border-b pb-3'>
             <History className='text-blue-600' size={20} />
             <div>
-              <h2 className='text-lg font-bold text-gray-800'>Últimos 10 Casos</h2>
+              <h2 className='text-lg font-bold text-gray-800'>Últimos Casos</h2>
               <p className='text-[10px] text-gray-500'>Casos mais recentes</p>
             </div>
           </div>
@@ -802,62 +817,6 @@ Controladoria Jurídica
             {funil.perdaNegociacao > 0 && ` ${funil.perdaNegociacao} ${funil.perdaNegociacao === 1 ? 'rejeitado' : 'rejeitados'} após proposta.`}
           </p>
         </div>
-      </div>
-
-      {/* 3B. STATUS DAS ASSINATURAS NOS CONTRATOS */}
-      <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
-        <div className='flex items-center gap-2 mb-6 border-b pb-4'>
-          <FileSignature className='text-purple-600' size={24} />
-          <div>
-            <h2 className='text-xl font-bold text-gray-800'>Status das Assinaturas nos Contratos</h2>
-            <p className='text-xs text-gray-500'>Acompanhamento de formalização dos contratos</p>
-          </div>
-        </div>
-
-        {/* Cards de Status de Assinatura */}
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div className='text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-300'>
-            <p className='text-sm text-blue-700 font-semibold mb-1'>✓ Contratos Fechados Assinados</p>
-            <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
-            <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
-          </div>
-          <div className='text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-300'>
-            <p className='text-sm text-orange-700 font-semibold mb-1'>⏳ Contratos Fechados Aguardando Assinatura</p>
-            <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
-            <p className='text-xs text-gray-600 mt-1'>pendentes de assinatura</p>
-          </div>
-        </div>
-
-        {/* Lista de Contratos Aguardando Assinatura */}
-        {contratosSemAssinatura.length > 0 && (
-          <div className='mt-6 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
-            <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
-              <AlertCircle className='text-orange-600' size={18} />
-              Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
-            </h4>
-            <div className='space-y-2'>
-              {contratosSemAssinatura.map((contrato) => (
-                <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
-                  <div>
-                    <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
-                    <p className='text-xs text-gray-600'>
-                      HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
-                    </p>
-                  </div>
-                  <div className='text-right'>
-                    <p className='text-xs text-gray-500'>
-                      {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
-                    </p>
-                    <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
-                      {contrato.dias_sem_assinar} dia(s) sem assinar
-                      {contrato.dias_sem_assinar > 5 && ' ⚠️'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 4. VALORES (PERFORMANCE COMERCIAL) */}
@@ -1126,6 +1085,62 @@ Controladoria Jurídica
           </div>
         </div>
       )}
+
+      {/* 7. STATUS DAS ASSINATURAS NOS CONTRATOS */}
+      <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
+        <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+          <FileSignature className='text-purple-600' size={24} />
+          <div>
+            <h2 className='text-xl font-bold text-gray-800'>Status das Assinaturas nos Contratos</h2>
+            <p className='text-xs text-gray-500'>Acompanhamento de formalização dos contratos</p>
+          </div>
+        </div>
+
+        {/* Cards de Status de Assinatura */}
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-300'>
+            <p className='text-sm text-blue-700 font-semibold mb-1'>✓ Contratos Fechados Assinados</p>
+            <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
+            <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
+          </div>
+          <div className='text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-300'>
+            <p className='text-sm text-orange-700 font-semibold mb-1'>⏳ Contratos Fechados Aguardando Assinatura</p>
+            <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
+            <p className='text-xs text-gray-600 mt-1'>pendentes de assinatura</p>
+          </div>
+        </div>
+
+        {/* Lista de Contratos Aguardando Assinatura */}
+        {contratosSemAssinatura.length > 0 && (
+          <div className='mt-6 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
+            <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
+              <AlertCircle className='text-orange-600' size={18} />
+              Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
+            </h4>
+            <div className='space-y-2'>
+              {contratosSemAssinatura.map((contrato) => (
+                <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
+                  <div>
+                    <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
+                    <p className='text-xs text-gray-600'>
+                      HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
+                    </p>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-xs text-gray-500'>
+                      {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
+                      {contrato.dias_sem_assinar} dia(s) sem assinar
+                      {contrato.dias_sem_assinar > 5 && ' ⚠️'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
