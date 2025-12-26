@@ -524,12 +524,33 @@ Controladoria Jurídica
         </div>
 
         <div className='mt-4 pt-4 border-t border-gray-100'>
-          <p className='text-sm text-gray-600'>
+          <p className='text-sm text-gray-600 mb-3'>
             <span className='font-bold'>Resumo:</span> Esta semana entraram {metrics.semana.novos} novos casos, 
             {metrics.semana.propQtd > 0 && ` foram enviadas ${metrics.semana.propQtd} propostas,`}
             {metrics.semana.fechQtd > 0 && ` ${metrics.semana.fechQtd} contrato(s) fechado(s)`}
             {metrics.semana.rejeitados > 0 && ` e ${metrics.semana.rejeitados} rejeitado(s)`}.
           </p>
+          
+          {/* Resumo Financeiro */}
+          <div className='grid grid-cols-2 gap-4 mt-4'>
+            <div className='bg-yellow-50 p-3 rounded-lg border border-yellow-200'>
+              <p className='text-xs font-bold text-yellow-700 mb-1'>💰 Propostas Enviadas</p>
+              <p className='text-lg font-bold text-yellow-900'>{formatMoney(metrics.semana.propPL + metrics.semana.propExito)}</p>
+              <div className='flex justify-between text-[10px] text-gray-600 mt-1'>
+                <span>PL: {formatMoney(metrics.semana.propPL)}</span>
+                <span>Êxito: {formatMoney(metrics.semana.propExito)}</span>
+              </div>
+            </div>
+            
+            <div className='bg-green-50 p-3 rounded-lg border border-green-200'>
+              <p className='text-xs font-bold text-green-700 mb-1'>💰 Contratos Fechados</p>
+              <p className='text-lg font-bold text-green-900'>{formatMoney(metrics.semana.fechPL + metrics.semana.fechExito + metrics.semana.fechMensal)}</p>
+              <div className='flex justify-between text-[10px] text-gray-600 mt-1'>
+                <span>PL: {formatMoney(metrics.semana.fechPL)}</span>
+                <span>Êxito: {formatMoney(metrics.semana.fechExito)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -832,6 +853,20 @@ Controladoria Jurídica
             {funil.perdaNegociacao > 0 && ` ${funil.perdaNegociacao} rejeitados após proposta.`}
           </p>
         </div>
+
+        {/* Cards de Status de Assinatura */}
+        <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-300'>
+            <p className='text-sm text-blue-700 font-semibold mb-1'>✓ Contratos Assinados</p>
+            <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
+            <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
+          </div>
+          <div className='text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-300'>
+            <p className='text-sm text-orange-700 font-semibold mb-1'>⏳ Aguardando Assinatura</p>
+            <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
+            <p className='text-xs text-gray-600 mt-1'>pendentes de assinatura</p>
+          </div>
+        </div>
       </div>
 
       {/* 4. VALORES (PERFORMANCE COMERCIAL) */}
@@ -995,22 +1030,9 @@ Controladoria Jurídica
           </div>
         </div>
 
-        {/* Cards de Status de Assinatura - Movidos para baixo dos cards principais */}
-        <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div className='text-center p-4 bg-blue-50 rounded-lg border border-blue-200'>
-            <p className='text-sm text-blue-700 font-semibold mb-1'>Contratos Assinados</p>
-            <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
-            <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
-          </div>
-          <div className='text-center p-4 bg-orange-50 rounded-lg border border-orange-200'>
-            <p className='text-sm text-orange-700 font-semibold mb-1'>Aguardando Assinatura</p>
-            <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
-          </div>
-        </div>
-
         {/* Lista de Contratos Aguardando Assinatura */}
         {contratosSemAssinatura.length > 0 && (
-          <div className='mt-4 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
+          <div className='mt-6 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
             <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
               <AlertCircle className='text-orange-600' size={18} />
               Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
