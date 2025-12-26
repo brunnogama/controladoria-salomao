@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { CompanyLogo } from '../hooks/useCompanyLogo'
-import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck, Trash2, Filter } from 'lucide-react'
+import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck, Trash2, Filter, Download } from 'lucide-react'
 
 const Contratos = () => {
   const navigate = useNavigate()
@@ -178,6 +178,118 @@ const Contratos = () => {
     return new Date(data).toLocaleDateString('pt-BR')
   }
 
+  const exportarParaExcel = async () => {
+    try {
+      setLoading(true)
+
+      // Usar contratos filtrados
+      const dadosParaExportar = contratosFiltrados.map((contrato) => ({
+        'Número HON': contrato.numero_hon || '-',
+        'Cliente': contrato.clientes?.razao_social || '-',
+        'CNPJ': contrato.clientes?.cnpj || '-',
+        'Status': contrato.status || '-',
+        'Responsável': contrato.responsavel || '-',
+        'Área': contrato.area || '-',
+        'Número Processo': contrato.numero_proc || '-',
+        'Descrição': contrato.descricao_contrato || '-',
+        
+        // Datas
+        'Data Prospect': formatarData(contrato.data_prospect),
+        'Data Proposta': formatarData(contrato.data_proposta),
+        'Data Contrato': formatarData(contrato.data_contrato),
+        'Data Rejeição': formatarData(contrato.data_rejeicao),
+        'Data Cadastro': formatarData(contrato.created_at),
+        
+        // Valores Proposta
+        'Proposta Pró-labore': contrato.proposta_pro_labore || 0,
+        'Proposta Êxito Total': contrato.proposta_exito_total || 0,
+        'Proposta Fixo Mensal': contrato.proposta_fixo_mensal || 0,
+        
+        // Valores Contrato
+        'Contrato Pró-labore': contrato.contrato_pro_labore || 0,
+        'Contrato Êxito Total': contrato.contrato_exito_total || 0,
+        'Contrato Fixo Mensal': contrato.contrato_fixo_mensal || 0,
+        
+        // Informações adicionais
+        'Contrato Assinado': contrato.contrato_assinado === 'sim' ? 'Sim' : 'Não',
+        'Observações': contrato.observacoes || '-',
+        'Motivo Rejeição': contrato.motivo_rejeicao || '-',
+        'Iniciativa Rejeição': contrato.iniciativa_rejeicao || '-',
+        
+        // Histórico
+        'Histórico de Alterações': contrato.historico_alteracoes 
+          ? contrato.historico_alteracoes.map(h => 
+              `[${formatarData(h.data)}] ${h.usuario}: ${h.acao} - ${h.detalhes}`
+            ).join(' | ')
+          : '-'
+      }))
+
+      if (dadosParaExportar.length === 0) {
+        alert('Nenhum contrato para exportar com os filtros aplicados!')
+        return
+      }
+
+      // Importar biblioteca xlsx
+      const XLSX = await import('xlsx')
+      
+      // Criar workbook e worksheet
+      const wb = XLSX.utils.book_new()
+      const ws = XLSX.utils.json_to_sheet(dadosParaExportar)
+      
+      // Ajustar largura das colunas
+      const colWidths = [
+        { wch: 12 }, // Número HON
+        { wch: 30 }, // Cliente
+        { wch: 18 }, // CNPJ
+        { wch: 18 }, // Status
+        { wch: 20 }, // Responsável
+        { wch: 15 }, // Área
+        { wch: 25 }, // Número Processo
+        { wch: 40 }, // Descrição
+        { wch: 12 }, // Data Prospect
+        { wch: 12 }, // Data Proposta
+        { wch: 12 }, // Data Contrato
+        { wch: 12 }, // Data Rejeição
+        { wch: 12 }, // Data Cadastro
+        { wch: 15 }, // Proposta Pró-labore
+        { wch: 15 }, // Proposta Êxito
+        { wch: 15 }, // Proposta Fixo
+        { wch: 15 }, // Contrato Pró-labore
+        { wch: 15 }, // Contrato Êxito
+        { wch: 15 }, // Contrato Fixo
+        { wch: 15 }, // Assinado
+        { wch: 40 }, // Observações
+        { wch: 25 }, // Motivo Rejeição
+        { wch: 20 }, // Iniciativa
+        { wch: 60 }  // Histórico
+      ]
+      ws['!cols'] = colWidths
+      
+      // Adicionar worksheet ao workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Contratos')
+      
+      // Criar nome do arquivo com data e filtros aplicados
+      const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
+      let nomeArquivo = `Contratos_${hoje}`
+      
+      if (filtroStatus) nomeArquivo += `_${filtroStatus.replace(/ /g, '_')}`
+      if (filtroResponsavel) nomeArquivo += `_${filtroResponsavel}`
+      if (filtroDataInicio || filtroDataFim) nomeArquivo += '_Filtrado'
+      
+      nomeArquivo += `.xlsx`
+      
+      // Baixar arquivo
+      XLSX.writeFile(wb, nomeArquivo)
+      
+      alert(`✅ ${dadosParaExportar.length} contratos exportados com sucesso!`)
+    } catch (error) {
+      console.error('Erro ao exportar:', error)
+      alert('Erro ao exportar para Excel: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className='w-full space-y-6'>
       <div className='flex flex-col md:flex-row justify-between items-start md:items-center gap-4'>
@@ -190,13 +302,30 @@ const Contratos = () => {
           </p>
         </div>
 
-        <Link
-          to='/contratos/novo'
-          className='flex items-center gap-2 bg-[#0F2C4C] text-white px-5 py-2.5 rounded-lg hover:bg-blue-900 transition-colors shadow-lg font-bold'
-        >
-          <Plus size={20} />
-          <span>Novo Contrato</span>
-        </Link>
+        <div className='flex gap-3'>
+          <button
+            onClick={exportarParaExcel}
+            disabled={loading || contratosFiltrados.length === 0}
+            className='flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors shadow-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed'
+            title={contratosFiltrados.length === 0 ? 'Nenhum contrato para exportar' : `Exportar ${contratosFiltrados.length} contratos`}
+          >
+            <Download size={20} />
+            <span>Exportar Excel</span>
+            {contratosFiltrados.length > 0 && (
+              <span className='bg-green-800 px-2 py-0.5 rounded text-xs'>
+                {contratosFiltrados.length}
+              </span>
+            )}
+          </button>
+
+          <Link
+            to='/contratos/novo'
+            className='flex items-center gap-2 bg-[#0F2C4C] text-white px-5 py-2.5 rounded-lg hover:bg-blue-900 transition-colors shadow-lg font-bold'
+          >
+            <Plus size={20} />
+            <span>Novo Contrato</span>
+          </Link>
+        </div>
       </div>
 
       <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4'>
