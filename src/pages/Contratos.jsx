@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
-import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck, Trash2 } from 'lucide-react'
+import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck, Trash2, Filter } from 'lucide-react'
 
 const Contratos = () => {
   const navigate = useNavigate()
@@ -10,6 +10,12 @@ const Contratos = () => {
   const [busca, setBusca] = useState('')
   const [contratoSelecionado, setContratoSelecionado] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  
+  // Filtros
+  const [filtroStatus, setFiltroStatus] = useState('')
+  const [filtroResponsavel, setFiltroResponsavel] = useState('')
+  const [filtroDataInicio, setFiltroDataInicio] = useState('')
+  const [filtroDataFim, setFiltroDataFim] = useState('')
 
   useEffect(() => {
     buscarContratos()
@@ -82,12 +88,40 @@ const Contratos = () => {
 
   const contratosFiltrados = contratos.filter((c) => {
     const termo = busca.toLowerCase()
-    return (
+    
+    // Filtro de busca textual
+    const matchBusca = !termo || (
       c.clientes?.razao_social?.toLowerCase().includes(termo) ||
       c.descricao_contrato?.toLowerCase().includes(termo) ||
       c.responsavel?.toLowerCase().includes(termo)
     )
+    
+    // Filtro de status
+    const matchStatus = !filtroStatus || c.status === filtroStatus
+    
+    // Filtro de responsável
+    const matchResponsavel = !filtroResponsavel || c.responsavel?.toLowerCase().includes(filtroResponsavel.toLowerCase())
+    
+    // Filtro de data (usa created_at)
+    let matchData = true
+    if (filtroDataInicio || filtroDataFim) {
+      const dataContrato = new Date(c.created_at)
+      if (filtroDataInicio) {
+        const dataInicio = new Date(filtroDataInicio)
+        matchData = matchData && dataContrato >= dataInicio
+      }
+      if (filtroDataFim) {
+        const dataFim = new Date(filtroDataFim)
+        dataFim.setHours(23, 59, 59, 999) // Incluir o dia todo
+        matchData = matchData && dataContrato <= dataFim
+      }
+    }
+    
+    return matchBusca && matchStatus && matchResponsavel && matchData
   })
+  
+  // Obter lista única de responsáveis para o filtro
+  const responsaveisUnicos = [...new Set(contratos.map(c => c.responsavel).filter(Boolean))].sort()
 
   const abrirModal = (contrato) => {
     setContratoSelecionado(contrato)
@@ -164,7 +198,8 @@ const Contratos = () => {
         </Link>
       </div>
 
-      <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4'>
+      <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4'>
+        {/* Busca textual */}
         <div className='relative flex-1'>
           <Search className='absolute left-3 top-3 text-gray-400' size={20} />
           <input
@@ -175,6 +210,86 @@ const Contratos = () => {
             className='w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500'
           />
         </div>
+        
+        {/* Filtros avançados */}
+        <div className='flex items-center gap-2'>
+          <Filter size={18} className='text-gray-400' />
+          <span className='text-xs font-bold text-gray-500 uppercase'>Filtros:</span>
+        </div>
+        
+        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+          {/* Filtro de Status */}
+          <div>
+            <label className='block text-xs font-semibold text-gray-600 mb-1'>Status</label>
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className='w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+            >
+              <option value=''>Todos</option>
+              <option value='Sob Análise'>Sob Análise</option>
+              <option value='Proposta Enviada'>Proposta Enviada</option>
+              <option value='Contrato Fechado'>Contrato Fechado</option>
+              <option value='Rejeitada'>Rejeitada</option>
+              <option value='Probono'>Probono</option>
+            </select>
+          </div>
+          
+          {/* Filtro de Responsável */}
+          <div>
+            <label className='block text-xs font-semibold text-gray-600 mb-1'>Responsável</label>
+            <select
+              value={filtroResponsavel}
+              onChange={(e) => setFiltroResponsavel(e.target.value)}
+              className='w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+            >
+              <option value=''>Todos</option>
+              {responsaveisUnicos.map((resp) => (
+                <option key={resp} value={resp}>{resp}</option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Filtro de Data Início */}
+          <div>
+            <label className='block text-xs font-semibold text-gray-600 mb-1'>Data Início</label>
+            <input
+              type='date'
+              value={filtroDataInicio}
+              onChange={(e) => setFiltroDataInicio(e.target.value)}
+              className='w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+            />
+          </div>
+          
+          {/* Filtro de Data Fim */}
+          <div>
+            <label className='block text-xs font-semibold text-gray-600 mb-1'>Data Fim</label>
+            <input
+              type='date'
+              value={filtroDataFim}
+              onChange={(e) => setFiltroDataFim(e.target.value)}
+              className='w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+            />
+          </div>
+        </div>
+        
+        {/* Botão limpar filtros */}
+        {(filtroStatus || filtroResponsavel || filtroDataInicio || filtroDataFim) && (
+          <div className='flex justify-end'>
+            <button
+              onClick={() => {
+                setFiltroStatus('')
+                setFiltroResponsavel('')
+                setFiltroDataInicio('')
+                setFiltroDataFim('')
+              }}
+              className='text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1'
+            >
+              <X size={14} />
+              Limpar filtros
+            </button>
+          </div>
+        )}
       </div>
 
       <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
@@ -200,7 +315,10 @@ const Contratos = () => {
                     Cliente
                   </th>
                   <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest'>
-                    Descrição do Contrato
+                    Data Criação
+                  </th>
+                  <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest'>
+                    Responsável
                   </th>
                   <th className='px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest text-center'>
                     GED (PDF)
@@ -229,8 +347,21 @@ const Contratos = () => {
                     <td className='px-6 py-4 font-bold text-[#0F2C4C] text-sm'>
                       {contrato.clientes?.razao_social || 'Cliente não identificado'}
                     </td>
-                    <td className='px-6 py-4 text-gray-600 text-xs italic'>
-                      {contrato.descricao_contrato || '-'}
+                    <td className='px-6 py-4 text-gray-600 text-xs'>
+                      <div className='flex items-center gap-2'>
+                        <Calendar size={14} className='text-gray-400' />
+                        {new Date(contrato.created_at).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </td>
+                    <td className='px-6 py-4 text-gray-700 text-sm font-medium'>
+                      <div className='flex items-center gap-2'>
+                        <User size={14} className='text-gray-400' />
+                        {contrato.responsavel || '-'}
+                      </div>
                     </td>
                     <td className='px-6 py-4 text-center'>
                       {contrato.status === 'Contrato Fechado' && (
