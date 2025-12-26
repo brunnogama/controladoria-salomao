@@ -329,14 +329,12 @@ const ContratoForm = () => {
       let contratoId = id;
       
       if (id) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('contratos')
           .update(dadosFinais)
-          .eq('id', id)
-          .select('*')
-          .single();
+          .eq('id', id);
         if (error) throw error;
-        console.log('Contrato atualizado:', data);
+        console.log('Contrato atualizado com sucesso');
         
         // Registrar mudança de status se houver
         if (statusAnterior && statusAnterior !== formData.status) {
@@ -360,10 +358,10 @@ const ContratoForm = () => {
           }
         }
       } else {
-        const { data, error} = await supabase
+        const { data, error } = await supabase
           .from('contratos')
           .insert([dadosFinais])
-          .select('*')
+          .select('id')
           .single();
         if (error) throw error;
         console.log('Contrato criado:', data);
