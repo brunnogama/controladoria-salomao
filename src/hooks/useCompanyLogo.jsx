@@ -159,7 +159,7 @@ export const CompanyLogo = ({ cnpj, razaoSocial, clienteId, size = 'md' }) => {
 
   if (logoUrl) {
     return (
-      <div className={`${sizeClass} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border border-gray-100 p-1.5`}>
+      <div className={`${sizeClass} rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border border-gray-100 p-1`}>
         <img 
           src={logoUrl} 
           alt={razaoSocial}
