@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { Save, ArrowLeft, Briefcase, Search, Loader2 } from 'lucide-react';
+import { Save, ArrowLeft, Briefcase, Search, Loader2, Clock, History } from 'lucide-react';
 import { formatCNPJ, aplicarMascaraMoeda, removerMascaraMoeda } from '../utils/formatters';
 import PDFUpload from '../components/PDFUpload';
 
@@ -13,6 +13,7 @@ const ContratoForm = () => {
   const [clienteEncontrado, setClienteEncontrado] = useState(null);
   const [cnpjNaoDisponivel, setCnpjNaoDisponivel] = useState(false);
   const [statusAnterior, setStatusAnterior] = useState(null); // Para rastrear mudanças
+  const [historicoStatus, setHistoricoStatus] = useState([]); // Histórico de mudanças
   
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -106,6 +107,23 @@ const ContratoForm = () => {
       });
       setClienteEncontrado(clienteData);
       setStatusAnterior(contratoData.status); // Guardar status inicial
+      
+      // Buscar histórico de status
+      await fetchHistoricoStatus(id);
+    }
+  };
+
+  const fetchHistoricoStatus = async (contratoId) => {
+    const { data, error } = await supabase
+      .from('historico_status_contratos')
+      .select('*')
+      .eq('contrato_id', contratoId)
+      .order('data_mudanca', { ascending: false });
+    
+    if (error) {
+      console.error('Erro ao buscar histórico:', error);
+    } else {
+      setHistoricoStatus(data || []);
     }
   };
 
@@ -436,6 +454,12 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
       }
       
       alert('Contrato salvo com sucesso!');
+      
+      // Recarregar histórico se for edição
+      if (id) {
+        await fetchHistoricoStatus(id);
+      }
+      
       navigate('/contratos');
     } catch (error) {
       console.error('Erro completo:', error);
@@ -880,6 +904,114 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
           <div className="border-t pt-6">
             {renderCamposStatus()}
           </div>
+
+          {/* Histórico de Mudanças de Status */}
+          {id && historicoStatus.length > 0 && (
+            <div className="border-t pt-6 mt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <History className="text-purple-600" size={20} />
+                <h3 className="text-sm font-bold text-gray-700">Histórico de Mudanças de Status</h3>
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-semibold">
+                  {historicoStatus.length} {historicoStatus.length === 1 ? 'mudança' : 'mudanças'}
+                </span>
+              </div>
+              
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {historicoStatus.map((item, index) => {
+                  const data = new Date(item.data_mudanca);
+                  const dataFormatada = data.toLocaleDateString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                  });
+                  const horaFormatada = data.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  });
+                  
+                  // Calcular tempo desde a mudança
+                  const agora = new Date();
+                  const diffMs = agora - data;
+                  const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+                  
+                  let tempoDecorrido = '';
+                  if (diffDias > 0) {
+                    tempoDecorrido = `há ${diffDias} ${diffDias === 1 ? 'dia' : 'dias'}`;
+                  } else if (diffHoras > 0) {
+                    tempoDecorrido = `há ${diffHoras} ${diffHoras === 1 ? 'hora' : 'horas'}`;
+                  } else {
+                    tempoDecorrido = 'há poucos minutos';
+                  }
+                  
+                  // Cores por status
+                  const getCores = (status) => {
+                    const cores = {
+                      'Sob Análise': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', badge: 'bg-blue-100 text-blue-700' },
+                      'Proposta Enviada': { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', badge: 'bg-yellow-100 text-yellow-700' },
+                      'Contrato Fechado': { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-800', badge: 'bg-green-100 text-green-700' },
+                      'Rejeitada': { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', badge: 'bg-red-100 text-red-700' },
+                      'Probono': { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-800', badge: 'bg-purple-100 text-purple-700' }
+                    };
+                    return cores[status] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-800', badge: 'bg-gray-100 text-gray-700' };
+                  };
+                  
+                  const coresNovo = getCores(item.status_novo);
+                  
+                  return (
+                    <div key={item.id} className={`${coresNovo.bg} border-2 ${coresNovo.border} rounded-lg p-4 relative`}>
+                      {/* Linha do tempo */}
+                      {index < historicoStatus.length - 1 && (
+                        <div className="absolute left-6 top-full w-0.5 h-3 bg-gray-300"></div>
+                      )}
+                      
+                      <div className="flex items-start gap-4">
+                        {/* Ícone */}
+                        <div className={`${coresNovo.badge} p-2 rounded-full mt-1`}>
+                          <Clock size={16} />
+                        </div>
+                        
+                        {/* Conteúdo */}
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              {item.status_anterior ? (
+                                <>
+                                  <span className={`text-xs font-semibold px-2 py-1 rounded ${getCores(item.status_anterior).badge}`}>
+                                    {item.status_anterior}
+                                  </span>
+                                  <span className="text-gray-400">→</span>
+                                  <span className={`text-xs font-semibold px-2 py-1 rounded ${coresNovo.badge}`}>
+                                    {item.status_novo}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className={`text-xs font-semibold px-2 py-1 rounded ${coresNovo.badge}`}>
+                                  📝 Contrato criado: {item.status_novo}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-500 font-medium">{tempoDecorrido}</span>
+                          </div>
+                          
+                          <div className="text-xs text-gray-600 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">📅 {dataFormatada}</span>
+                              <span>•</span>
+                              <span className="font-semibold">🕐 {horaFormatada}</span>
+                            </div>
+                            {item.observacao && (
+                              <p className="text-gray-500 italic mt-1">{item.observacao}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-8 bg-gray-50 flex justify-end gap-4 border-t">
