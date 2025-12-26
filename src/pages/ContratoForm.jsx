@@ -458,9 +458,12 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
       // Recarregar histórico se for edição
       if (id) {
         await fetchHistoricoStatus(id);
+        setStatusAnterior(formData.status); // Atualizar status anterior
+        // Não navega - permite ver o histórico atualizado
+      } else {
+        // Se for criação, navega de volta
+        navigate('/contratos');
       }
-      
-      navigate('/contratos');
     } catch (error) {
       console.error('Erro completo:', error);
       alert("Erro ao salvar: " + error.message);
@@ -734,7 +737,34 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
                 {/* Coluna 1 e 2: Status do Caso (sempre à esquerda, ocupa 2 colunas se Contrato Fechado) */}
                 <div className={formData.status === 'Contrato Fechado' ? 'col-span-2' : 'col-span-1'}>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Caso *</label>
-                  <select className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} required>
+                  <select 
+                    className="w-full bg-white border-2 border-gray-200 rounded-xl p-3 text-sm font-bold text-[#0F2C4C] outline-none focus:border-blue-500 transition-all" 
+                    value={formData.status} 
+                    onChange={(e) => {
+                      const novoStatus = e.target.value;
+                      const statusMudou = novoStatus !== statusAnterior;
+                      
+                      // Mapear qual data deve ser zerada baseado no novo status
+                      const camposParaZerar = {};
+                      if (statusMudou) {
+                        // Zerar a data do novo status para forçar preenchimento
+                        if (novoStatus === 'Sob Análise') {
+                          camposParaZerar.data_prospect = '';
+                        } else if (novoStatus === 'Proposta Enviada') {
+                          camposParaZerar.data_proposta = '';
+                        } else if (novoStatus === 'Contrato Fechado') {
+                          camposParaZerar.data_contrato = '';
+                        } else if (novoStatus === 'Rejeitada') {
+                          camposParaZerar.data_rejeicao = '';
+                        } else if (novoStatus === 'Probono') {
+                          camposParaZerar.data_probono = '';
+                        }
+                      }
+                      
+                      setFormData({...formData, status: novoStatus, ...camposParaZerar});
+                    }} 
+                    required
+                  >
                     <option value="Sob Análise">Sob Análise</option>
                     <option value="Proposta Enviada">Proposta Enviada</option>
                     <option value="Contrato Fechado">Contrato Fechado</option>
