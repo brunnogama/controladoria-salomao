@@ -38,12 +38,16 @@ const Configuracoes = () => {
   const fetchUsuarios = async () => {
     setLoadingUsuarios(true);
     try {
-      const { data, error } = await supabase.auth.admin.listUsers();
+      const { data, error } = await supabase
+        .from('usuarios_sistema')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
       if (error) throw error;
-      setUsuarios(data.users || []);
+      setUsuarios(data || []);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
-      alert('❌ Erro ao carregar usuários. Verifique se você tem permissões de admin.');
+      alert('❌ Erro ao carregar usuários: ' + error.message);
     } finally {
       setLoadingUsuarios(false);
     }
@@ -79,8 +83,8 @@ const Configuracoes = () => {
       setUserForm({
         email: usuario.email,
         password: '',
-        nome_completo: usuario.user_metadata?.nome_completo || '',
-        role: usuario.user_metadata?.role || 'user'
+        nome_completo: usuario.nome_completo || '',
+        role: usuario.role || 'user'
       });
     } else {
       setEditingUser(null);
@@ -95,60 +99,109 @@ const Configuracoes = () => {
         alert('❌ Email e senha são obrigatórios!');
         return;
       }
-      const { error } = await supabase.auth.admin.createUser({
+
+      // 1. Criar usuário no Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userForm.email,
         password: userForm.password,
-        email_confirm: true,
-        user_metadata: { nome_completo: userForm.nome_completo, role: userForm.role }
+        options: {
+          data: {
+            nome_completo: userForm.nome_completo,
+            role: userForm.role
+          }
+        }
       });
-      if (error) throw error;
-      alert('✅ Usuário criado!');
+
+      if (authError) throw authError;
+
+      // 2. Criar registro na tabela usuarios_sistema
+      const { error: dbError } = await supabase
+        .from('usuarios_sistema')
+        .insert([{
+          auth_user_id: authData.user.id,
+          email: userForm.email,
+          nome_completo: userForm.nome_completo,
+          role: userForm.role,
+          ativo: true
+        }]);
+
+      if (dbError) throw dbError;
+
+      alert('✅ Usuário criado com sucesso!');
       setShowUserModal(false);
       fetchUsuarios();
     } catch (error) {
-      alert('❌ Erro: ' + error.message);
+      console.error('Erro ao criar usuário:', error);
+      alert('❌ Erro ao criar usuário: ' + error.message);
     }
   };
 
   const atualizarUsuario = async () => {
     try {
-      const updates = {
-        email: userForm.email,
-        user_metadata: { nome_completo: userForm.nome_completo, role: userForm.role }
-      };
-      if (userForm.password) updates.password = userForm.password;
-      const { error } = await supabase.auth.admin.updateUserById(editingUser.id, updates);
-      if (error) throw error;
-      alert('✅ Usuário atualizado!');
+      // Atualizar na tabela usuarios_sistema
+      const { error: dbError } = await supabase
+        .from('usuarios_sistema')
+        .update({
+          email: userForm.email,
+          nome_completo: userForm.nome_completo,
+          role: userForm.role
+        })
+        .eq('id', editingUser.id);
+
+      if (dbError) throw dbError;
+
+      // Se tiver senha nova, atualizar no Auth
+      if (userForm.password && editingUser.auth_user_id) {
+        const { error: authError } = await supabase.auth.updateUser({
+          password: userForm.password
+        });
+        if (authError) console.warn('Aviso ao atualizar senha:', authError);
+      }
+
+      alert('✅ Usuário atualizado com sucesso!');
       setShowUserModal(false);
       fetchUsuarios();
     } catch (error) {
-      alert('❌ Erro: ' + error.message);
+      console.error('Erro ao atualizar usuário:', error);
+      alert('❌ Erro ao atualizar usuário: ' + error.message);
     }
   };
 
   const excluirUsuario = async (userId, email) => {
-    if (!window.confirm(`⚠️ Excluir "${email}"?`)) return;
+    if (!window.confirm(`⚠️ Tem certeza que deseja excluir o usuário "${email}"?\n\nEsta ação não pode ser desfeita.`)) {
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const { error } = await supabase
+        .from('usuarios_sistema')
+        .delete()
+        .eq('id', userId);
+
       if (error) throw error;
-      alert('✅ Usuário excluído!');
+
+      alert('✅ Usuário excluído com sucesso!');
       fetchUsuarios();
     } catch (error) {
-      alert('❌ Erro: ' + error.message);
+      console.error('Erro ao excluir usuário:', error);
+      alert('❌ Erro ao excluir usuário: ' + error.message);
     }
   };
 
-  const toggleUsuarioStatus = async (userId, currentBanned) => {
+  const toggleUsuarioStatus = async (userId, currentAtivo) => {
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        ban_duration: currentBanned ? 'none' : '876000h'
-      });
+      const { error } = await supabase
+        .from('usuarios_sistema')
+        .update({ ativo: !currentAtivo })
+        .eq('id', userId);
+
       if (error) throw error;
-      alert(`✅ Usuário ${currentBanned ? 'ativado' : 'inativado'}!`);
+
+      alert(`✅ Usuário ${currentAtivo ? 'inativado' : 'ativado'} com sucesso!`);
       fetchUsuarios();
     } catch (error) {
-      alert('❌ Erro: ' + error.message);
+      console.error('Erro ao alterar status:', error);
+      alert('❌ Erro ao alterar status: ' + error.message);
     }
   };
 
@@ -162,6 +215,7 @@ const Configuracoes = () => {
         "Criação, edição e exclusão de usuários",
         "Ativação/Inativação de usuários",
         "Roles: Admin, User, Viewer",
+        "Tabela usuarios_sistema com RLS",
         "🎨 Logos circulares otimizadas",
         "📊 Histórico de Status completo",
         "🔄 Data zerada ao mudar status",
@@ -199,7 +253,7 @@ const Configuracoes = () => {
             <Users size={24} className="text-purple-600" />
             <div>
               <h2 className="text-xl font-bold">Gerenciamento de Usuários</h2>
-              <p className="text-sm text-gray-500">Crie, edite e gerencie usuários</p>
+              <p className="text-sm text-gray-500">Crie, edite e gerencie usuários do sistema</p>
             </div>
           </div>
           <button onClick={() => abrirModalUsuario()} className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 font-bold">
@@ -209,67 +263,69 @@ const Configuracoes = () => {
         </div>
 
         {loadingUsuarios ? (
-          <div className="text-center py-8 text-gray-500">Carregando...</div>
+          <div className="text-center py-8 text-gray-500">Carregando usuários...</div>
         ) : usuarios.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <Users size={48} className="mx-auto mb-2 opacity-20" />
-            <p>Nenhum usuário</p>
+            <p>Nenhum usuário cadastrado</p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Role</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Criado</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {usuarios.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Mail size={14} className="text-gray-400" />
-                      {u.email}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm font-medium">{u.user_metadata?.nome_completo || '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.user_metadata?.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {u.user_metadata?.role || 'user'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={14} className="text-gray-400" />
-                      {new Date(u.created_at).toLocaleDateString('pt-BR')}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.banned_until ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                      {u.banned_until ? 'Inativo' : 'Ativo'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => abrirModalUsuario(u)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg" title="Editar">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => toggleUsuarioStatus(u.id, u.banned_until)} className={`p-2 rounded-lg ${u.banned_until ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`} title={u.banned_until ? 'Ativar' : 'Inativar'}>
-                        {u.banned_until ? <Shield size={16} /> : <ShieldOff size={16} />}
-                      </button>
-                      <button onClick={() => excluirUsuario(u.id, u.email)} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg" title="Excluir">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Role</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Criado</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {usuarios.map((u) => (
+                  <tr key={u.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Mail size={14} className="text-gray-400" />
+                        {u.email}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium">{u.nome_completo || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : u.role === 'viewer' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar size={14} className="text-gray-400" />
+                        {new Date(u.created_at).toLocaleDateString('pt-BR')}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.ativo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {u.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center gap-2">
+                        <button onClick={() => abrirModalUsuario(u)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg" title="Editar">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => toggleUsuarioStatus(u.id, u.ativo)} className={`p-2 rounded-lg ${u.ativo ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`} title={u.ativo ? 'Inativar' : 'Ativar'}>
+                          {u.ativo ? <ShieldOff size={16} /> : <Shield size={16} />}
+                        </button>
+                        <button onClick={() => excluirUsuario(u.id, u.email)} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg" title="Excluir">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -367,7 +423,7 @@ const Configuracoes = () => {
                 <input type="email" value={userForm.email} onChange={(e) => setUserForm({...userForm, email: e.target.value})} className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="usuario@exemplo.com" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Senha {editingUser && '(vazio = não altera)'}</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Senha {editingUser && '(vazio = não altera)'} *</label>
                 <input type="password" value={userForm.password} onChange={(e) => setUserForm({...userForm, password: e.target.value})} className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="••••••••" />
               </div>
               <div>
