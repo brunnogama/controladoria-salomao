@@ -580,6 +580,62 @@ Controladoria Jurídica
             </div>
           </div>
         </div>
+        
+        {/* ANÁLISE GERENCIAL - Resumo da Semana */}
+        <div className='mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600 p-5 rounded-r-xl'>
+          <h4 className='text-sm font-black text-blue-900 uppercase mb-3 flex items-center gap-2'>
+            <TrendingUp size={18} className='text-blue-600' />
+            Análise Gerencial
+          </h4>
+          <div className='space-y-3 text-sm text-blue-900'>
+            {/* Taxa de Conversão Semanal */}
+            <div className='flex items-start gap-2'>
+              <span className='text-blue-600 font-bold'>📊</span>
+              <div className='flex-1'>
+                <strong>Taxa de Conversão:</strong> {metrics.semana.novos > 0 ? (
+                  <>
+                    De <strong>{metrics.semana.novos} {metrics.semana.novos === 1 ? 'caso novo' : 'casos novos'}</strong>, 
+                    {metrics.semana.propQtd > 0 && ` ${metrics.semana.propQtd} ${metrics.semana.propQtd === 1 ? 'virou proposta' : 'viraram propostas'} (${((metrics.semana.propQtd / metrics.semana.novos) * 100).toFixed(0)}%)`}
+                    {metrics.semana.fechQtd > 0 && ` e ${metrics.semana.fechQtd} ${metrics.semana.fechQtd === 1 ? 'foi fechado' : 'foram fechados'} (${((metrics.semana.fechQtd / metrics.semana.novos) * 100).toFixed(0)}%)`}.
+                  </>
+                ) : 'Sem novos casos na semana.'}
+              </div>
+            </div>
+            
+            {/* Ticket Médio */}
+            {metrics.semana.fechQtd > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-green-600 font-bold'>💰</span>
+                <div className='flex-1'>
+                  <strong>Ticket Médio de Fechamento:</strong> {formatMoney((metrics.semana.fechPL + metrics.semana.fechExito + metrics.semana.fechMensal) / metrics.semana.fechQtd)} por contrato. 
+                  {metrics.semana.fechPL > 0 && ` Pró-labore médio: ${formatMoney(metrics.semana.fechPL / metrics.semana.fechQtd)}.`}
+                </div>
+              </div>
+            )}
+            
+            {/* Perda de Oportunidades */}
+            {metrics.semana.rejeitados > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-red-600 font-bold'>⚠️</span>
+                <div className='flex-1'>
+                  <strong>Atenção:</strong> {metrics.semana.rejeitados} {metrics.semana.rejeitados === 1 ? 'caso rejeitado' : 'casos rejeitados'} esta semana ({metrics.semana.novos > 0 ? ((metrics.semana.rejeitados / metrics.semana.novos) * 100).toFixed(0) : '0'}% dos casos novos). 
+                  Verifique os motivos na aba de Histórico.
+                </div>
+              </div>
+            )}
+            
+            {/* Velocidade de Conversão */}
+            {metrics.semana.propQtd > 0 && metrics.semana.fechQtd > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-purple-600 font-bold'>⚡</span>
+                <div className='flex-1'>
+                  <strong>Velocidade:</strong> {((metrics.semana.fechQtd / metrics.semana.propQtd) * 100).toFixed(0)}% das propostas enviadas foram fechadas na mesma semana. 
+                  {((metrics.semana.fechQtd / metrics.semana.propQtd) * 100) >= 50 ? ' Excelente conversão!' : ' Mantenha o follow-up ativo.'}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 2. DISTRIBUIÇÃO DA CARTEIRA + ENTRADA DE CASOS + ÚLTIMOS 10 CASOS (GRID) */}
@@ -667,6 +723,47 @@ Controladoria Jurídica
                   </div>
                 )
               })}
+            </div>
+          </div>
+          
+          {/* ANÁLISE GERENCIAL - Distribuição da Carteira */}
+          <div className='mt-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-600 p-4 rounded-r-xl'>
+            <h4 className='text-xs font-black text-purple-900 uppercase mb-2 flex items-center gap-2'>
+              <PieChart size={16} className='text-purple-600' />
+              Insights da Carteira
+            </h4>
+            <div className='space-y-2 text-xs text-purple-900'>
+              {/* Distribuição por Status */}
+              <div className='flex items-start gap-2'>
+                <span className='text-purple-600 font-bold'>📌</span>
+                <div className='flex-1'>
+                  <strong>Distribuição:</strong> {((metrics.geral.emAnalise / metrics.geral.totalCasos) * 100).toFixed(0)}% em análise, 
+                  {((metrics.geral.propostasAtivas / metrics.geral.totalCasos) * 100).toFixed(0)}% em negociação, 
+                  {((metrics.geral.fechados / metrics.geral.totalCasos) * 100).toFixed(0)}% fechados.
+                  {metrics.geral.emAnalise > metrics.geral.fechados && ' ⚠️ Mais casos em análise do que fechados - oportunidade de acelerar qualificação.'}
+                </div>
+              </div>
+              
+              {/* Taxa de Rejeição */}
+              {metrics.geral.rejeitados > 0 && (
+                <div className='flex items-start gap-2'>
+                  <span className='text-red-600 font-bold'>⚠️</span>
+                  <div className='flex-1'>
+                    <strong>Taxa de Rejeição:</strong> {((metrics.geral.rejeitados / metrics.geral.totalCasos) * 100).toFixed(0)}% dos casos foram rejeitados ({metrics.geral.rejeitados} de {metrics.geral.totalCasos}).
+                    {((metrics.geral.rejeitados / metrics.geral.totalCasos) * 100) > 30 && ' Alta taxa - revisar critérios de triagem inicial.'}
+                  </div>
+                </div>
+              )}
+              
+              {/* Saúde do Funil */}
+              <div className='flex items-start gap-2'>
+                <span className='text-green-600 font-bold'>✅</span>
+                <div className='flex-1'>
+                  <strong>Saúde do Funil:</strong> Para cada {metrics.geral.fechados} {metrics.geral.fechados === 1 ? 'contrato ativo' : 'contratos ativos'}, 
+                  há {metrics.geral.propostasAtivas} {metrics.geral.propostasAtivas === 1 ? 'proposta pendente' : 'propostas pendentes'} (ratio {metrics.geral.fechados > 0 ? (metrics.geral.propostasAtivas / metrics.geral.fechados).toFixed(1) : '0'}:1).
+                  {metrics.geral.fechados > 0 && (metrics.geral.propostasAtivas / metrics.geral.fechados) < 0.3 && ' ⚠️ Pipeline magro - intensificar prospecção.'}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -902,6 +999,68 @@ Controladoria Jurídica
             </div>
           </div>
         </div>
+        
+        {/* ANÁLISE GERENCIAL - Valores */}
+        <div className='mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-600 p-5 rounded-r-xl'>
+          <h4 className='text-sm font-black text-green-900 uppercase mb-3 flex items-center gap-2'>
+            <DollarSign size={18} className='text-green-600' />
+            Análise Financeira
+          </h4>
+          <div className='space-y-3 text-sm text-green-900'>
+            {/* Pipeline de Receita */}
+            <div className='flex items-start gap-2'>
+              <span className='text-green-600 font-bold'>💼</span>
+              <div className='flex-1'>
+                <strong>Pipeline de Receita:</strong> {formatMoney(totalNegociacao)} em propostas ativas + {formatMoney(totalCarteira)} em carteira ativa = <strong>{formatMoney(totalNegociacao + totalCarteira)} de exposição total</strong>.
+              </div>
+            </div>
+            
+            {/* Taxa de Realização */}
+            {totalNegociacao > 0 && totalCarteira > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-blue-600 font-bold'>📈</span>
+                <div className='flex-1'>
+                  <strong>Taxa de Realização:</strong> {((totalCarteira / (totalNegociacao + totalCarteira)) * 100).toFixed(0)}% do pipeline já está concretizado em contratos. 
+                  {metrics.geral.propostasAtivas > 0 && ` Há ${metrics.geral.propostasAtivas} ${metrics.geral.propostasAtivas === 1 ? 'proposta pendente' : 'propostas pendentes'} no funil.`}
+                </div>
+              </div>
+            )}
+            
+            {/* Composição da Receita */}
+            {metrics.geral.totalFechadoPL > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-purple-600 font-bold'>📊</span>
+                <div className='flex-1'>
+                  <strong>Composição da Carteira:</strong> {((metrics.geral.totalFechadoPL / totalCarteira) * 100).toFixed(0)}% em Pró-labore (recorrente/previsível), 
+                  {((metrics.geral.totalFechadoExito / totalCarteira) * 100).toFixed(0)}% em Êxito (condicional), 
+                  {((metrics.geral.receitaRecorrenteAtiva / totalCarteira) * 100).toFixed(0)}% em Recorrente.
+                </div>
+              </div>
+            )}
+            
+            {/* Receita Recorrente */}
+            {metrics.geral.receitaRecorrenteAtiva > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-green-600 font-bold'>♻️</span>
+                <div className='flex-1'>
+                  <strong>Receita Previsível Mensal:</strong> {formatMoney(metrics.geral.receitaRecorrenteAtiva)} garantidos por mês em contratos recorrentes. 
+                  Base sólida para planejamento financeiro.
+                </div>
+              </div>
+            )}
+            
+            {/* Oportunidade Mensal */}
+            {metrics.mes.propPL > 0 && metrics.mes.fechPL > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-yellow-600 font-bold'>⚡</span>
+                <div className='flex-1'>
+                  <strong>Performance do Mês:</strong> De {formatMoney(metrics.mes.propPL + metrics.mes.propExito)} em propostas, 
+                  já foram convertidos {formatMoney(metrics.mes.fechPL + metrics.mes.fechExito + metrics.mes.fechMensal)} ({((metrics.mes.fechPL + metrics.mes.fechExito + metrics.mes.fechMensal) / (metrics.mes.propPL + metrics.mes.propExito) * 100).toFixed(0)}% de realização).
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 5. FOTOGRAFIA FINANCEIRA TOTAL */}
@@ -977,6 +1136,70 @@ Controladoria Jurídica
                 <span className='font-semibold text-gray-700'>{formatMoney(metrics.geral.receitaRecorrenteAtiva)}</span>
               </div>
             </div>
+          </div>
+        </div>
+        
+        {/* ANÁLISE GERENCIAL - Fotografia Financeira */}
+        <div className='mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-600 p-5 rounded-r-xl'>
+          <h4 className='text-sm font-black text-indigo-900 uppercase mb-3 flex items-center gap-2'>
+            <Target size={18} className='text-indigo-600' />
+            Visão Estratégica
+          </h4>
+          <div className='space-y-3 text-sm text-indigo-900'>
+            {/* Potencial Total */}
+            <div className='flex items-start gap-2'>
+              <span className='text-indigo-600 font-bold'>🎯</span>
+              <div className='flex-1'>
+                <strong>Potencial Total:</strong> {formatMoney(totalNegociacao + totalCarteira)} em exposição combinada. 
+                Se todas as propostas fecharem, a carteira saltaria de {formatMoney(totalCarteira)} para <strong>{formatMoney(totalNegociacao + totalCarteira)}</strong> (crescimento de {totalCarteira > 0 ? ((totalNegociacao / totalCarteira) * 100).toFixed(0) : '0'}%).
+              </div>
+            </div>
+            
+            {/* Concentração de Risco */}
+            {metrics.geral.totalFechadoExito > 0 && metrics.geral.totalFechadoPL > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-orange-600 font-bold'>⚖️</span>
+                <div className='flex-1'>
+                  <strong>Perfil de Risco:</strong> {((metrics.geral.totalFechadoPL / totalCarteira) * 100).toFixed(0)}% da carteira é previsível (Pró-labore), 
+                  {((metrics.geral.totalFechadoExito / totalCarteira) * 100).toFixed(0)}% é condicional (Êxito). 
+                  {((metrics.geral.totalFechadoExito / totalCarteira) * 100) > 60 && ' ⚠️ Alta exposição a êxito - considerar equilibrar com mais recorrente.'}
+                  {((metrics.geral.totalFechadoPL / totalCarteira) * 100) > 70 && ' ✅ Boa base de receita previsível.'}
+                </div>
+              </div>
+            )}
+            
+            {/* Potencial de Crescimento MRR */}
+            {metrics.geral.receitaRecorrenteAtiva > 0 && metrics.geral.valorEmNegociacaoPL > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-green-600 font-bold'>📈</span>
+                <div className='flex-1'>
+                  <strong>Potencial MRR:</strong> MRR atual de {formatMoney(metrics.geral.receitaRecorrenteAtiva)} + {formatMoney(metrics.geral.valorEmNegociacaoPL)} em propostas = 
+                  <strong> {formatMoney(metrics.geral.receitaRecorrenteAtiva + metrics.geral.valorEmNegociacaoPL)} de MRR potencial</strong> (crescimento de {((metrics.geral.valorEmNegociacaoPL / metrics.geral.receitaRecorrenteAtiva) * 100).toFixed(0)}%).
+                </div>
+              </div>
+            )}
+            
+            {/* Status de Assinatura */}
+            {metrics.geral.naoAssinados > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-red-600 font-bold'>⚠️</span>
+                <div className='flex-1'>
+                  <strong>Ação Necessária:</strong> {metrics.geral.naoAssinados} {metrics.geral.naoAssinados === 1 ? 'contrato fechado' : 'contratos fechados'} ainda não {metrics.geral.naoAssinados === 1 ? 'foi assinado' : 'foram assinados'} ({((metrics.geral.naoAssinados / metrics.geral.fechados) * 100).toFixed(0)}% dos contratos). 
+                  Priorize a coleta de assinaturas para garantir execução.
+                </div>
+              </div>
+            )}
+            
+            {/* Eficiência de Conversão */}
+            {metrics.geral.propostasAtivas > 0 && metrics.geral.fechados > 0 && (
+              <div className='flex items-start gap-2'>
+                <span className='text-purple-600 font-bold'>🔄</span>
+                <div className='flex-1'>
+                  <strong>Ciclo de Vendas:</strong> Ratio atual de {(metrics.geral.propostasAtivas / metrics.geral.fechados).toFixed(1)} propostas pendentes para cada contrato ativo. 
+                  {(metrics.geral.propostasAtivas / metrics.geral.fechados) > 1 ? ' Pipeline saudável.' : ' ⚠️ Pipeline precisa reforço - intensificar prospecção.'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
