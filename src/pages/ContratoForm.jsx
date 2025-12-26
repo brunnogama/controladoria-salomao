@@ -68,27 +68,44 @@ const ContratoForm = () => {
   }, [id]);
 
   const fetchContrato = async () => {
-    const { data } = await supabase
+    // Buscar contrato primeiro
+    const { data: contratoData, error: contratoError } = await supabase
       .from('contratos')
-      .select('*, clientes(razao_social, cnpj)')
+      .select('*')
       .eq('id', id)
       .single();
     
-    if (data) {
+    if (contratoError) {
+      console.error('Erro ao buscar contrato:', contratoError);
+      return;
+    }
+    
+    if (contratoData) {
+      // Buscar cliente separadamente se houver cliente_id
+      let clienteData = null;
+      if (contratoData.cliente_id) {
+        const { data: cliente } = await supabase
+          .from('clientes')
+          .select('razao_social, cnpj')
+          .eq('id', contratoData.cliente_id)
+          .single();
+        clienteData = cliente;
+      }
+      
       setFormData({
-        ...data,
-        cliente_nome: data.clientes?.razao_social || '',
-        cnpj_cliente: data.clientes?.cnpj || '',
-        proposta_pro_labore: data.proposta_pro_labore ? aplicarMascaraMoeda(data.proposta_pro_labore * 100) : '',
-        proposta_honorario_fixo: data.proposta_honorario_fixo ? aplicarMascaraMoeda(data.proposta_honorario_fixo * 100) : '',
-        proposta_exito_total: data.proposta_exito_total ? aplicarMascaraMoeda(data.proposta_exito_total * 100) : '',
-        contrato_pro_labore: data.contrato_pro_labore ? aplicarMascaraMoeda(data.contrato_pro_labore * 100) : '',
-        contrato_honorario_fixo: data.contrato_honorario_fixo ? aplicarMascaraMoeda(data.contrato_honorario_fixo * 100) : '',
-        contrato_exito_total: data.contrato_exito_total ? aplicarMascaraMoeda(data.contrato_exito_total * 100) : '',
-        valor_causa: data.valor_causa ? aplicarMascaraMoeda(data.valor_causa * 100) : '',
+        ...contratoData,
+        cliente_nome: clienteData?.razao_social || '',
+        cnpj_cliente: clienteData?.cnpj || '',
+        proposta_pro_labore: contratoData.proposta_pro_labore ? aplicarMascaraMoeda(contratoData.proposta_pro_labore * 100) : '',
+        proposta_honorario_fixo: contratoData.proposta_honorario_fixo ? aplicarMascaraMoeda(contratoData.proposta_honorario_fixo * 100) : '',
+        proposta_exito_total: contratoData.proposta_exito_total ? aplicarMascaraMoeda(contratoData.proposta_exito_total * 100) : '',
+        contrato_pro_labore: contratoData.contrato_pro_labore ? aplicarMascaraMoeda(contratoData.contrato_pro_labore * 100) : '',
+        contrato_honorario_fixo: contratoData.contrato_honorario_fixo ? aplicarMascaraMoeda(contratoData.contrato_honorario_fixo * 100) : '',
+        contrato_exito_total: contratoData.contrato_exito_total ? aplicarMascaraMoeda(contratoData.contrato_exito_total * 100) : '',
+        valor_causa: contratoData.valor_causa ? aplicarMascaraMoeda(contratoData.valor_causa * 100) : '',
       });
-      setClienteEncontrado(data.clientes);
-      setStatusAnterior(data.status); // Guardar status inicial
+      setClienteEncontrado(clienteData);
+      setStatusAnterior(contratoData.status); // Guardar status inicial
     }
   };
 
