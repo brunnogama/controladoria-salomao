@@ -815,6 +815,37 @@ Controladoria Jurídica
             <p className='text-xs text-gray-600 mt-1'>pendentes de assinatura</p>
           </div>
         </div>
+
+        {/* Lista de Contratos Aguardando Assinatura */}
+        {contratosSemAssinatura.length > 0 && (
+          <div className='mt-4 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
+            <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
+              <AlertCircle className='text-orange-600' size={18} />
+              Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
+            </h4>
+            <div className='space-y-2'>
+              {contratosSemAssinatura.map((contrato) => (
+                <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
+                  <div>
+                    <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
+                    <p className='text-xs text-gray-600'>
+                      HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
+                    </p>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-xs text-gray-500'>
+                      {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
+                    </p>
+                    <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
+                      {contrato.dias_sem_assinar} dia(s) sem assinar
+                      {contrato.dias_sem_assinar > 5 && ' ⚠️'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 4. VALORES (PERFORMANCE COMERCIAL) */}
@@ -841,7 +872,7 @@ Controladoria Jurídica
                 <p className='text-xs text-gray-600'>PL: {formatMoney(metrics.mes.propPL)} | Êxito: {formatMoney(metrics.mes.propExito)}</p>
               </div>
               <div className='pt-2 border-t border-blue-200'>
-                <p className='text-xs text-blue-700 font-semibold'>Fechamentos ({metrics.mes.fechQtd})</p>
+                <p className='text-xs text-blue-700 font-semibold'>Fechados ({metrics.mes.fechQtd})</p>
                 <p className='text-lg font-bold text-blue-900'>{formatMoney(metrics.mes.fechPL + metrics.mes.fechExito + metrics.mes.fechMensal)}</p>
                 <p className='text-xs text-gray-600'>PL: {formatMoney(metrics.mes.fechPL)} | Êxito: {formatMoney(metrics.mes.fechExito)} | Mensal: {formatMoney(metrics.mes.fechMensal)}</p>
               </div>
@@ -908,7 +939,7 @@ Controladoria Jurídica
           <Target className='text-purple-600' size={28} />
           <div>
             <h2 className='text-2xl font-bold text-purple-900'>Fotografia Financeira Total</h2>
-            <p className='text-sm text-purple-700'>Visão consolidada de todo o pipeline comercial</p>
+            <p className='text-sm text-purple-700'>Panorama completo de honorários e contratos</p>
           </div>
         </div>
 
@@ -977,37 +1008,6 @@ Controladoria Jurídica
             </div>
           </div>
         </div>
-
-        {/* Lista de Contratos Aguardando Assinatura */}
-        {contratosSemAssinatura.length > 0 && (
-          <div className='mt-6 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
-            <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
-              <AlertCircle className='text-orange-600' size={18} />
-              Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
-            </h4>
-            <div className='space-y-2'>
-              {contratosSemAssinatura.map((contrato) => (
-                <div key={contrato.id} className='bg-white p-3 rounded-lg border border-orange-300 flex justify-between items-center'>
-                  <div>
-                    <p className='font-bold text-gray-800 text-sm'>{contrato.cliente}</p>
-                    <p className='text-xs text-gray-600'>
-                      HON: {contrato.numero_hon} • Responsável: {contrato.responsavel}
-                    </p>
-                  </div>
-                  <div className='text-right'>
-                    <p className='text-xs text-gray-500'>
-                      {new Date(contrato.data_contrato).toLocaleDateString('pt-BR')}
-                    </p>
-                    <p className={`text-xs font-bold ${contrato.dias_sem_assinar > 5 ? 'text-red-600' : 'text-orange-600'}`}>
-                      {contrato.dias_sem_assinar} dia(s) sem assinar
-                      {contrato.dias_sem_assinar > 5 && ' ⚠️'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 6. ANÁLISE DE REJEIÇÕES */}
