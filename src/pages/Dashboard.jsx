@@ -610,9 +610,9 @@ Controladoria Jurídica
             </div>
           </div>
 
-          {/* Gráfico de Linha - Evolução Total Últimos 6 Meses */}
+          {/* Gráfico de Linha - Entrada de Casos Novos Últimos 6 Meses */}
           <div className='mt-4 pt-4 border-t border-gray-200'>
-            <h3 className='text-xs font-bold text-purple-700 mb-3 uppercase tracking-wide'>Evolução Total (Últimos 6 Meses)</h3>
+            <h3 className='text-xs font-bold text-purple-700 mb-3 uppercase tracking-wide'>Entrada de Casos Novos (Últimos 6 Meses)</h3>
             <div className='relative h-24'>
               {/* Calcular min e max para escala */}
               {(() => {
@@ -697,19 +697,23 @@ Controladoria Jurídica
                     </div>
                     
                     {/* Valores nos pontos */}
-                    <div className='absolute inset-0 flex justify-between items-end pb-1'>
-                      {totais.map((total, i) => (
-                        <div key={i} className='flex flex-col items-center' style={{
-                          position: 'absolute',
-                          left: `${(i / (totais.length - 1)) * 100}%`,
-                          bottom: `${((total - minTotal) / range * 100)}%`,
-                          transform: 'translate(-50%, -120%)'
-                        }}>
-                          <span className='text-[10px] font-bold text-purple-900 bg-white px-1 rounded shadow-sm'>
-                            {total}
-                          </span>
-                        </div>
-                      ))}
+                    <div className='absolute inset-0 pointer-events-none'>
+                      {totais.map((total, i) => {
+                        const x = (i / (totais.length - 1)) * 100
+                        const y = 100 - ((total - minTotal) / range * 100)
+                        return (
+                          <div key={i} className='absolute' style={{
+                            left: `${x}%`,
+                            top: `${y}%`,
+                            transform: 'translate(-50%, -150%)'
+                          }}>
+                            <span className='text-[11px] font-bold text-purple-900 bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-purple-200'>
+                              {total}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
                     </div>
                   </>
                 )
