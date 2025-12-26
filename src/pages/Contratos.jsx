@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { CompanyLogo } from '../hooks/useCompanyLogo'
 import { Plus, Search, FileText, Upload, CheckCircle2, Edit2, X, Calendar, User, DollarSign, FileCheck, Trash2, Filter } from 'lucide-react'
 
 const Contratos = () => {
@@ -344,8 +345,18 @@ const Contratos = () => {
                         {contrato.status}
                       </span>
                     </td>
-                    <td className='px-6 py-4 font-bold text-[#0F2C4C] text-sm'>
-                      {contrato.clientes?.razao_social || 'Cliente não identificado'}
+                    <td className='px-6 py-4'>
+                      <div className='flex items-center gap-3'>
+                        <CompanyLogo 
+                          cnpj={contrato.clientes?.cnpj}
+                          razaoSocial={contrato.clientes?.razao_social}
+                          clienteId={contrato.cliente_id}
+                          size="sm"
+                        />
+                        <span className='font-bold text-[#0F2C4C] text-sm'>
+                          {contrato.clientes?.razao_social || 'Cliente não identificado'}
+                        </span>
+                      </div>
                     </td>
                     <td className='px-6 py-4 text-gray-600 text-xs'>
                       <div className='flex items-center gap-2'>
