@@ -47,8 +47,8 @@ const Sidebar = () => {
         <Link to="/" className={isActive('/')}><LayoutDashboard size={20} /> Dashboard</Link>
         <Link to="/contratos" className={isActive('/contratos')}><FileText size={20} /> Contratos</Link>
         <Link to="/propostas" className={isActive('/propostas')}><FileCheck size={20} /> Propostas</Link>
-        <Link to="/clientes" className={isActive('/clientes')}><Users size={20} /> Clientes</Link>
         <Link to="/compliance" className={isActive('/compliance')}><Shield size={20} /> Compliance</Link>
+        <Link to="/clientes" className={isActive('/clientes')}><Users size={20} /> Clientes</Link>
         <Link to="/kanban" className={isActive('/kanban')}><Kanban size={20} /> Kanban</Link>
         <Link to="/ged" className={isActive('/ged')}><FolderOpen size={20} /> GED</Link>
       </nav>
