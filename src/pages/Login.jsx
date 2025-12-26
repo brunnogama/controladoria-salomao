@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 import { User, Lock, Loader2, ArrowRight, AlertCircle } from 'lucide-react'
+import { APP_VERSION } from '../version'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -138,7 +139,7 @@ const Login = () => {
           </form>
 
           <p className='text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em] pt-4'>
-            © 2025 Salomão Advogados • v1.2.0
+            © 2025 Salomão Advogados • v{APP_VERSION}
           </p>
         </div>
       </div>
