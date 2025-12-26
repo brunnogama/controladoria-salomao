@@ -610,135 +610,47 @@ Controladoria Jurídica
             </div>
           </div>
 
-          {/* Gráfico de Linha - Entrada de Casos Novos Últimos 6 Meses */}
+          {/* Gráfico de Colunas - Entrada de Casos Novos Últimos 6 Meses */}
           <div className='mt-4 pt-4 border-t border-gray-200'>
             <h3 className='text-xs font-bold text-purple-700 mb-3 uppercase tracking-wide'>Entrada de Casos Novos (Últimos 6 Meses)</h3>
-            <div className='relative h-24'>
-              {/* Calcular min e max para escala */}
-              {(() => {
-                const totais = evolucaoMensal.map(m => m.prospects) // Apenas casos novos
-                console.log('📊 Evolução Mensal:', evolucaoMensal)
-                console.log('📊 Totais:', totais)
-                const maxTotal = Math.max(...totais, 1)
-                const minTotal = 0 // Sempre começar do zero
-                const range = maxTotal || 1 // Se maxTotal é 0, usar 1 para evitar divisão por zero
+            <div className='relative h-32 flex items-end justify-between gap-1 px-2'>
+              {evolucaoMensal.map((item, i) => {
+                const total = item.prospects
+                const maxTotal = Math.max(...evolucaoMensal.map(m => m.prospects), 1)
+                const altura = total > 0 ? (total / maxTotal) * 100 : 0
                 
                 return (
-                  <>
-                    {/* Grid de fundo */}
-                    <div className='absolute inset-0 flex flex-col justify-between'>
-                      {[0, 1, 2, 3].map(i => (
-                        <div key={i} className='border-t border-purple-100 border-dashed'></div>
-                      ))}
-                    </div>
+                  <div key={i} className='flex-1 flex flex-col items-center justify-end' style={{ height: '100%' }}>
+                    {/* Rótulo do valor */}
+                    {total > 0 && (
+                      <span className='text-[11px] font-bold text-purple-900 mb-1'>
+                        {total}
+                      </span>
+                    )}
                     
-                    {/* Linha do gráfico */}
-                    <svg className='absolute inset-0 w-full h-full' preserveAspectRatio='none'>
-                      <defs>
-                        <linearGradient id='lineGradient' x1='0%' y1='0%' x2='100%' y2='0%'>
-                          <stop offset='0%' style={{stopColor: '#9333ea', stopOpacity: 1}} />
-                          <stop offset='100%' style={{stopColor: '#c084fc', stopOpacity: 1}} />
-                        </linearGradient>
-                        <linearGradient id='areaGradient' x1='0%' y1='0%' x2='0%' y2='100%'>
-                          <stop offset='0%' style={{stopColor: '#9333ea', stopOpacity: 0.2}} />
-                          <stop offset='100%' style={{stopColor: '#9333ea', stopOpacity: 0}} />
-                        </linearGradient>
-                      </defs>
-                      
-                      {/* Área preenchida - apenas para meses com dados */}
-                      {totais.some(t => t > 0) && (
-                        <path
-                          d={(() => {
-                            // Criar pontos apenas para valores > 0
-                            const pontosComDados = totais.map((total, i) => ({
-                              total,
-                              i,
-                              x: (i / (totais.length - 1)) * 100,
-                              y: 100 - ((total / range) * 100)
-                            })).filter(p => p.total > 0)
-                            
-                            if (pontosComDados.length === 0) return 'M 0,100 L 100,100 Z'
-                            
-                            const points = pontosComDados.map(p => `${p.x},${p.y}`).join(' ')
-                            const firstX = pontosComDados[0].x
-                            const lastX = pontosComDados[pontosComDados.length - 1].x
-                            
-                            return `M ${firstX},100 L ${points} L ${lastX},100 Z`
-                          })()}
-                          fill='url(#areaGradient)'
-                        />
+                    {/* Coluna */}
+                    <div 
+                      className='w-full rounded-t-lg transition-all duration-300 hover:opacity-80 relative'
+                      style={{
+                        height: `${altura}%`,
+                        minHeight: total > 0 ? '8px' : '0px',
+                        background: total > 0 
+                          ? 'linear-gradient(to top, #9333ea, #c084fc)' 
+                          : 'transparent'
+                      }}
+                    >
+                      {total > 0 && (
+                        <div className='absolute inset-0 bg-white/20 rounded-t-lg'></div>
                       )}
-                      
-                      {/* Linha - conectar apenas pontos com dados */}
-                      {totais.some(t => t > 0) && (
-                        <polyline
-                          points={totais
-                            .map((total, i) => ({
-                              total,
-                              x: (i / (totais.length - 1)) * 100,
-                              y: 100 - ((total / range) * 100)
-                            }))
-                            .filter(p => p.total > 0)
-                            .map(p => `${p.x},${p.y}`)
-                            .join(' ')
-                          }
-                          fill='none'
-                          stroke='url(#lineGradient)'
-                          strokeWidth='2'
-                          vectorEffect='non-scaling-stroke'
-                        />
-                      )}
-                      
-                      {/* Pontos - só mostrar onde há valor > 0 */}
-                      {totais.map((total, i) => {
-                        if (total === 0) return null
-                        const x = (i / (totais.length - 1)) * 100
-                        const y = 100 - ((total / range) * 100)
-                        return (
-                          <circle
-                            key={i}
-                            cx={`${x}%`}
-                            cy={`${y}%`}
-                            r='4'
-                            fill='#9333ea'
-                            stroke='white'
-                            strokeWidth='2'
-                          />
-                        )
-                      })}
-                    </svg>
-                    
-                    {/* Labels dos meses */}
-                    <div className='absolute -bottom-5 left-0 right-0 flex justify-between px-1'>
-                      {evolucaoMensal.map((item, i) => (
-                        <span key={i} className='text-[9px] text-purple-600 font-semibold'>
-                          {item.mes}
-                        </span>
-                      ))}
                     </div>
                     
-                    {/* Valores nos pontos */}
-                    <div className='absolute inset-0 pointer-events-none'>
-                      {totais.map((total, i) => {
-                        if (total === 0) return null // Não mostrar rótulo para valores zero
-                        const x = (i / (totais.length - 1)) * 100
-                        const y = 100 - ((total / range) * 100)
-                        return (
-                          <div key={i} className='absolute' style={{
-                            left: `${x}%`,
-                            top: `${y}%`,
-                            transform: 'translate(-50%, -150%)'
-                          }}>
-                            <span className='text-[11px] font-bold text-purple-900 bg-white/90 px-1.5 py-0.5 rounded shadow-sm border border-purple-200'>
-                              {total}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </>
+                    {/* Label do mês */}
+                    <span className='text-[9px] text-purple-600 font-semibold mt-2'>
+                      {item.mes}
+                    </span>
+                  </div>
                 )
-              })()}
+              })}
             </div>
           </div>
         </div>
