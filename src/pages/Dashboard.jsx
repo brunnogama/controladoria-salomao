@@ -530,7 +530,7 @@ Controladoria Jurídica
 
         <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
           <div className='bg-blue-50 p-4 rounded-xl border border-blue-100'>
-            <p className='text-xs font-bold text-blue-600 uppercase mb-1'>Novas Análises</p>
+            <p className='text-xs font-bold text-blue-600 uppercase mb-1'>Sob Análise</p>
             <p className='text-2xl font-bold text-blue-900'>{metrics.semana.novos}</p>
           </div>
 
@@ -596,9 +596,10 @@ Controladoria Jurídica
               <div className='flex-1'>
                 <strong>Taxa de Conversão:</strong> {metrics.semana.novos > 0 ? (
                   <>
-                    De <strong>{metrics.semana.novos} {metrics.semana.novos === 1 ? 'caso novo' : 'casos novos'}</strong>, 
-                    {metrics.semana.propQtd > 0 && ` ${metrics.semana.propQtd} ${metrics.semana.propQtd === 1 ? 'virou proposta' : 'viraram propostas'} (${((metrics.semana.propQtd / metrics.semana.novos) * 100).toFixed(0)}%)`}
-                    {metrics.semana.fechQtd > 0 && ` e ${metrics.semana.fechQtd} ${metrics.semana.fechQtd === 1 ? 'foi fechado' : 'foram fechados'} (${((metrics.semana.fechQtd / metrics.semana.novos) * 100).toFixed(0)}%)`}.
+                    De <strong>{metrics.semana.novos} {metrics.semana.novos === 1 ? 'caso novo' : 'casos novos'}</strong>
+                    {metrics.semana.propQtd > 0 && `, ${metrics.semana.propQtd} ${metrics.semana.propQtd === 1 ? 'virou proposta' : 'viraram propostas'} (${((metrics.semana.propQtd / metrics.semana.novos) * 100).toFixed(0)}%)`}
+                    {metrics.semana.fechQtd > 0 && ` e ${metrics.semana.fechQtd} ${metrics.semana.fechQtd === 1 ? 'foi fechado' : 'foram fechados'} (${((metrics.semana.fechQtd / metrics.semana.novos) * 100).toFixed(0)}%)`}
+                    {metrics.semana.propQtd === 0 && metrics.semana.fechQtd === 0 && ', nenhum avançou para proposta ainda'}.
                   </>
                 ) : 'Sem novos casos na semana.'}
               </div>
@@ -738,9 +739,7 @@ Controladoria Jurídica
               <div className='flex items-start gap-2'>
                 <span className='text-purple-600 font-bold'>📌</span>
                 <div className='flex-1'>
-                  <strong>Distribuição:</strong> {((metrics.geral.emAnalise / metrics.geral.totalCasos) * 100).toFixed(0)}% em análise, 
-                  {((metrics.geral.propostasAtivas / metrics.geral.totalCasos) * 100).toFixed(0)}% em negociação, 
-                  {((metrics.geral.fechados / metrics.geral.totalCasos) * 100).toFixed(0)}% fechados.
+                  <strong>Distribuição:</strong> {((metrics.geral.emAnalise / metrics.geral.totalCasos) * 100).toFixed(0)}% em análise, {((metrics.geral.propostasAtivas / metrics.geral.totalCasos) * 100).toFixed(0)}% em negociação, {((metrics.geral.fechados / metrics.geral.totalCasos) * 100).toFixed(0)}% fechados.
                   {metrics.geral.emAnalise > metrics.geral.fechados && ' ⚠️ Mais casos em análise do que fechados - oportunidade de acelerar qualificação.'}
                 </div>
               </div>
@@ -762,7 +761,7 @@ Controladoria Jurídica
                 <div className='flex-1'>
                   <strong>Proporção Propostas/Contratos:</strong> Para cada {metrics.geral.fechados} {metrics.geral.fechados === 1 ? 'contrato ativo' : 'contratos ativos'}, 
                   há {metrics.geral.propostasAtivas} {metrics.geral.propostasAtivas === 1 ? 'proposta pendente' : 'propostas pendentes'} (proporção de {metrics.geral.fechados > 0 ? (metrics.geral.propostasAtivas / metrics.geral.fechados).toFixed(1) : '0'}:1).
-                  {metrics.geral.fechados > 0 && (metrics.geral.propostasAtivas / metrics.geral.fechados) < 0.3 && ' ⚠️ Baixo volume de propostas pendentes - intensificar captação.'}
+                  {metrics.geral.fechados > 0 && (metrics.geral.propostasAtivas / metrics.geral.fechados) < 0.3 && ' ⚠️ Baixo volume de propostas pendentes.'}
                 </div>
               </div>
             </div>
@@ -820,9 +819,7 @@ Controladoria Jurídica
               <div className='flex items-start gap-2'>
                 <span className='text-blue-600 font-bold'>📊</span>
                 <div className='flex-1'>
-                  <strong>Média Mensal (6 meses):</strong> {(evolucaoMensal.reduce((acc, m) => acc + m.prospects, 0) / evolucaoMensal.length).toFixed(1)} novos casos, 
-                  {' '}{(evolucaoMensal.reduce((acc, m) => acc + m.propostas, 0) / evolucaoMensal.length).toFixed(1)} propostas, 
-                  {' '}{(evolucaoMensal.reduce((acc, m) => acc + m.fechados, 0) / evolucaoMensal.length).toFixed(1)} fechamentos.
+                  <strong>Média Mensal (6 meses):</strong> {(evolucaoMensal.reduce((acc, m) => acc + m.prospects, 0) / evolucaoMensal.length).toFixed(1)} novos casos, {(evolucaoMensal.reduce((acc, m) => acc + m.propostas, 0) / evolucaoMensal.length).toFixed(1)} propostas, {(evolucaoMensal.reduce((acc, m) => acc + m.fechados, 0) / evolucaoMensal.length).toFixed(1)} fechamentos.
                 </div>
               </div>
               
@@ -857,8 +854,8 @@ Controladoria Jurídica
                     </span>
                     <div className='flex-1'>
                       <strong>Tendência (3 meses):</strong> {variacao > 0 ? 'Crescimento' : variacao < 0 ? 'Queda' : 'Estável'} de <strong>{Math.abs(variacao).toFixed(0)}%</strong> na entrada de casos.
-                      {' '}{variacao > 20 && '🚀 Crescimento expressivo da demanda!'}
-                      {variacao < -20 && '⚠️ Atenção: queda significativa.'}
+                      {variacao > 20 && ' 🚀 Crescimento expressivo da demanda!'}
+                      {variacao < -20 && ' ⚠️ Atenção: queda significativa.'}
                       {Math.abs(variacao) < 5 && ' ➡️ Entrada estável.'}
                     </div>
                   </div>
@@ -1413,7 +1410,7 @@ Controladoria Jurídica
                 <span className='text-purple-600 font-bold'>🔄</span>
                 <div className='flex-1'>
                   <strong>Volume de Propostas:</strong> Proporção atual de {(metrics.geral.propostasAtivas / metrics.geral.fechados).toFixed(1)} propostas aguardando decisão para cada contrato vigente. 
-                  {(metrics.geral.propostasAtivas / metrics.geral.fechados) > 1 ? ' Volume adequado de negociações em andamento.' : ' ⚠️ Baixo volume de propostas - intensificar captação.'}
+                  {(metrics.geral.propostasAtivas / metrics.geral.fechados) > 1 ? ' Volume adequado de negociações em andamento.' : ' ⚠️ Baixo volume de propostas.'}
                 </div>
               </div>
             )}
@@ -1514,7 +1511,7 @@ Controladoria Jurídica
 
           <div className='mt-6 pt-4 border-t bg-red-50 rounded-lg p-4'>
             <p className='text-sm text-gray-700'>
-              <span className='font-bold text-red-700'>Insight:</span> {' '}
+              <span className='font-bold text-red-700'>Insight:</span>{' '}
               {dadosRejeicao.porMotivo.length > 0 && dadosRejeicao.porMotivo[0] && (
                 <>O principal motivo de rejeição é "{dadosRejeicao.porMotivo[0].motivo}" ({dadosRejeicao.porMotivo[0].count} casos, {dadosRejeicao.porMotivo[0].percentual}%). </>
               )}
