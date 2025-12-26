@@ -82,6 +82,7 @@ const Dashboard = () => {
   const [evolucaoMensal, setEvolucaoMensal] = useState([])
   const [ultimosCasos, setUltimosCasos] = useState([])
   const [contratosSemAssinatura, setContratosSemAssinatura] = useState([])
+  const [periodoSemana, setPeriodoSemana] = useState({ inicio: '', fim: '' })
   const [dadosRejeicao, setDadosRejeicao] = useState({
     porMotivo: [],
     porIniciativa: []
@@ -109,6 +110,10 @@ const Dashboard = () => {
       const inicioSemana = new Date(hoje)
       inicioSemana.setDate(hoje.getDate() - hoje.getDay())
       inicioSemana.setHours(0, 0, 0, 0)
+      
+      const fimSemana = new Date(inicioSemana)
+      fimSemana.setDate(inicioSemana.getDate() + 6)
+      fimSemana.setHours(23, 59, 59, 999)
 
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
 
@@ -260,14 +265,15 @@ const Dashboard = () => {
       contratos.forEach((c) => {
         const statusNormalizado = c.status?.trim()
         
-        // Usar data_prospect ou created_at para prospects
-        const dataProspect = c.data_prospect ? new Date(c.data_prospect) : new Date(c.created_at)
-        const mesProspect = dataProspect.getMonth()
-        const anoProspect = dataProspect.getFullYear()
+        // Contar entrada de casos (todos os casos, independente do status inicial)
+        // Usa created_at como data de entrada do caso no sistema
+        const dataEntrada = new Date(c.created_at)
+        const mesEntrada = dataEntrada.getMonth()
+        const anoEntrada = dataEntrada.getFullYear()
 
         ultimos6Meses.forEach((item) => {
-          if (item.mesNumero === mesProspect && item.anoNumero === anoProspect) {
-            item.prospects++
+          if (item.mesNumero === mesEntrada && item.anoNumero === anoEntrada) {
+            item.prospects++ // Renomeado mas conta todos os casos que entraram no sistema
           }
         })
 
@@ -313,6 +319,13 @@ const Dashboard = () => {
 
       setMetrics({ semana: mSemana, mes: mMes, geral: mGeral })
       setFunil(funilTemp)
+      
+      // Definir período da semana
+      setPeriodoSemana({
+        inicio: inicioSemana.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        fim: fimSemana.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      })
+      
       setEvolucaoMensal(ultimos6Meses)
       
       // Preparar últimos 10 casos cadastrados
@@ -491,7 +504,9 @@ Controladoria Jurídica
           <CalendarDays className='text-blue-600' size={24} />
           <div>
             <h2 className='text-xl font-bold text-gray-800'>Resumo da Semana</h2>
-            <p className='text-xs text-gray-500'>Performance dos últimos 7 dias</p>
+            <p className='text-xs text-gray-500'>
+              Performance do período {periodoSemana.inicio} a {periodoSemana.fim}
+            </p>
           </div>
         </div>
 
@@ -525,10 +540,7 @@ Controladoria Jurídica
 
         <div className='mt-4 pt-4 border-t border-gray-100'>
           <p className='text-sm text-gray-600 mb-3'>
-            <span className='font-bold'>Resumo:</span> Esta semana entraram {metrics.semana.novos} novos casos, 
-            {metrics.semana.propQtd > 0 && ` foram enviadas ${metrics.semana.propQtd} propostas,`}
-            {metrics.semana.fechQtd > 0 && ` ${metrics.semana.fechQtd} contrato(s) fechado(s)`}
-            {metrics.semana.rejeitados > 0 && ` e ${metrics.semana.rejeitados} rejeitado(s)`}.
+            <span className='font-bold'>Resumo:</span> Esta semana {metrics.semana.novos === 1 ? 'entrou 1 novo caso' : `entraram ${metrics.semana.novos} novos casos`}{metrics.semana.propQtd > 0 && `, ${metrics.semana.propQtd === 1 ? 'foi enviada 1 proposta' : `foram enviadas ${metrics.semana.propQtd} propostas`}`}{metrics.semana.fechQtd > 0 && `, ${metrics.semana.fechQtd} ${metrics.semana.fechQtd === 1 ? 'contrato fechado' : 'contratos fechados'}`}{metrics.semana.rejeitados > 0 && ` e ${metrics.semana.rejeitados} ${metrics.semana.rejeitados === 1 ? 'rejeitado' : 'rejeitados'}`}.
           </p>
           
           {/* Resumo Financeiro */}
@@ -604,7 +616,7 @@ Controladoria Jurídica
             <div className='relative h-24'>
               {/* Calcular min e max para escala */}
               {(() => {
-                const totais = evolucaoMensal.map(m => m.prospects + m.propostas + m.fechados + m.rejeitados)
+                const totais = evolucaoMensal.map(m => m.prospects) // Apenas casos novos
                 const maxTotal = Math.max(...totais, 1)
                 const minTotal = Math.min(...totais, 0)
                 const range = maxTotal - minTotal || 1
@@ -847,22 +859,21 @@ Controladoria Jurídica
 
         <div className='mt-6 pt-4 border-t bg-gray-50 rounded-lg p-4'>
           <p className='text-sm text-gray-700'>
-            <span className='font-bold text-blue-700'>Resumo:</span> De {funil.totalEntrada} casos, {funil.qualificadosProposta} viraram propostas ({funil.taxaConversaoProposta}%), 
-            {funil.fechados} foram fechados ({funil.taxaConversaoFechamento}% das propostas) e {metrics.geral.rejeitados} foram rejeitados.
-            {funil.perdaAnalise > 0 && ` ${funil.perdaAnalise} rejeitados antes da proposta.`}
-            {funil.perdaNegociacao > 0 && ` ${funil.perdaNegociacao} rejeitados após proposta.`}
+            <span className='font-bold text-blue-700'>Resumo:</span> De {funil.totalEntrada} {funil.totalEntrada === 1 ? 'caso' : 'casos'}, {funil.qualificadosProposta} {funil.qualificadosProposta === 1 ? 'virou proposta' : 'viraram propostas'} ({funil.taxaConversaoProposta}%), {funil.fechados} {funil.fechados === 1 ? 'foi fechado' : 'foram fechados'} ({funil.taxaConversaoFechamento}% das propostas) e {metrics.geral.rejeitados} {metrics.geral.rejeitados === 1 ? 'foi rejeitado' : 'foram rejeitados'}.
+            {funil.perdaAnalise > 0 && ` ${funil.perdaAnalise} ${funil.perdaAnalise === 1 ? 'rejeitado' : 'rejeitados'} antes da proposta.`}
+            {funil.perdaNegociacao > 0 && ` ${funil.perdaNegociacao} ${funil.perdaNegociacao === 1 ? 'rejeitado' : 'rejeitados'} após proposta.`}
           </p>
         </div>
 
         {/* Cards de Status de Assinatura */}
         <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-300'>
-            <p className='text-sm text-blue-700 font-semibold mb-1'>✓ Contratos Assinados</p>
+            <p className='text-sm text-blue-700 font-semibold mb-1'>✓ Contratos Fechados Assinados</p>
             <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
             <p className='text-xs text-gray-600 mt-1'>de {metrics.geral.fechados} fechados</p>
           </div>
           <div className='text-center p-4 bg-orange-50 rounded-lg border-2 border-orange-300'>
-            <p className='text-sm text-orange-700 font-semibold mb-1'>⏳ Aguardando Assinatura</p>
+            <p className='text-sm text-orange-700 font-semibold mb-1'>⏳ Contratos Fechados Aguardando Assinatura</p>
             <p className='text-3xl font-bold text-orange-900'>{metrics.geral.naoAssinados}</p>
             <p className='text-xs text-gray-600 mt-1'>pendentes de assinatura</p>
           </div>
