@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { CompanyLogo } from '../hooks/useCompanyLogo'
 import {
   Plus,
   Search,
@@ -413,9 +414,12 @@ const Clientes = () => {
                 </div>
 
                 <div className='flex items-start gap-4 mb-4'>
-                  <div className='w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-bold text-lg shrink-0'>
-                    {cliente.razao_social?.charAt(0).toUpperCase()}
-                  </div>
+                  <CompanyLogo 
+                    cnpj={cliente.cnpj}
+                    razaoSocial={cliente.razao_social}
+                    clienteId={cliente.id}
+                    size="md"
+                  />
                   <div className='overflow-hidden'>
                     <h3 className='font-bold text-gray-800 truncate' title={cliente.razao_social}>{cliente.razao_social}</h3>
                     <p className='text-xs text-gray-400 flex items-center gap-1 mt-1'>
@@ -550,9 +554,12 @@ const Clientes = () => {
           <div className='bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl' onClick={(e) => e.stopPropagation()}>
             <div className='bg-gradient-to-r from-[#0F2C4C] to-blue-900 p-6 flex items-center justify-between text-white'>
               <div className='flex items-center gap-3'>
-                <div className='w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold'>
-                  {clienteSelecionado.razao_social?.charAt(0).toUpperCase()}
-                </div>
+                <CompanyLogo 
+                  cnpj={clienteSelecionado.cnpj}
+                  razaoSocial={clienteSelecionado.razao_social}
+                  clienteId={clienteSelecionado.id}
+                  size="lg"
+                />
                 <div>
                   <h2 className='text-xl font-bold'>{clienteSelecionado.razao_social}</h2>
                   <p className='text-sm text-blue-100'>{clienteSelecionado.cnpj || 'CNPJ não informado'}</p>
