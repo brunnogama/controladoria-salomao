@@ -5,6 +5,7 @@ import {
   Users, Plus, Edit2, X, Shield, ShieldOff, Mail, Calendar, Code
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { APP_VERSION, RECENT_CHANGES } from '../version';
 
 const Configuracoes = () => {
   const [logoInterno, setLogoInterno] = useState('');
@@ -24,7 +25,8 @@ const Configuracoes = () => {
   });
   const [showFullChangelog, setShowFullChangelog] = useState(false);
 
-  const versaoAtual = "1.5.9";
+  // Usar changelog do arquivo version.js ao invés de hardcoded
+  const changelog = RECENT_CHANGES;
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -260,7 +262,7 @@ const Configuracoes = () => {
           </h1>
           <p className="text-gray-500 mt-1">Personalize aparência e gerencie usuários</p>
         </div>
-        <div className="text-sm text-gray-400 font-mono">v{versaoAtual}</div>
+        <div className="text-sm text-gray-400 font-mono">v{APP_VERSION}</div>
       </div>
 
       {status && (
@@ -414,7 +416,7 @@ const Configuracoes = () => {
             </div>
             <div>
               <p className="text-blue-200 mb-1">Versão Atual</p>
-              <p className="font-bold">v{versaoAtual}</p>
+              <p className="font-bold">v{APP_VERSION}</p>
             </div>
             <div>
               <p className="text-blue-200 mb-1">Última Atualização</p>
