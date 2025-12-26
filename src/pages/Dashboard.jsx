@@ -714,7 +714,6 @@ Controladoria Jurídica
                         )
                       })}
                     </div>
-                    </div>
                   </>
                 )
               })()}
