@@ -645,34 +645,53 @@ Controladoria Jurídica
                         </linearGradient>
                       </defs>
                       
-                      {/* Área preenchida */}
-                      <path
-                        d={(() => {
-                          const points = totais.map((total, i) => {
-                            const x = (i / (totais.length - 1)) * 100
-                            const y = 100 - ((total / range) * 100)
-                            return `${x},${y}`
-                          }).join(' ')
-                          return `M 0,100 L ${points} L 100,100 Z`
-                        })()}
-                        fill='url(#areaGradient)'
-                      />
+                      {/* Área preenchida - apenas para meses com dados */}
+                      {totais.some(t => t > 0) && (
+                        <path
+                          d={(() => {
+                            // Criar pontos apenas para valores > 0
+                            const pontosComDados = totais.map((total, i) => ({
+                              total,
+                              i,
+                              x: (i / (totais.length - 1)) * 100,
+                              y: 100 - ((total / range) * 100)
+                            })).filter(p => p.total > 0)
+                            
+                            if (pontosComDados.length === 0) return 'M 0,100 L 100,100 Z'
+                            
+                            const points = pontosComDados.map(p => `${p.x},${p.y}`).join(' ')
+                            const firstX = pontosComDados[0].x
+                            const lastX = pontosComDados[pontosComDados.length - 1].x
+                            
+                            return `M ${firstX},100 L ${points} L ${lastX},100 Z`
+                          })()}
+                          fill='url(#areaGradient)'
+                        />
+                      )}
                       
-                      {/* Linha */}
-                      <polyline
-                        points={totais.map((total, i) => {
-                          const x = (i / (totais.length - 1)) * 100
-                          const y = 100 - ((total / range) * 100)
-                          return `${x},${y}`
-                        }).join(' ')}
-                        fill='none'
-                        stroke='url(#lineGradient)'
-                        strokeWidth='2'
-                        vectorEffect='non-scaling-stroke'
-                      />
+                      {/* Linha - conectar apenas pontos com dados */}
+                      {totais.some(t => t > 0) && (
+                        <polyline
+                          points={totais
+                            .map((total, i) => ({
+                              total,
+                              x: (i / (totais.length - 1)) * 100,
+                              y: 100 - ((total / range) * 100)
+                            }))
+                            .filter(p => p.total > 0)
+                            .map(p => `${p.x},${p.y}`)
+                            .join(' ')
+                          }
+                          fill='none'
+                          stroke='url(#lineGradient)'
+                          strokeWidth='2'
+                          vectorEffect='non-scaling-stroke'
+                        />
+                      )}
                       
-                      {/* Pontos */}
+                      {/* Pontos - só mostrar onde há valor > 0 */}
                       {totais.map((total, i) => {
+                        if (total === 0) return null
                         const x = (i / (totais.length - 1)) * 100
                         const y = 100 - ((total / range) * 100)
                         return (
@@ -680,7 +699,7 @@ Controladoria Jurídica
                             key={i}
                             cx={`${x}%`}
                             cy={`${y}%`}
-                            r='3'
+                            r='4'
                             fill='#9333ea'
                             stroke='white'
                             strokeWidth='2'
