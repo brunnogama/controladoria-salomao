@@ -336,11 +336,17 @@ const Contratos = () => {
       </div>
 
       <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4'>
-        {/* Botão de Busca */}
-        <div className='flex items-center gap-3'>
+        {/* Cabeçalho de Filtros com Busca */}
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
+            <Filter size={18} className='text-gray-400' />
+            <span className='text-xs font-bold text-gray-500 uppercase'>Filtros:</span>
+          </div>
+          
+          {/* Botão de Busca */}
           <button
             onClick={() => setShowBuscaModal(!showBuscaModal)}
-            className='flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-700 font-medium'
+            className='flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-700 font-medium'
             title='Buscar contratos'
           >
             <Search size={20} />
@@ -359,6 +365,7 @@ const Contratos = () => {
             )}
           </button>
 
+          {/* Modal de Busca */}
           {showBuscaModal && (
             <div className='fixed inset-0 bg-black bg-opacity-30 flex items-start justify-center pt-20 z-50' onClick={() => setShowBuscaModal(false)}>
               <div className='bg-white rounded-xl shadow-2xl p-6 w-full max-w-xl' onClick={(e) => e.stopPropagation()}>
@@ -401,12 +408,7 @@ const Contratos = () => {
           )}
         </div>
         
-        {/* Filtros avançados */}
-        <div className='flex items-center gap-2'>
-          <Filter size={18} className='text-gray-400' />
-          <span className='text-xs font-bold text-gray-500 uppercase'>Filtros:</span>
-        </div>
-        
+        {/* Grid de Filtros */}
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           {/* Filtro de Status */}
           <div>
