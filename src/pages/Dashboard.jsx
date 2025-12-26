@@ -617,6 +617,8 @@ Controladoria Jurídica
               {/* Calcular min e max para escala */}
               {(() => {
                 const totais = evolucaoMensal.map(m => m.prospects) // Apenas casos novos
+                console.log('📊 Evolução Mensal:', evolucaoMensal)
+                console.log('📊 Totais:', totais)
                 const maxTotal = Math.max(...totais, 1)
                 const minTotal = Math.min(...totais, 0)
                 const range = maxTotal - minTotal || 1
@@ -699,6 +701,7 @@ Controladoria Jurídica
                     {/* Valores nos pontos */}
                     <div className='absolute inset-0 pointer-events-none'>
                       {totais.map((total, i) => {
+                        if (total === 0) return null // Não mostrar rótulo para valores zero
                         const x = (i / (totais.length - 1)) * 100
                         const y = 100 - ((total - minTotal) / range * 100)
                         return (
