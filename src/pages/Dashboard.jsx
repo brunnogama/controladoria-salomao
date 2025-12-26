@@ -21,6 +21,7 @@ import {
   FileText,
   TrendingDown,
   AlertCircle,
+  FileSignature,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -801,9 +802,20 @@ Controladoria Jurídica
             {funil.perdaNegociacao > 0 && ` ${funil.perdaNegociacao} ${funil.perdaNegociacao === 1 ? 'rejeitado' : 'rejeitados'} após proposta.`}
           </p>
         </div>
+      </div>
+
+      {/* 3B. STATUS DAS ASSINATURAS NOS CONTRATOS */}
+      <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
+        <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+          <FileSignature className='text-purple-600' size={24} />
+          <div>
+            <h2 className='text-xl font-bold text-gray-800'>Status das Assinaturas nos Contratos</h2>
+            <p className='text-xs text-gray-500'>Acompanhamento de formalização dos contratos</p>
+          </div>
+        </div>
 
         {/* Cards de Status de Assinatura */}
-        <div className='mt-6 grid grid-cols-1 md:grid-cols-2 gap-4'>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-300'>
             <p className='text-sm text-blue-700 font-semibold mb-1'>✓ Contratos Fechados Assinados</p>
             <p className='text-3xl font-bold text-blue-900'>{metrics.geral.assinados}</p>
@@ -818,7 +830,7 @@ Controladoria Jurídica
 
         {/* Lista de Contratos Aguardando Assinatura */}
         {contratosSemAssinatura.length > 0 && (
-          <div className='mt-4 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
+          <div className='mt-6 bg-orange-50 p-6 rounded-xl border-2 border-orange-200'>
             <h4 className='text-sm font-bold text-orange-900 mb-4 flex items-center gap-2'>
               <AlertCircle className='text-orange-600' size={18} />
               Contratos Aguardando Assinatura ({contratosSemAssinatura.length})
