@@ -11,6 +11,7 @@ const Contratos = () => {
   const [busca, setBusca] = useState('')
   const [contratoSelecionado, setContratoSelecionado] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [showBuscaModal, setShowBuscaModal] = useState(false)
   
   // Filtros
   const [filtroStatus, setFiltroStatus] = useState('')
@@ -306,11 +307,17 @@ const Contratos = () => {
           <button
             onClick={exportarParaExcel}
             disabled={loading || contratosFiltrados.length === 0}
-            className='flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition-colors shadow-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed'
-            title={contratosFiltrados.length === 0 ? 'Nenhum contrato para exportar' : `Exportar ${contratosFiltrados.length} contratos`}
+            className='flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition-colors shadow-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed'
+            title={contratosFiltrados.length === 0 ? 'Nenhum contrato para exportar' : `Exportar ${contratosFiltrados.length} contratos para Excel`}
           >
-            <Download size={20} />
-            <span>Exportar Excel</span>
+            {/* Ícone Excel SVG */}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 13L12 17L16 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 17V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            
             {contratosFiltrados.length > 0 && (
               <span className='bg-green-800 px-2 py-0.5 rounded text-xs'>
                 {contratosFiltrados.length}
@@ -329,16 +336,69 @@ const Contratos = () => {
       </div>
 
       <div className='bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4'>
-        {/* Busca textual */}
-        <div className='relative flex-1'>
-          <Search className='absolute left-3 top-3 text-gray-400' size={20} />
-          <input
-            type='text'
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            placeholder='Buscar por cliente, descrição ou responsável...'
-            className='w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500'
-          />
+        {/* Botão de Busca */}
+        <div className='flex items-center gap-3'>
+          <button
+            onClick={() => setShowBuscaModal(!showBuscaModal)}
+            className='flex items-center gap-2 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-gray-700 font-medium'
+            title='Buscar contratos'
+          >
+            <Search size={20} />
+            {busca && (
+              <>
+                <span className='text-sm font-normal text-gray-600'>"{busca}"</span>
+                <X 
+                  size={16} 
+                  className='text-gray-500 hover:text-red-600'
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setBusca('')
+                  }}
+                />
+              </>
+            )}
+          </button>
+
+          {showBuscaModal && (
+            <div className='fixed inset-0 bg-black bg-opacity-30 flex items-start justify-center pt-20 z-50' onClick={() => setShowBuscaModal(false)}>
+              <div className='bg-white rounded-xl shadow-2xl p-6 w-full max-w-xl' onClick={(e) => e.stopPropagation()}>
+                <div className='flex items-center justify-between mb-4'>
+                  <h3 className='text-lg font-bold text-gray-800'>Buscar Contratos</h3>
+                  <button onClick={() => setShowBuscaModal(false)} className='text-gray-400 hover:text-gray-600'>
+                    <X size={20} />
+                  </button>
+                </div>
+                <div className='relative'>
+                  <Search className='absolute left-3 top-3 text-gray-400' size={20} />
+                  <input
+                    type='text'
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder='Digite cliente, descrição ou responsável...'
+                    className='w-full pl-10 pr-4 py-3 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-blue-500 text-lg'
+                    autoFocus
+                  />
+                </div>
+                <div className='mt-4 flex justify-end gap-2'>
+                  <button
+                    onClick={() => {
+                      setBusca('')
+                      setShowBuscaModal(false)
+                    }}
+                    className='px-4 py-2 text-gray-600 hover:text-gray-800'
+                  >
+                    Limpar
+                  </button>
+                  <button
+                    onClick={() => setShowBuscaModal(false)}
+                    className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Filtros avançados */}
