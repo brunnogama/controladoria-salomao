@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Save, Monitor, RefreshCw, History, 
+  Save, Monitor, RefreshCw, History, ChevronDown, ChevronUp,
   CheckCircle, Building2, Copyright, Trash2, AlertTriangle,
-  Users, Plus, Edit2, X, Shield, ShieldOff, Mail, Calendar
+  Users, Plus, Edit2, X, Shield, ShieldOff, Mail, Calendar, Code
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
@@ -12,8 +12,6 @@ const Configuracoes = () => {
   const [status, setStatus] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetando, setResetando] = useState(false);
-
-  // Gerenciamento de Usuários
   const [usuarios, setUsuarios] = useState([]);
   const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -24,8 +22,9 @@ const Configuracoes = () => {
     nome_completo: '',
     role: 'user'
   });
+  const [showFullChangelog, setShowFullChangelog] = useState(false);
 
-  const versaoAtual = "1.5.8"; 
+  const versaoAtual = "1.5.9";
 
   useEffect(() => {
     const si = localStorage.getItem('app_logo_path');
@@ -99,8 +98,6 @@ const Configuracoes = () => {
         alert('❌ Email e senha são obrigatórios!');
         return;
       }
-
-      // 1. Criar usuário no Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userForm.email,
         password: userForm.password,
@@ -111,10 +108,7 @@ const Configuracoes = () => {
           }
         }
       });
-
       if (authError) throw authError;
-
-      // 2. Criar registro na tabela usuarios_sistema
       const { error: dbError } = await supabase
         .from('usuarios_sistema')
         .insert([{
@@ -124,21 +118,17 @@ const Configuracoes = () => {
           role: userForm.role,
           ativo: true
         }]);
-
       if (dbError) throw dbError;
-
-      alert('✅ Usuário criado com sucesso!');
+      alert('✅ Usuário criado!');
       setShowUserModal(false);
       fetchUsuarios();
     } catch (error) {
-      console.error('Erro ao criar usuário:', error);
-      alert('❌ Erro ao criar usuário: ' + error.message);
+      alert('❌ Erro: ' + error.message);
     }
   };
 
   const atualizarUsuario = async () => {
     try {
-      // Atualizar na tabela usuarios_sistema
       const { error: dbError } = await supabase
         .from('usuarios_sistema')
         .update({
@@ -147,44 +137,33 @@ const Configuracoes = () => {
           role: userForm.role
         })
         .eq('id', editingUser.id);
-
       if (dbError) throw dbError;
-
-      // Se tiver senha nova, atualizar no Auth
       if (userForm.password && editingUser.auth_user_id) {
         const { error: authError } = await supabase.auth.updateUser({
           password: userForm.password
         });
         if (authError) console.warn('Aviso ao atualizar senha:', authError);
       }
-
-      alert('✅ Usuário atualizado com sucesso!');
+      alert('✅ Usuário atualizado!');
       setShowUserModal(false);
       fetchUsuarios();
     } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
-      alert('❌ Erro ao atualizar usuário: ' + error.message);
+      alert('❌ Erro: ' + error.message);
     }
   };
 
   const excluirUsuario = async (userId, email) => {
-    if (!window.confirm(`⚠️ Tem certeza que deseja excluir o usuário "${email}"?\n\nEsta ação não pode ser desfeita.`)) {
-      return;
-    }
-
+    if (!window.confirm(`⚠️ Excluir "${email}"?`)) return;
     try {
       const { error } = await supabase
         .from('usuarios_sistema')
         .delete()
         .eq('id', userId);
-
       if (error) throw error;
-
-      alert('✅ Usuário excluído com sucesso!');
+      alert('✅ Usuário excluído!');
       fetchUsuarios();
     } catch (error) {
-      console.error('Erro ao excluir usuário:', error);
-      alert('❌ Erro ao excluir usuário: ' + error.message);
+      alert('❌ Erro: ' + error.message);
     }
   };
 
@@ -194,20 +173,17 @@ const Configuracoes = () => {
         .from('usuarios_sistema')
         .update({ ativo: !currentAtivo })
         .eq('id', userId);
-
       if (error) throw error;
-
-      alert(`✅ Usuário ${currentAtivo ? 'inativado' : 'ativado'} com sucesso!`);
+      alert(`✅ Usuário ${currentAtivo ? 'inativado' : 'ativado'}!`);
       fetchUsuarios();
     } catch (error) {
-      console.error('Erro ao alterar status:', error);
-      alert('❌ Erro ao alterar status: ' + error.message);
+      alert('❌ Erro: ' + error.message);
     }
   };
 
   const changelog = [
     {
-      versao: "1.5.8",
+      versao: "1.5.9",
       data: "26/12/2025",
       tipo: "Nova Funcionalidade",
       mudancas: [
@@ -216,12 +192,60 @@ const Configuracoes = () => {
         "Ativação/Inativação de usuários",
         "Roles: Admin, User, Viewer",
         "Tabela usuarios_sistema com RLS",
-        "🎨 Logos circulares otimizadas",
+        "🎨 Logos circulares corrigidas",
+        "object-contain com padding otimizado",
         "📊 Histórico de Status completo",
         "🔄 Data zerada ao mudar status",
         "📋 Filtros avançados em Contratos",
-        "🏷️ Tags coloridas em Rejeição",
-        "🐛 Correções críticas de FK"
+        "🏷️ Tags coloridas em Rejeição"
+      ]
+    },
+    {
+      versao: "1.5.7",
+      data: "25/12/2025",
+      tipo: "Ajustes e Melhorias",
+      mudancas: [
+        "Dashboard: resumo financeiro semanal no 'Resumo da Semana'",
+        "Dashboard: cards de assinatura em seção dedicada",
+        "Dashboard: correção singular/plural",
+        "Dashboard: período semanal com datas dinâmicas",
+        "Gráfico: mudado de linha para colunas",
+        "ContratoForm: campo Descrição removido",
+        "Animações suaves na reorganização"
+      ]
+    },
+    {
+      versao: "1.5.0",
+      data: "25/12/2025",
+      tipo: "Nova Funcionalidade",
+      mudancas: [
+        "Dashboard reorganizado para relatório executivo",
+        "Nova ordem otimizada das seções",
+        "Resumo da Semana com contador de rejeitados",
+        "Entrada de Casos corrigida (datas por fase)",
+        "Seção Valores detalhada",
+        "Fotografia Financeira completa"
+      ]
+    },
+    {
+      versao: "1.4.5",
+      data: "25/12/2025",
+      tipo: "Nova Funcionalidade",
+      mudancas: [
+        "Modal de visualização completo em Clientes",
+        "Botão para desvincular contrato",
+        "Validação robusta de exclusão"
+      ]
+    },
+    {
+      versao: "1.4.0",
+      data: "24/12/2025",
+      tipo: "Nova Funcionalidade",
+      mudancas: [
+        "Módulo Clientes criado",
+        "Busca automática CNPJ via BrasilAPI",
+        "Validação CNPJ completa",
+        "Cards visuais com HONs vinculados"
       ]
     }
   ];
@@ -253,7 +277,7 @@ const Configuracoes = () => {
             <Users size={24} className="text-purple-600" />
             <div>
               <h2 className="text-xl font-bold">Gerenciamento de Usuários</h2>
-              <p className="text-sm text-gray-500">Crie, edite e gerencie usuários do sistema</p>
+              <p className="text-sm text-gray-500">Crie, edite e gerencie usuários</p>
             </div>
           </div>
           <button onClick={() => abrirModalUsuario()} className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 font-bold">
@@ -263,69 +287,67 @@ const Configuracoes = () => {
         </div>
 
         {loadingUsuarios ? (
-          <div className="text-center py-8 text-gray-500">Carregando usuários...</div>
+          <div className="text-center py-8 text-gray-500">Carregando...</div>
         ) : usuarios.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <Users size={48} className="mx-auto mb-2 opacity-20" />
-            <p>Nenhum usuário cadastrado</p>
+            <p>Nenhum usuário</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Criado</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Ações</th>
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Role</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Criado</th>
+                <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {usuarios.map((u) => (
+                <tr key={u.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail size={14} className="text-gray-400" />
+                      {u.email}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium">{u.nome_completo || '-'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : u.role === 'viewer' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Calendar size={14} className="text-gray-400" />
+                      {new Date(u.created_at).toLocaleDateString('pt-BR')}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.ativo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {u.ativo ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => abrirModalUsuario(u)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg" title="Editar">
+                        <Edit2 size={16} />
+                      </button>
+                      <button onClick={() => toggleUsuarioStatus(u.id, u.ativo)} className={`p-2 rounded-lg ${u.ativo ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`} title={u.ativo ? 'Inativar' : 'Ativar'}>
+                        {u.ativo ? <ShieldOff size={16} /> : <Shield size={16} />}
+                      </button>
+                      <button onClick={() => excluirUsuario(u.id, u.email)} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg" title="Excluir">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y">
-                {usuarios.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Mail size={14} className="text-gray-400" />
-                        {u.email}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium">{u.nome_completo || '-'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : u.role === 'viewer' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'}`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar size={14} className="text-gray-400" />
-                        {new Date(u.created_at).toLocaleDateString('pt-BR')}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.ativo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {u.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => abrirModalUsuario(u)} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg" title="Editar">
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => toggleUsuarioStatus(u.id, u.ativo)} className={`p-2 rounded-lg ${u.ativo ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`} title={u.ativo ? 'Inativar' : 'Ativar'}>
-                          {u.ativo ? <ShieldOff size={16} /> : <Shield size={16} />}
-                        </button>
-                        <button onClick={() => excluirUsuario(u.id, u.email)} className="p-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg" title="Excluir">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
@@ -374,27 +396,98 @@ const Configuracoes = () => {
         </div>
       </div>
 
-      {/* CHANGELOG */}
+      {/* CHANGELOG - VERSÃO ATUAL */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
-          <History size={24} className="text-green-600" />
-          Changelog
-        </h2>
-        <div className="space-y-6">
-          {changelog.map((entry, i) => (
-            <div key={i} className="border-l-4 border-blue-500 pl-4 py-2">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-black">v{entry.versao}</span>
-                <span className="text-sm text-gray-500">{entry.data}</span>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">{entry.tipo}</span>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold flex items-center gap-3">
+            <History size={24} className="text-green-600" />
+            Changelog - Últimas Atualizações
+          </h2>
+        </div>
+
+        {/* Versão Mais Recente */}
+        <div className="border-l-4 border-green-500 pl-6 py-4 mb-4 bg-gradient-to-r from-green-50 to-transparent">
+          <div className="flex items-center gap-3 mb-3">
+            <span className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-black">
+              v{changelog[0].versao} - ATUAL
+            </span>
+            <span className="text-sm text-gray-500">{changelog[0].data}</span>
+            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+              {changelog[0].tipo}
+            </span>
+          </div>
+          <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
+            {changelog[0].mudancas.map((m, i) => (
+              <li key={i} className="leading-relaxed">{m}</li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Botão Ver Histórico */}
+        <button
+          onClick={() => setShowFullChangelog(!showFullChangelog)}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition-colors"
+        >
+          {showFullChangelog ? (
+            <>
+              <ChevronUp size={20} />
+              Ocultar Histórico Completo
+            </>
+          ) : (
+            <>
+              <ChevronDown size={20} />
+              Ver Histórico Completo ({changelog.length - 1} versões anteriores)
+            </>
+          )}
+        </button>
+
+        {/* Histórico Completo */}
+        {showFullChangelog && (
+          <div className="mt-6 space-y-4 border-t pt-6">
+            {changelog.slice(1).map((entry, index) => (
+              <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-black">
+                    v{entry.versao}
+                  </span>
+                  <span className="text-sm text-gray-500">{entry.data}</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-bold">
+                    {entry.tipo}
+                  </span>
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                  {entry.mudancas.map((m, i) => (
+                    <li key={i}>{m}</li>
+                  ))}
+                </ul>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
-                {entry.mudancas.map((m, j) => (
-                  <li key={j}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* CRÉDITOS */}
+      <div className="bg-gradient-to-r from-[#0F2C4C] to-blue-900 rounded-xl p-6 text-white">
+        <div className="flex items-center gap-4 mb-4">
+          <Code size={32} />
+          <div>
+            <h3 className="text-xl font-bold">Flow Metrics System</h3>
+            <p className="text-blue-200 text-sm">Controladoria Jurídica</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-blue-200 mb-1">Stack</p>
+            <p className="font-bold">React + Supabase</p>
+          </div>
+          <div>
+            <p className="text-blue-200 mb-1">Versão Atual</p>
+            <p className="font-bold">v{versaoAtual}</p>
+          </div>
+          <div>
+            <p className="text-blue-200 mb-1">Última Atualização</p>
+            <p className="font-bold">{changelog[0].data}</p>
+          </div>
         </div>
       </div>
 
@@ -402,12 +495,12 @@ const Configuracoes = () => {
       <div className="text-center py-8 border-t">
         <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
           <Copyright size={16} />
-          <span>2024-2025 Controladoria Jurídica - Flow Metrics System</span>
+          <span>2024-2025 Controladoria Jurídica</span>
         </div>
-        <p className="text-xs text-gray-400 mt-2">Supabase + React</p>
+        <p className="text-xs text-gray-400 mt-2">Desenvolvido com Supabase + React</p>
       </div>
 
-      {/* MODAL USUÁRIO */}
+      {/* MODALS... */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
@@ -447,7 +540,6 @@ const Configuracoes = () => {
         </div>
       )}
 
-      {/* MODAL RESET */}
       {showResetModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
