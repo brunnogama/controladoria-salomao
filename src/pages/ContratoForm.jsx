@@ -494,6 +494,19 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
               <label className="block text-xs font-medium text-gray-600 mb-1">Observações do Prospect</label>
               <textarea value={formData.obs_prospect} onChange={(e) => setFormData({...formData, obs_prospect: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Observações sobre a prospecção..." />
             </div>
+            
+            {/* Resumo Explicativo */}
+            <div className="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <h4 className="text-xs font-black text-blue-900 uppercase mb-2 flex items-center gap-2">
+                <span className="text-blue-600">💡</span> O que isso significa?
+              </h4>
+              <p className="text-sm text-blue-800 leading-relaxed">
+                <strong>Status "Sob Análise":</strong> O caso está em fase de prospecção. 
+                A <strong>Data Prospect</strong> marca quando o caso chegou ao escritório. 
+                O campo <strong>Analisado por</strong> registra quem está avaliando a viabilidade do caso. 
+                Use <strong>Observações</strong> para anotar detalhes importantes da análise inicial.
+              </p>
+            </div>
           </div>
         );
         
@@ -534,6 +547,44 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Outros</label>
               <input type="text" value={formData.proposta_outros} onChange={(e) => setFormData({...formData, proposta_outros: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Informações adicionais..." />
+            </div>
+            
+            {/* Resumo Explicativo com Cálculos */}
+            <div className="mt-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-lg">
+              <h4 className="text-xs font-black text-green-900 uppercase mb-3 flex items-center gap-2">
+                <span className="text-green-600">💰</span> Resumo Financeiro da Proposta
+              </h4>
+              <div className="space-y-2 text-sm text-green-800">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Pró-labore:</span>
+                  <span className="font-bold">{formData.proposta_pro_labore || 'R$ 0,00'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Honorário Fixo:</span>
+                  <span className="font-bold">{formData.proposta_honorario_fixo || 'R$ 0,00'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Êxito Total:</span>
+                  <span className="font-bold">{formData.proposta_exito_total || 'R$ 0,00'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Êxito Percentual:</span>
+                  <span className="font-bold">{formData.proposta_exito_percentual || '0%'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Timesheet:</span>
+                  <span className={`font-bold ${formData.proposta_timesheet ? 'text-green-700' : 'text-gray-500'}`}>
+                    {formData.proposta_timesheet ? '✓ Sim' : '✗ Não'}
+                  </span>
+                </div>
+                <div className="pt-2 mt-2 border-t border-green-200">
+                  <p className="text-xs italic">
+                    <strong>Dica:</strong> O <strong>Pró-labore</strong> é o valor mensal fixo. 
+                    O <strong>Êxito</strong> é pago apenas se houver resultado positivo no caso. 
+                    O <strong>Timesheet</strong> indica cobrança por horas trabalhadas.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -590,6 +641,54 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Observações</label>
               <textarea value={formData.observacoes_contrato} onChange={(e) => setFormData({...formData, observacoes_contrato: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="2" />
+            </div>
+            
+            {/* Resumo Explicativo com Cálculos */}
+            <div className="mt-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg">
+              <h4 className="text-xs font-black text-emerald-900 uppercase mb-3 flex items-center gap-2">
+                <span className="text-emerald-600">📊</span> Resumo do Contrato Fechado
+              </h4>
+              <div className="space-y-2 text-sm text-emerald-800">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-emerald-600 mb-1">Identificação</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-xs">Número HON:</span>
+                        <span className="font-bold text-xs">{formData.numero_hon || 'Não informado'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs">Número Processo:</span>
+                        <span className="font-bold text-xs">{formData.numero_proc || 'Não informado'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-emerald-600 mb-1">Valores Contratados</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-xs">Pró-labore:</span>
+                        <span className="font-bold text-xs">{formData.contrato_pro_labore || 'R$ 0,00'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs">Hon. Fixo:</span>
+                        <span className="font-bold text-xs">{formData.contrato_honorario_fixo || 'R$ 0,00'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs">Êxito:</span>
+                        <span className="font-bold text-xs">{formData.contrato_exito_total || 'R$ 0,00'} ({formData.contrato_exito_percentual || '0%'})</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-2 mt-2 border-t border-emerald-200">
+                  <p className="text-xs italic">
+                    <strong>💡 Importante:</strong> Os valores aqui são os <strong>efetivamente contratados</strong>. 
+                    O <strong>Número HON</strong> é a identificação interna do caso. 
+                    {formData.contrato_timesheet && <span className="text-emerald-700"> ⏱️ Este contrato inclui <strong>Timesheet</strong>.</span>}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -678,6 +777,48 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
               <label className="block text-xs font-medium text-gray-600 mb-1">Observações da Rejeição</label>
               <textarea value={formData.observacoes_rejeicao} onChange={(e) => setFormData({...formData, observacoes_rejeicao: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Detalhes adicionais sobre a rejeição..." />
             </div>
+            
+            {/* Resumo Explicativo */}
+            <div className="mt-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+              <h4 className="text-xs font-black text-red-900 uppercase mb-3 flex items-center gap-2">
+                <span className="text-red-600">⚠️</span> Análise da Rejeição
+              </h4>
+              <div className="space-y-3 text-sm text-red-800">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-red-700 mb-1">Motivo:</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      formData.motivo_rejeicao 
+                        ? 'bg-red-200 text-red-900' 
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {formData.motivo_rejeicao || 'Não selecionado'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-red-700 mb-1">Iniciativa:</p>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      formData.iniciativa_rejeicao === 'Cliente' 
+                        ? 'bg-blue-200 text-blue-900' 
+                        : formData.iniciativa_rejeicao === 'Escritório'
+                        ? 'bg-orange-200 text-orange-900'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {formData.iniciativa_rejeicao || 'Não selecionado'}
+                    </span>
+                  </div>
+                </div>
+                <div className="pt-2 mt-2 border-t border-red-200">
+                  <p className="text-xs italic leading-relaxed">
+                    <strong>📌 Entenda os campos:</strong><br/>
+                    • <strong>Motivo</strong> indica a razão da rejeição (caso ruim, conflito, etc.)<br/>
+                    • <strong>Iniciativa</strong> mostra quem tomou a decisão de rejeitar<br/>
+                    • <strong>Cliente</strong> = cliente não quis prosseguir<br/>
+                    • <strong>Escritório</strong> = escritório decidiu não aceitar o caso
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         );
         
@@ -698,6 +839,32 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Observações do Probono</label>
               <textarea value={formData.observacoes_probono} onChange={(e) => setFormData({...formData, observacoes_probono: e.target.value})} className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Detalhes do caso probono..." />
+            </div>
+            
+            {/* Resumo Explicativo */}
+            <div className="mt-6 bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+              <h4 className="text-xs font-black text-purple-900 uppercase mb-3 flex items-center gap-2">
+                <span className="text-purple-600">🤝</span> O que é Probono?
+              </h4>
+              <div className="space-y-2 text-sm text-purple-800">
+                <p className="leading-relaxed">
+                  <strong>Probono</strong> significa "para o bem público". São casos aceitos pelo escritório 
+                  <strong> sem cobrança de honorários</strong>, geralmente por motivos sociais, institucionais 
+                  ou de responsabilidade social.
+                </p>
+                <div className="bg-purple-100 rounded-lg p-3 mt-2">
+                  <p className="text-xs font-bold text-purple-900 mb-1">📋 Dados importantes:</p>
+                  <ul className="text-xs space-y-1 ml-4 list-disc">
+                    <li><strong>Data Probono:</strong> Quando o caso foi aceito nesta modalidade</li>
+                    <li><strong>Enviado Por:</strong> Quem encaminhou ou aprovou o caso probono</li>
+                    <li><strong>Observações:</strong> Justificativa e detalhes da aceitação</li>
+                  </ul>
+                </div>
+                <p className="text-xs italic pt-2 border-t border-purple-200">
+                  💡 Casos probono não geram receita mas são importantes para responsabilidade social 
+                  e reputação do escritório.
+                </p>
+              </div>
             </div>
           </div>
         );
