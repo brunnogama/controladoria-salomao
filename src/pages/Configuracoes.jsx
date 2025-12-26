@@ -396,54 +396,82 @@ const Configuracoes = () => {
         </div>
       </div>
 
-      {/* CHANGELOG - VERSÃO ATUAL */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold flex items-center gap-3">
-            <History size={24} className="text-green-600" />
-            Changelog - Últimas Atualizações
-          </h2>
-        </div>
-
-        {/* Versão Mais Recente */}
-        <div className="border-l-4 border-green-500 pl-6 py-4 mb-4 bg-gradient-to-r from-green-50 to-transparent">
-          <div className="flex items-center gap-3 mb-3">
-            <span className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-black">
-              v{changelog[0].versao} - ATUAL
-            </span>
-            <span className="text-sm text-gray-500">{changelog[0].data}</span>
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
-              {changelog[0].tipo}
-            </span>
+      {/* CHANGELOG E CRÉDITOS LADO A LADO */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* CRÉDITOS */}
+        <div className="bg-gradient-to-r from-[#0F2C4C] to-blue-900 rounded-xl p-6 text-white">
+          <div className="flex items-center gap-4 mb-4">
+            <Code size={32} />
+            <div>
+              <h3 className="text-xl font-bold">Flow Metrics System</h3>
+              <p className="text-blue-200 text-sm">Controladoria Jurídica</p>
+            </div>
           </div>
-          <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
-            {changelog[0].mudancas.map((m, i) => (
-              <li key={i} className="leading-relaxed">{m}</li>
-            ))}
-          </ul>
+          <div className="grid grid-cols-1 gap-4 text-sm">
+            <div>
+              <p className="text-blue-200 mb-1">Stack</p>
+              <p className="font-bold">React + Supabase</p>
+            </div>
+            <div>
+              <p className="text-blue-200 mb-1">Versão Atual</p>
+              <p className="font-bold">v{versaoAtual}</p>
+            </div>
+            <div>
+              <p className="text-blue-200 mb-1">Última Atualização</p>
+              <p className="font-bold">{changelog[0].data}</p>
+            </div>
+          </div>
         </div>
 
-        {/* Botão Ver Histórico */}
-        <button
-          onClick={() => setShowFullChangelog(!showFullChangelog)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition-colors"
-        >
-          {showFullChangelog ? (
-            <>
-              <ChevronUp size={20} />
-              Ocultar Histórico Completo
-            </>
-          ) : (
-            <>
-              <ChevronDown size={20} />
-              Ver Histórico Completo ({changelog.length - 1} versões anteriores)
-            </>
-          )}
-        </button>
+        {/* CHANGELOG - VERSÃO ATUAL */}
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <History size={20} className="text-green-600" />
+              Changelog
+            </h2>
+          </div>
 
-        {/* Histórico Completo */}
-        {showFullChangelog && (
-          <div className="mt-6 space-y-4 border-t pt-6">
+          {/* Versão Mais Recente */}
+          <div className="border-l-4 border-green-500 pl-4 py-3 mb-3 bg-gradient-to-r from-green-50 to-transparent">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className="px-3 py-1 bg-green-600 text-white rounded-full text-xs font-black">
+                v{changelog[0].versao}
+              </span>
+              <span className="text-xs text-gray-500">{changelog[0].data}</span>
+            </div>
+            <ul className="list-disc list-inside space-y-1 text-xs text-gray-700">
+              {changelog[0].mudancas.slice(0, 5).map((m, i) => (
+                <li key={i} className="leading-relaxed">{m}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Botão Ver Histórico */}
+          <button
+            onClick={() => setShowFullChangelog(!showFullChangelog)}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition-colors text-sm"
+          >
+            {showFullChangelog ? (
+              <>
+                <ChevronUp size={16} />
+                Ocultar Histórico
+              </>
+            ) : (
+              <>
+                <ChevronDown size={16} />
+                Ver Completo ({changelog.length - 1} versões)
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Histórico Completo Expandido */}
+      {showFullChangelog && (
+        <div className="bg-white rounded-xl shadow-sm border p-6">
+          <h3 className="font-bold text-lg mb-4 text-gray-800">Histórico Completo</h3>
+          <div className="space-y-4">
             {changelog.slice(1).map((entry, index) => (
               <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
                 <div className="flex items-center gap-3 mb-2">
@@ -463,33 +491,8 @@ const Configuracoes = () => {
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* CRÉDITOS */}
-      <div className="bg-gradient-to-r from-[#0F2C4C] to-blue-900 rounded-xl p-6 text-white">
-        <div className="flex items-center gap-4 mb-4">
-          <Code size={32} />
-          <div>
-            <h3 className="text-xl font-bold">Flow Metrics System</h3>
-            <p className="text-blue-200 text-sm">Controladoria Jurídica</p>
-          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-blue-200 mb-1">Stack</p>
-            <p className="font-bold">React + Supabase</p>
-          </div>
-          <div>
-            <p className="text-blue-200 mb-1">Versão Atual</p>
-            <p className="font-bold">v{versaoAtual}</p>
-          </div>
-          <div>
-            <p className="text-blue-200 mb-1">Última Atualização</p>
-            <p className="font-bold">{changelog[0].data}</p>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* FOOTER */}
       <div className="text-center py-8 border-t">
