@@ -12,6 +12,7 @@ const ContratoForm = () => {
   const [buscandoCNPJ, setBuscandoCNPJ] = useState(false);
   const [clienteEncontrado, setClienteEncontrado] = useState(null);
   const [cnpjNaoDisponivel, setCnpjNaoDisponivel] = useState(false);
+  const [statusAnterior, setStatusAnterior] = useState(null); // Para rastrear mudanças
   
   const [formData, setFormData] = useState({
     cliente_id: '',
@@ -87,6 +88,7 @@ const ContratoForm = () => {
         valor_causa: data.valor_causa ? aplicarMascaraMoeda(data.valor_causa * 100) : '',
       });
       setClienteEncontrado(data.clientes);
+      setStatusAnterior(data.status); // Guardar status inicial
     }
   };
 
@@ -327,14 +329,62 @@ const ContratoForm = () => {
       let contratoId = id;
       
       if (id) {
-        const { data, error } = await supabase.from('contratos').update(dadosFinais).eq('id', id);
+        const { data, error } = await supabase
+          .from('contratos')
+          .update(dadosFinais)
+          .eq('id', id)
+          .select('*')
+          .single();
         if (error) throw error;
         console.log('Contrato atualizado:', data);
+        
+        // Registrar mudança de status se houver
+        if (statusAnterior && statusAnterior !== formData.status) {
+          console.log(`📝 Status mudou de "${statusAnterior}" para "${formData.status}"`);
+          
+          const { error: historicoError } = await supabase
+            .from('historico_status_contratos')
+            .insert([{
+              contrato_id: id,
+              status_anterior: statusAnterior,
+              status_novo: formData.status,
+              data_mudanca: new Date().toISOString(),
+              observacao: `Mudança de status: ${statusAnterior} → ${formData.status}`
+            }]);
+          
+          if (historicoError) {
+            console.error('Erro ao registrar histórico:', historicoError);
+            // Não bloqueia o salvamento
+          } else {
+            console.log('✅ Histórico de status registrado');
+          }
+        }
       } else {
-        const { data, error } = await supabase.from('contratos').insert([dadosFinais]).select();
+        const { data, error} = await supabase
+          .from('contratos')
+          .insert([dadosFinais])
+          .select('*')
+          .single();
         if (error) throw error;
         console.log('Contrato criado:', data);
-        contratoId = data?.[0]?.id;
+        contratoId = data?.id;
+        
+        // Registrar criação no histórico
+        const { error: historicoError } = await supabase
+          .from('historico_status_contratos')
+          .insert([{
+            contrato_id: data.id,
+            status_anterior: null,
+            status_novo: formData.status,
+            data_mudanca: new Date().toISOString(),
+            observacao: `Contrato criado com status: ${formData.status}`
+          }]);
+        
+        if (historicoError) {
+          console.error('Erro ao registrar histórico:', historicoError);
+        } else {
+          console.log('✅ Histórico de criação registrado');
+        }
       }
 
       // Se status é Contrato Fechado e não está assinado, criar tarefa no Kanban
@@ -521,31 +571,67 @@ Data de cobrança: ${dataCobranca.toLocaleDateString('pt-BR')}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Motivo da Rejeição *</label>
-                <select 
-                  value={formData.motivo_rejeicao} 
-                  onChange={(e) => setFormData({...formData, motivo_rejeicao: e.target.value})} 
-                  className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Selecione o motivo</option>
-                  <option value="Caso ruim">Caso ruim</option>
-                  <option value="Conflito">Conflito</option>
-                  <option value="Cliente Declinou">Cliente Declinou</option>
-                  <option value="Cliente não respondeu">Cliente não respondeu</option>
-                </select>
+                {!formData.motivo_rejeicao ? (
+                  <select 
+                    value={formData.motivo_rejeicao} 
+                    onChange={(e) => setFormData({...formData, motivo_rejeicao: e.target.value})} 
+                    className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Selecione o motivo</option>
+                    <option value="Caso ruim">Caso ruim</option>
+                    <option value="Conflito">Conflito</option>
+                    <option value="Cliente Declinou">Cliente Declinou</option>
+                    <option value="Cliente não respondeu">Cliente não respondeu</option>
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 px-4 py-2 rounded-lg font-medium text-sm bg-red-100 text-red-800 border-2 border-red-300">
+                      {formData.motivo_rejeicao}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, motivo_rejeicao: ''})}
+                      className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                      title="Alterar"
+                    >
+                      ✎
+                    </button>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Iniciativa da Rejeição *</label>
-                <select 
-                  value={formData.iniciativa_rejeicao} 
-                  onChange={(e) => setFormData({...formData, iniciativa_rejeicao: e.target.value})} 
-                  className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Selecione quem rejeitou</option>
-                  <option value="Cliente">Cliente</option>
-                  <option value="Escritório">Escritório</option>
-                </select>
+                {!formData.iniciativa_rejeicao ? (
+                  <select 
+                    value={formData.iniciativa_rejeicao} 
+                    onChange={(e) => setFormData({...formData, iniciativa_rejeicao: e.target.value})} 
+                    className="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Selecione quem rejeitou</option>
+                    <option value="Cliente">Cliente</option>
+                    <option value="Escritório">Escritório</option>
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className={`flex-1 px-4 py-2 rounded-lg font-medium text-sm border-2 ${
+                      formData.iniciativa_rejeicao === 'Cliente' 
+                        ? 'bg-blue-100 text-blue-800 border-blue-300' 
+                        : 'bg-orange-100 text-orange-800 border-orange-300'
+                    }`}>
+                      {formData.iniciativa_rejeicao}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, iniciativa_rejeicao: ''})}
+                      className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                      title="Alterar"
+                    >
+                      ✎
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <div>
