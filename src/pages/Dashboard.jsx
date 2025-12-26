@@ -350,7 +350,9 @@ const Dashboard = () => {
         cliente: c.cliente?.razao_social || 'Sem cliente',
         status: c.status,
         data: c.data_prospect || c.created_at,
-        numero_hon: c.numero_hon
+        numero_hon: c.numero_hon,
+        area: c.area,
+        numero_proc: c.numero_proc
       }))
       setUltimosCasos(casos10)
 
@@ -806,6 +808,81 @@ Controladoria Jurídica
               </div>
             ))}
           </div>
+          
+          {/* INSIGHTS - Entrada de Casos */}
+          <div className='mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600 p-4 rounded-r-xl'>
+            <h4 className='text-xs font-black text-blue-900 uppercase mb-3 flex items-center gap-2'>
+              <TrendingUp size={16} className='text-blue-600' />
+              Análise de Tendência
+            </h4>
+            <div className='space-y-2 text-xs text-blue-900'>
+              {/* Média Mensal */}
+              <div className='flex items-start gap-2'>
+                <span className='text-blue-600 font-bold'>📊</span>
+                <div className='flex-1'>
+                  <strong>Média Mensal (6 meses):</strong> {(evolucaoMensal.reduce((acc, m) => acc + m.prospects, 0) / evolucaoMensal.length).toFixed(1)} novos casos, 
+                  {' '}{(evolucaoMensal.reduce((acc, m) => acc + m.propostas, 0) / evolucaoMensal.length).toFixed(1)} propostas, 
+                  {' '}{(evolucaoMensal.reduce((acc, m) => acc + m.fechados, 0) / evolucaoMensal.length).toFixed(1)} fechamentos.
+                </div>
+              </div>
+              
+              {/* Tendência */}
+              {evolucaoMensal.length >= 3 && (() => {
+                const ultimos3 = evolucaoMensal.slice(-3);
+                const primeiros3 = evolucaoMensal.slice(0, 3);
+                const mediaRecente = ultimos3.reduce((acc, m) => acc + m.prospects, 0) / 3;
+                const mediaAnterior = primeiros3.reduce((acc, m) => acc + m.prospects, 0) / 3;
+                const variacao = ((mediaRecente - mediaAnterior) / mediaAnterior) * 100;
+                
+                return (
+                  <div className='flex items-start gap-2'>
+                    <span className={`font-bold ${variacao > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {variacao > 0 ? '📈' : '📉'}
+                    </span>
+                    <div className='flex-1'>
+                      <strong>Tendência (3 meses):</strong> {variacao > 0 ? 'Crescimento' : 'Queda'} de <strong>{Math.abs(variacao).toFixed(0)}%</strong> na entrada de casos.
+                      {' '}{variacao > 20 && '🚀 Forte expansão!'}
+                      {variacao < -20 && '⚠️ Atenção: queda significativa.'}
+                    </div>
+                  </div>
+                );
+              })()}
+              
+              {/* Taxa de Conversão Média */}
+              {(() => {
+                const totalProspects = evolucaoMensal.reduce((acc, m) => acc + m.prospects, 0);
+                const totalFechados = evolucaoMensal.reduce((acc, m) => acc + m.fechados, 0);
+                const taxaConversao = totalProspects > 0 ? (totalFechados / totalProspects) * 100 : 0;
+                
+                return (
+                  <div className='flex items-start gap-2'>
+                    <span className='text-purple-600 font-bold'>🎯</span>
+                    <div className='flex-1'>
+                      <strong>Taxa de Conversão (6 meses):</strong> {taxaConversao.toFixed(0)}% dos casos prospectados foram fechados.
+                      {taxaConversao >= 40 && ' ✅ Excelente taxa de conversão!'}
+                      {taxaConversao < 20 && ' ⚠️ Taxa baixa - revisar qualificação inicial.'}
+                    </div>
+                  </div>
+                );
+              })()}
+              
+              {/* Melhor e Pior Mês */}
+              {(() => {
+                const melhorMes = evolucaoMensal.reduce((prev, curr) => prev.fechados > curr.fechados ? prev : curr);
+                const piorMes = evolucaoMensal.reduce((prev, curr) => prev.fechados < curr.fechados ? prev : curr);
+                
+                return (
+                  <div className='flex items-start gap-2'>
+                    <span className='text-yellow-600 font-bold'>⭐</span>
+                    <div className='flex-1'>
+                      <strong>Performance:</strong> Melhor mês foi <strong>{melhorMes.mes}</strong> ({melhorMes.fechados} fechamentos).
+                      {melhorMes.mes !== piorMes.mes && ` Menor foi ${piorMes.mes} (${piorMes.fechados} fechamentos).`}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         </div>
 
         {/* Últimos Casos Cadastrados - SEM SCROLL */}
@@ -854,6 +931,128 @@ Controladoria Jurídica
                   </div>
                 )
               })}
+            </div>
+          )}
+          
+          {/* INSIGHTS - Últimos Casos */}
+          {ultimosCasos.length > 0 && (
+            <div className='mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-600 p-4 rounded-r-xl'>
+              <h4 className='text-xs font-black text-indigo-900 uppercase mb-3 flex items-center gap-2'>
+                <BarChart3 size={16} className='text-indigo-600' />
+                Distribuição dos Últimos 10 Casos
+              </h4>
+              <div className='space-y-2 text-xs text-indigo-900'>
+                {/* Distribuição por Status */}
+                {(() => {
+                  const statusCount = ultimosCasos.slice(0, 10).reduce((acc, caso) => {
+                    acc[caso.status] = (acc[caso.status] || 0) + 1;
+                    return acc;
+                  }, {});
+                  
+                  const statusMaisComum = Object.entries(statusCount).sort((a, b) => b[1] - a[1])[0];
+                  
+                  return (
+                    <div className='flex items-start gap-2'>
+                      <span className='text-indigo-600 font-bold'>📊</span>
+                      <div className='flex-1'>
+                        <strong>Por Status:</strong> {Object.entries(statusCount).map(([status, count]) => 
+                          `${count} ${status}`
+                        ).join(', ')}.
+                        {statusMaisComum && ` Predominância em <strong>${statusMaisComum[0]}</strong>.`}
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {/* Distribuição por Área */}
+                {(() => {
+                  const casosComArea = ultimosCasos.slice(0, 10).filter(c => c.area);
+                  if (casosComArea.length === 0) return null;
+                  
+                  const areaCount = casosComArea.reduce((acc, caso) => {
+                    acc[caso.area] = (acc[caso.area] || 0) + 1;
+                    return acc;
+                  }, {});
+                  
+                  const areaMaisComum = Object.entries(areaCount).sort((a, b) => b[1] - a[1])[0];
+                  
+                  return (
+                    <div className='flex items-start gap-2'>
+                      <span className='text-purple-600 font-bold'>⚖️</span>
+                      <div className='flex-1'>
+                        <strong>Por Área:</strong> {Object.entries(areaCount).map(([area, count]) => 
+                          `${count} ${area}`
+                        ).join(', ')}.
+                        {areaMaisComum && areaMaisComum[1] > 1 && ` Concentração em <strong>${areaMaisComum[0]}</strong>.`}
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {/* Distribuição por Número de Processo (TJ/UF) */}
+                {(() => {
+                  const casosComProcesso = ultimosCasos.slice(0, 10).filter(c => c.numero_proc);
+                  if (casosComProcesso.length === 0) return null;
+                  
+                  // Extrair TJ da numeração (formato: NNNNNNN-DD.AAAA.J.TR.OOOO)
+                  const tjCount = casosComProcesso.reduce((acc, caso) => {
+                    const match = caso.numero_proc?.match(/\.(\d)\.(\d{2})\./);
+                    if (match) {
+                      const segmento = match[1]; // J (Justiça)
+                      const tribunal = match[2]; // TR (Tribunal)
+                      
+                      // Mapear código para nome do TJ
+                      const tribunalMap = {
+                        '01': 'TJAC', '02': 'TJAL', '03': 'TJAP', '04': 'TJAM',
+                        '05': 'TJBA', '06': 'TJCE', '07': 'TJDF', '08': 'TJES',
+                        '09': 'TJGO', '10': 'TJMA', '11': 'TJMT', '12': 'TJMS',
+                        '13': 'TJMG', '14': 'TJPA', '15': 'TJPB', '16': 'TJPR',
+                        '17': 'TJPE', '18': 'TJPI', '19': 'TJRJ', '20': 'TJRN',
+                        '21': 'TJRS', '22': 'TJRO', '23': 'TJRR', '24': 'TJSC',
+                        '25': 'TJSP', '26': 'TJSE', '27': 'TJTO'
+                      };
+                      
+                      const tjNome = tribunalMap[tribunal] || `TJ-${tribunal}`;
+                      acc[tjNome] = (acc[tjNome] || 0) + 1;
+                    }
+                    return acc;
+                  }, {});
+                  
+                  if (Object.keys(tjCount).length === 0) return null;
+                  
+                  const tjMaisComum = Object.entries(tjCount).sort((a, b) => b[1] - a[1])[0];
+                  
+                  return (
+                    <div className='flex items-start gap-2'>
+                      <span className='text-green-600 font-bold'>🏛️</span>
+                      <div className='flex-1'>
+                        <strong>Por Tribunal:</strong> {Object.entries(tjCount).map(([tj, count]) => 
+                          `${count} ${tj}`
+                        ).join(', ')}.
+                        {tjMaisComum && tjMaisComum[1] > 1 && ` Maior volume em <strong>${tjMaisComum[0]}</strong>.`}
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                {/* Velocidade de Entrada */}
+                {ultimosCasos.length >= 2 && (() => {
+                  const caso1 = new Date(ultimosCasos[0].data);
+                  const caso2 = new Date(ultimosCasos[1].data);
+                  const diffDias = Math.abs((caso1 - caso2) / (1000 * 60 * 60 * 24));
+                  
+                  return (
+                    <div className='flex items-start gap-2'>
+                      <span className='text-blue-600 font-bold'>⏱️</span>
+                      <div className='flex-1'>
+                        <strong>Ritmo de Entrada:</strong> Últimos 2 casos cadastrados com {diffDias.toFixed(0)} dia(s) de intervalo.
+                        {diffDias < 1 && ' 🚀 Alta frequência!'}
+                        {diffDias > 7 && ' ⚠️ Ritmo mais lento que o habitual.'}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
             </div>
           )}
         </div>
