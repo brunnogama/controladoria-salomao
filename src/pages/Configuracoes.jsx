@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Save, Monitor, RefreshCw, History, ChevronDown, ChevronUp,
-  CheckCircle, Building2, Copyright, Trash2, AlertTriangle,
+  CheckCircle, Copyright, Trash2, AlertTriangle,
   Users, Plus, Edit2, X, Shield, ShieldOff, Mail, Calendar, Code
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { APP_VERSION, RECENT_CHANGES } from '../version';
 
 const Configuracoes = () => {
-  const [logoInterno, setLogoInterno] = useState('');
-  const [logoLogin, setLogoLogin] = useState('');
   const [status, setStatus] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetando, setResetando] = useState(false);
@@ -29,10 +27,6 @@ const Configuracoes = () => {
   const changelog = RECENT_CHANGES;
 
   useEffect(() => {
-    const si = localStorage.getItem('app_logo_path');
-    const sl = localStorage.getItem('app_login_logo_path');
-    if (si) setLogoInterno(si.replace('/', ''));
-    if (sl) setLogoLogin(sl.replace('/', ''));
     fetchUsuarios();
   }, []);
 
@@ -52,13 +46,6 @@ const Configuracoes = () => {
     } finally {
       setLoadingUsuarios(false);
     }
-  };
-
-  const salvar = (tipo, valor) => {
-    const path = valor.startsWith('/') ? valor : `/${valor}`;
-    localStorage.setItem(tipo === 'interno' ? 'app_logo_path' : 'app_login_logo_path', path);
-    setStatus('Configuração salva com sucesso!');
-    setTimeout(() => setStatus(''), 3000);
   };
 
   const resetarDados = async () => {
@@ -282,36 +269,6 @@ const Configuracoes = () => {
             </tbody>
           </table>
         )}
-      </div>
-
-      {/* LOGOS */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-3">
-          <Building2 size={24} className="text-blue-600" />
-          Logos do Sistema
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Logo Interno</label>
-            <div className="flex gap-3">
-              <input type="text" value={logoInterno} onChange={(e) => setLogoInterno(e.target.value)} className="flex-1 p-3 border rounded-lg" placeholder="logo-interno.png" />
-              <button onClick={() => salvar('interno', logoInterno)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold flex items-center gap-2">
-                <Save size={18} />
-                Salvar
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Logo Login</label>
-            <div className="flex gap-3">
-              <input type="text" value={logoLogin} onChange={(e) => setLogoLogin(e.target.value)} className="flex-1 p-3 border rounded-lg" placeholder="logo-login.png" />
-              <button onClick={() => salvar('login', logoLogin)} className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold flex items-center gap-2">
-                <Save size={18} />
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* RESET */}
