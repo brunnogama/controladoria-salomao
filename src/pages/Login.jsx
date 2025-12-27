@@ -10,17 +10,10 @@ const Login = () => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [customLogo, setCustomLogo] = useState(null)
   const [shake, setShake] = useState(false)
   const [bgImage, setBgImage] = useState('')
 
   useEffect(() => {
-    // Carrega a logo personalizada
-    const savedLoginLogo = localStorage.getItem('app_login_logo_path')
-    if (savedLoginLogo && savedLoginLogo !== '/') {
-      setCustomLogo(savedLoginLogo)
-    }
-
     // Imagem Dinâmica (Direito/Escritório) com ID aleatório para mudar a cada acesso
     const randomID = Math.floor(Math.random() * 1000)
     setBgImage(`https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=2070&auto=format&fit=crop&sig=${randomID}`)
@@ -65,24 +58,11 @@ const Login = () => {
         <div className='w-full max-w-md space-y-10'>
           
           <div className='flex justify-center'>
-            {customLogo ? (
-              <img
-                src={customLogo}
-                alt='Logo'
-                className='h-24 md:h-32 object-contain'
-                onError={() => setCustomLogo(null)}
-              />
-            ) : (
-              <div className='text-center'>
-                <h1 className='text-3xl font-bold text-[#0F2C4C] tracking-tight'>
-                  Salomão Advogados
-                </h1>
-                <div className='h-1 w-12 bg-[#0F2C4C] mx-auto mt-2 mb-1'></div>
-                <p className='text-xs text-gray-500 uppercase tracking-widest font-semibold'>
-                  Controladoria Jurídica
-                </p>
-              </div>
-            )}
+            <img
+              src='/logo-salomao.png'
+              alt='Logo Salomão Advogados'
+              className='h-24 md:h-32 object-contain'
+            />
           </div>
 
           <form className='space-y-6' onSubmit={handleLogin}>
