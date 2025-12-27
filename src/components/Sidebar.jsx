@@ -8,12 +8,9 @@ import {
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [customLogo, setCustomLogo] = useState(null);
   const [userName, setUserName] = useState('Visitante');
 
   useEffect(() => {
-    const savedLogo = localStorage.getItem('app_logo_path');
-    if (savedLogo && savedLogo !== '/') setCustomLogo(savedLogo);
     const storedName = localStorage.getItem('user_name');
     if (storedName) setUserName(storedName);
   }, []);
@@ -33,14 +30,11 @@ const Sidebar = () => {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[#0F2C4C] text-white z-50 shadow-xl flex flex-col">
       <div className="p-6 flex flex-col items-center border-b border-white/10">
-        {customLogo ? (
-          <img src={customLogo} alt="Logo" className="h-10 w-auto object-contain" />
-        ) : (
-          <div className="text-center">
-            <h1 className="text-lg font-bold tracking-tight">Salomão</h1>
-            <p className="text-[8px] uppercase tracking-widest text-blue-300 font-black">Controladoria</p>
-          </div>
-        )}
+        <img 
+          src="/logo-branca.png" 
+          alt="Logo Salomão Advogados" 
+          className="h-10 w-auto object-contain" 
+        />
       </div>
 
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
