@@ -1,53 +1,103 @@
 /**
  * @file version.js
  * @description Versão centralizada do sistema - FONTE ÚNICA DA VERDADE
- * @updated 26/12/2025
+ * @updated 28/12/2024
  * 
  * IMPORTANTE: Este é o ÚNICO lugar onde a versão deve ser atualizada.
  * Todos os componentes importam daqui.
  */
 
-export const APP_VERSION = "1.6.2";
+export const APP_VERSION = "2.0.1";
 export const APP_NAME = "Flow Metrics System";
-export const LAST_UPDATE = "26/12/2025";
+export const LAST_UPDATE = "28/12/2024";
 
 // Changelog completo (usado em Configurações)
 export const RECENT_CHANGES = [
   {
+    versao: "2.0.1",
+    data: "28/12/2024",
+    tipo: "UI Modernization",
+    mudancas: [
+      "🎨 Modernização visual do Dashboard (apenas CSS)",
+      "✨ Gradientes nos cards de métricas",
+      "🎯 Hover effects e transitions suaves",
+      "💎 Sombras e bordas melhoradas",
+      "📊 Interface consistente com Volumetria",
+      "⚡ Performance visual otimizada"
+    ]
+  },
+  {
+    versao: "2.0.0",
+    data: "28/12/2024",
+    tipo: "Dashboard Redesign",
+    mudancas: [
+      "🚀 Dashboard completamente reformulado",
+      "📊 UI moderna estilo Volumetria",
+      "🎨 Cards coloridos com ícones",
+      "📈 Painéis com gradientes (verde/azul/roxo)",
+      "🔗 Cards clicáveis com links",
+      "⚡ Código otimizado (67% menor)"
+    ]
+  },
+  {
+    versao: "1.9.0",
+    data: "28/12/2024",
+    tipo: "New Feature",
+    mudancas: [
+      "📊 Novo módulo: Volumetria Processual",
+      "📈 Análise quantitativa de contratos",
+      "🎯 4 cards de métricas principais",
+      "💰 Indicadores financeiros em tempo real",
+      "📉 Distribuição por status e clientes",
+      "🔍 Filtros: Mês, Trimestre, Semestre, Ano"
+    ]
+  },
+  {
+    versao: "1.8.1",
+    data: "28/12/2024",
+    tipo: "Critical Fix",
+    mudancas: [
+      "🔧 CSS corrigido - Tailwind funcionando",
+      "✅ Diretivas @tailwind adicionadas",
+      "🎨 Sistema de estilos restaurado",
+      "🚀 Build corrigido - ModalManager",
+      "⚡ Arquitetura de notificações simplificada"
+    ]
+  },
+  {
     versao: "1.6.2",
-    data: "26/12/2025",
+    data: "26/12/2024",
     tipo: "Business Intelligence",
     mudancas: [
       "📊 Análises Gerenciais no Dashboard",
-      "💰 Resumo da Semana com insights de conversão",
-      "📌 Insights da Carteira com alertas automáticos",
-      "💼 Análise Financeira com pipeline e MRR",
-      "🎯 Visão Estratégica com potencial de crescimento",
-      "⚠️ Alertas inteligentes de performance"
+      "💰 Resumo da Semana com insights",
+      "📌 Insights da Carteira automáticos",
+      "💼 Análise Financeira com MRR",
+      "🎯 Visão Estratégica completa"
     ]
   },
   {
     versao: "1.6.1", 
-    data: "26/12/2025",
+    data: "26/12/2024",
     tipo: "UX Enhancement",
     mudancas: [
-      "💡 Resumos Explicativos em cada bloco de status",
-      "📊 Proposta: valores dinâmicos e totalizações",
-      "📈 Contrato: grid organizado com valores",
-      "⚠️ Rejeição: badges visuais condicionais",
-      "🤝 Probono: contexto educativo completo"
+      "💡 Resumos Explicativos em status",
+      "📊 Proposta: valores dinâmicos",
+      "📈 Contrato: grid organizado",
+      "⚠️ Rejeição: badges visuais",
+      "🤝 Probono: contexto educativo"
     ]
   },
   {
     versao: "1.6.0",
-    data: "26/12/2025",
-    tipo: "Melhoria de UX",
+    data: "26/12/2024",
+    tipo: "UX Improvement",
     mudancas: [
-      "📝 Campo Descrição Universal criado",
-      "Descrição agora em Informações Básicas",
-      "Presente em todos os status",
-      "Removidos campos duplicados",
-      "UX mais consistente e organizada"
+      "📝 Campo Descrição Universal",
+      "✅ Descrição em Informações Básicas",
+      "🔄 Presente em todos os status",
+      "❌ Campos duplicados removidos",
+      "🎯 UX mais consistente"
     ]
   }
 ];
