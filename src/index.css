@@ -1,19 +1,217 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ============================================
+   ESTILOS GLOBAIS - SISTEMA CONTROLADORIA
+   ============================================ */
 
-/* FORÇA O SITE A OCUPAR 100% DA TELA SEMPRE */
-html,
-body,
-#root {
-  height: 100%;
-  width: 100%;
+/* Reset e Base */
+* {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Remove barra de rolagem dupla do navegador */
+  box-sizing: border-box;
 }
 
 body {
-  background-color: #f3f4f6;
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* ============================================
+   ANIMAÇÕES - SISTEMA DE NOTIFICAÇÕES
+   ============================================ */
+
+/* Animação Toast - Entrada pela direita */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Animação Toast - Barra de progresso */
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Animação Modal - Fade in do backdrop */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Animação Modal - Scale in do conteúdo */
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Classes de animação */
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.animate-shrink {
+  animation: shrink linear forwards;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out forwards;
+}
+
+/* ============================================
+   UTILITÁRIOS CUSTOMIZADOS
+   ============================================ */
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Focus outline customizado */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Disable text selection em botões */
+button {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   IMPRESSÃO
+   ============================================ */
+
+@media print {
+  /* Ocultar elementos que não devem ser impressos */
+  .no-print,
+  button,
+  nav,
+  aside {
+    display: none !important;
+  }
+  
+  /* Ajustar cores para impressão */
+  * {
+    color: #000 !important;
+    background: #fff !important;
+  }
+  
+  /* Quebras de página */
+  .page-break {
+    page-break-after: always;
+  }
+}
+
+/* ============================================
+   ACESSIBILIDADE
+   ============================================ */
+
+/* Modo de alto contraste */
+@media (prefers-contrast: high) {
+  * {
+    border-color: #000 !important;
+  }
+}
+
+/* Reduzir movimento para usuários com preferência */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+
+/* Mobile First - Ajustes para telas pequenas */
+@media (max-width: 640px) {
+  /* Reduzir padding em telas pequenas */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Ajustes específicos para tablet */
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  /* Ajustes específicos para desktop */
+}
+
+/* ============================================
+   DARK MODE (Preparado para futuro)
+   ============================================ */
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1a1a;
+    --text-primary: #ffffff;
+  }
+} */
