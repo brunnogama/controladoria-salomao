@@ -763,6 +763,101 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ================= 5. CONTRATOS RECENTES ================= */}
+      <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100'>
+        <div className='flex items-center justify-between mb-6 border-b pb-4'>
+          <div className='flex items-center gap-2'>
+            <History className='text-[#0F2C4C]' size={24} />
+            <div>
+              <h2 className='text-xl font-bold text-gray-800'>
+                Últimos Contratos
+              </h2>
+              <p className='text-xs text-gray-500'>
+                5 contratos mais recentes
+              </p>
+            </div>
+          </div>
+          <Link
+            to='/contratos'
+            className='text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center gap-1'
+          >
+            Ver todos
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {recentes.length === 0 ? (
+          <p className='text-center text-gray-400 py-8'>
+            Nenhum contrato cadastrado
+          </p>
+        ) : (
+          <div className='overflow-x-auto'>
+            <table className='w-full'>
+              <thead className='bg-gray-50 border-b'>
+                <tr>
+                  <th className='px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase'>
+                    Cliente
+                  </th>
+                  <th className='px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase'>
+                    Status
+                  </th>
+                  <th className='px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase'>
+                    Pró-labore
+                  </th>
+                  <th className='px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase'>
+                    Fixo Mensal
+                  </th>
+                  <th className='px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase'>
+                    Data
+                  </th>
+                </tr>
+              </thead>
+              <tbody className='divide-y'>
+                {recentes.map((c, index) => {
+                  const statusColors = {
+                    'Sob Análise': 'bg-yellow-100 text-yellow-700',
+                    'Proposta Enviada': 'bg-blue-100 text-blue-700',
+                    'Contrato Fechado': 'bg-green-100 text-green-700',
+                    'Rejeitada': 'bg-red-100 text-red-700',
+                    'Pro Bono': 'bg-purple-100 text-purple-700'
+                  }
+
+                  return (
+                    <tr key={index} className='hover:bg-gray-50 transition-colors'>
+                      <td className='px-4 py-3 text-sm font-medium text-gray-900'>
+                        {c.clientes?.razao_social || '-'}
+                      </td>
+                      <td className='px-4 py-3'>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            statusColors[c.status] || 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </td>
+                      <td className='px-4 py-3 text-sm text-gray-700'>
+                        {c.proposta_pro_labore
+                          ? formatMoney(c.proposta_pro_labore)
+                          : '-'}
+                      </td>
+                      <td className='px-4 py-3 text-sm text-gray-700'>
+                        {c.proposta_fixo_mensal
+                          ? formatMoney(c.proposta_fixo_mensal)
+                          : '-'}
+                      </td>
+                      <td className='px-4 py-3 text-sm text-gray-500'>
+                        {new Date(c.created_at).toLocaleDateString('pt-BR')}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
