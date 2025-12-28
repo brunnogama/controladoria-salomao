@@ -1,7 +1,7 @@
 /**
  * @file App.jsx
  * @description Componente raiz da aplicação - Configuração de rotas
- * @version 1.8.0
+ * @version 1.9.0
  * @author Marcio Gama - Flow Metrics
  */
 
@@ -14,6 +14,7 @@ import Contratos from './pages/Contratos';
 import ContratoForm from './pages/ContratoForm';
 import Propostas from './pages/Propostas';
 import Clientes from './pages/Clientes';
+import Volumetria from './pages/Volumetria';
 import Compliance from './pages/Compliance';
 import Historico from './pages/Historico';
 import Configuracoes from './pages/Configuracoes';
@@ -44,6 +45,7 @@ const App = () => {
             <Route path="contratos/editar/:id" element={<ContratoForm />} />
             <Route path="propostas" element={<Propostas />} />
             <Route path="clientes" element={<Clientes />} />
+            <Route path="volumetria" element={<Volumetria />} />
             <Route path="compliance" element={<Compliance />} />
             <Route path="ged" element={<GED />} />
             <Route path="historico" element={<Historico />} />
