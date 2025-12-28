@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, FileText, Users, History, 
-  Settings, LogOut, UserCircle, FolderOpen, Kanban, Shield, FileCheck
+  Settings, LogOut, UserCircle, FolderOpen, Kanban, Shield, FileCheck, BarChart3
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -41,6 +41,7 @@ const Sidebar = () => {
         <Link to="/" className={isActive('/')}><LayoutDashboard size={20} /> Dashboard</Link>
         <Link to="/contratos" className={isActive('/contratos')}><FileText size={20} /> Contratos</Link>
         <Link to="/propostas" className={isActive('/propostas')}><FileCheck size={20} /> Propostas</Link>
+        <Link to="/volumetria" className={isActive('/volumetria')}><BarChart3 size={20} /> Volumetria</Link>
         <Link to="/compliance" className={isActive('/compliance')}><Shield size={20} /> Compliance</Link>
         <Link to="/clientes" className={isActive('/clientes')}><Users size={20} /> Clientes</Link>
         <Link to="/kanban" className={isActive('/kanban')}><Kanban size={20} /> Kanban</Link>
