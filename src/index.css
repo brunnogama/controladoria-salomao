@@ -1,4 +1,12 @@
 /* ============================================
+   TAILWIND CSS - DIRETIVAS OBRIGATÓRIAS
+   ============================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
    ESTILOS GLOBAIS - SISTEMA CONTROLADORIA
    ============================================ */
 
