@@ -1,447 +1,770 @@
-/**
- * @file Dashboard.jsx
- * @description Dashboard principal com visão executiva do sistema
- * @version 2.0.0
- * @author Marcio Gama - Flow Metrics
- */
-
-import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, TrendingUp, TrendingDown, FileText, 
-  DollarSign, Users, Target, ArrowUpRight, ArrowDownRight,
-  Activity, PieChart, Filter, CheckCircle2, Clock,
-  XCircle, AlertCircle, FileSignature, Briefcase
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import React, { useEffect, useState } from 'react'
+import { supabase } from '../supabaseClient'
+import {
+  CalendarDays,
+  ArrowRight,
+  Target,
+  TrendingUp,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Filter,
+  ArrowDown,
+  History,
+  PieChart,
+  BarChart3,
+  Camera,
+  FileSignature, // Ícone novo para assinatura
+  AlertCircle, // Ícone novo para pendência
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState('mes_atual');
-  const [dados, setDados] = useState({
-    totalContratos: 0,
-    propostasAbertas: 0,
-    contratosFechados: 0,
-    valorTotal: 0,
-    valorFechado: 0,
-    taxaConversao: 0,
-    tendencia: 0,
-    distribuicaoPorStatus: [],
-    ultimosContratos: [],
-    contratosPendentes: []
-  });
+  const [loading, setLoading] = useState(true)
+
+  // Estado Unificado das Métricas
+  const [metrics, setMetrics] = useState({
+    semana: {
+      novos: 0,
+      propQtd: 0,
+      propPL: 0,
+      propExito: 0,
+      fechQtd: 0,
+      fechPL: 0,
+      fechExito: 0,
+      fechMensal: 0,
+    },
+    mes: {
+      novos: 0,
+      propQtd: 0,
+      propPL: 0,
+      propExito: 0,
+      fechQtd: 0,
+      fechPL: 0,
+      fechExito: 0,
+      fechMensal: 0,
+    },
+    geral: {
+      totalCasos: 0,
+      emAnalise: 0,
+      propostasAtivas: 0,
+      fechados: 0,
+      rejeitados: 0,
+      valorEmNegociacaoPL: 0,
+      valorEmNegociacaoExito: 0,
+      receitaRecorrenteAtiva: 0,
+      totalFechadoPL: 0,
+      totalFechadoExito: 0,
+      // Novos contadores de assinatura
+      assinados: 0,
+      naoAssinados: 0,
+    },
+  })
+
+  // Estado do Funil
+  const [funil, setFunil] = useState({
+    totalEntrada: 0,
+    qualificadosProposta: 0,
+    fechados: 0,
+    perdaAnalise: 0,
+    perdaNegociacao: 0,
+    taxaConversaoProposta: 0,
+    taxaConversaoFechamento: 0,
+  })
+
+  const [evolucaoMensal, setEvolucaoMensal] = useState([])
+  const [recentes, setRecentes] = useState([])
 
   useEffect(() => {
-    carregarDados();
-  }, [periodo]);
+    fetchDashboardData()
+  }, [])
 
-  const carregarDados = async () => {
+  const fetchDashboardData = async () => {
     try {
-      setLoading(true);
+      setLoading(true)
 
-      // Calcular intervalo de datas
-      const hoje = new Date();
-      let dataInicio, dataFim;
+      const { data: contratos } = await supabase.from('contratos').select(`
+          status, 
+          proposta_pro_labore, 
+          proposta_fixo_mensal, 
+          proposta_exito_total,
+          contrato_assinado,
+          created_at, 
+          data_proposta,
+          data_contrato,
+          clientes(razao_social)
+        `)
 
-      switch (periodo) {
-        case 'mes_atual':
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-          dataFim = hoje;
-          break;
-        case 'trimestre':
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1);
-          dataFim = hoje;
-          break;
-        case 'ano':
-          dataInicio = new Date(hoje.getFullYear(), 0, 1);
-          dataFim = hoje;
-          break;
-        default:
-          dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-          dataFim = hoje;
+      if (contratos) {
+        processarDados(contratos)
       }
-
-      // Buscar contratos
-      const { data: contratos, error } = await supabase
-        .from('contratos')
-        .select('*')
-        .gte('created_at', dataInicio.toISOString())
-        .lte('created_at', dataFim.toISOString())
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Calcular métricas
-      const totalContratos = contratos?.length || 0;
-      const propostasAbertas = contratos?.filter(c => 
-        c.status === 'Proposta Enviada' || c.status === 'Em Análise'
-      ).length || 0;
-      const contratosFechados = contratos?.filter(c => 
-        c.status === 'Contrato Fechado'
-      ).length || 0;
-      const valorTotal = contratos?.reduce((sum, c) => 
-        sum + (parseFloat(c.valor) || 0), 0
-      ) || 0;
-      const valorFechado = contratos?.filter(c => 
-        c.status === 'Contrato Fechado'
-      ).reduce((sum, c) => sum + (parseFloat(c.valor) || 0), 0) || 0;
-
-      // Taxa de conversão
-      const taxaConversao = totalContratos > 0 
-        ? ((contratosFechados / totalContratos) * 100).toFixed(1)
-        : 0;
-
-      // Distribuição por status
-      const statusCount = {};
-      contratos?.forEach(c => {
-        statusCount[c.status] = (statusCount[c.status] || 0) + 1;
-      });
-
-      const distribuicaoPorStatus = Object.entries(statusCount)
-        .map(([status, count]) => ({
-          status,
-          count,
-          percentual: ((count / totalContratos) * 100).toFixed(1)
-        }))
-        .sort((a, b) => b.count - a.count);
-
-      // Últimos contratos (5 mais recentes)
-      const ultimosContratos = contratos?.slice(0, 5) || [];
-
-      // Contratos pendentes de assinatura
-      const contratosPendentes = contratos?.filter(c => 
-        c.status === 'Contrato Fechado' && !c.assinatura
-      ) || [];
-
-      setDados({
-        totalContratos,
-        propostasAbertas,
-        contratosFechados,
-        valorTotal,
-        valorFechado,
-        taxaConversao: parseFloat(taxaConversao),
-        tendencia: 8.5, // Exemplo - calcular real com período anterior
-        distribuicaoPorStatus,
-        ultimosContratos,
-        contratosPendentes
-      });
-
     } catch (error) {
-      console.error('Erro ao carregar dashboard:', error);
+      console.error('Erro dashboard:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  const formatarMoeda = (valor) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
-  };
-
-  const formatarData = (data) => {
-    return new Date(data).toLocaleDateString('pt-BR');
-  };
-
-  const getStatusColor = (status) => {
-    const cores = {
-      'Contrato Fechado': 'bg-green-100 text-green-700',
-      'Proposta Enviada': 'bg-blue-100 text-blue-700',
-      'Em Análise': 'bg-yellow-100 text-yellow-700',
-      'Rejeitado': 'bg-red-100 text-red-700',
-      'Pro Bono': 'bg-purple-100 text-purple-700'
-    };
-    return cores[status] || 'bg-gray-100 text-gray-700';
-  };
-
-  const getStatusIcon = (status) => {
-    const icones = {
-      'Contrato Fechado': CheckCircle2,
-      'Proposta Enviada': Clock,
-      'Em Análise': AlertCircle,
-      'Rejeitado': XCircle,
-      'Pro Bono': Briefcase
-    };
-    const Icone = icones[status] || FileText;
-    return <Icone size={16} />;
-  };
-
-  const CardMetrica = ({ titulo, valor, icone: Icone, cor, tendencia, sufixo = '', link = null }) => {
-    const conteudo = (
-      <div className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition-all cursor-pointer">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-lg ${cor}`}>
-            <Icone size={24} className="text-white" />
-          </div>
-          {tendencia !== undefined && (
-            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-              tendencia >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-            }`}>
-              {tendencia >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-              {Math.abs(tendencia)}%
-            </div>
-          )}
-        </div>
-        <h3 className="text-gray-600 text-sm font-medium mb-1">{titulo}</h3>
-        <p className="text-3xl font-bold text-gray-900">
-          {valor}{sufixo}
-        </p>
-      </div>
-    );
-
-    return link ? <Link to={link}>{conteudo}</Link> : conteudo;
-  };
-
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
   }
 
+  const processarDados = (contratos) => {
+    const hoje = new Date()
+
+    // Configurações de Data
+    const diaDaSemana = hoje.getDay() || 7
+    const inicioSemana = new Date(hoje)
+    inicioSemana.setHours(0, 0, 0, 0)
+    inicioSemana.setDate(hoje.getDate() - diaDaSemana + 1)
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+
+    // Acumuladores
+    let mSemana = {
+      novos: 0,
+      propQtd: 0,
+      propPL: 0,
+      propExito: 0,
+      fechQtd: 0,
+      fechPL: 0,
+      fechExito: 0,
+      fechMensal: 0,
+    }
+    let mMes = {
+      novos: 0,
+      propQtd: 0,
+      propPL: 0,
+      propExito: 0,
+      fechQtd: 0,
+      fechPL: 0,
+      fechExito: 0,
+      fechMensal: 0,
+    }
+    let mGeral = {
+      totalCasos: 0,
+      emAnalise: 0,
+      propostasAtivas: 0,
+      fechados: 0,
+      rejeitados: 0,
+      valorEmNegociacaoPL: 0,
+      valorEmNegociacaoExito: 0,
+      receitaRecorrenteAtiva: 0,
+      totalFechadoPL: 0,
+      totalFechadoExito: 0,
+      assinados: 0,
+      naoAssinados: 0,
+    }
+
+    // Funil
+    let fTotal = 0
+    let fQualificados = 0
+    let fFechados = 0
+    let fPerdaAnalise = 0
+    let fPerdaNegociacao = 0
+
+    const mapaMeses = {}
+
+    contratos.forEach((c) => {
+      const dataCriacao = new Date(c.created_at)
+      const dataProp = c.data_proposta ? new Date(c.data_proposta) : dataCriacao
+      const dataFechamento = c.data_contrato
+        ? new Date(c.data_contrato)
+        : dataCriacao
+      const pl = Number(c.proposta_pro_labore || 0)
+      const exito = Number(c.proposta_exito_total || 0)
+      const mensal = Number(c.proposta_fixo_mensal || 0)
+
+      // --- FUNIL ---
+      fTotal++
+      const chegouEmProposta =
+        c.status === 'Proposta Enviada' ||
+        c.status === 'Contrato Fechado' ||
+        (c.status === 'Rejeitada' && c.data_proposta)
+
+      if (chegouEmProposta) fQualificados++
+
+      if (c.status === 'Contrato Fechado') {
+        fFechados++
+      } else if (c.status === 'Rejeitada') {
+        c.data_proposta ? fPerdaNegociacao++ : fPerdaAnalise++
+      }
+
+      // --- GERAL ---
+      mGeral.totalCasos++
+      if (c.status === 'Sob Análise') mGeral.emAnalise++
+      if (c.status === 'Rejeitada') mGeral.rejeitados++
+      if (c.status === 'Proposta Enviada') {
+        mGeral.propostasAtivas++
+        mGeral.valorEmNegociacaoPL += pl
+        mGeral.valorEmNegociacaoExito += exito
+      }
+      if (c.status === 'Contrato Fechado') {
+        mGeral.fechados++
+        mGeral.receitaRecorrenteAtiva += mensal
+        mGeral.totalFechadoPL += pl
+        mGeral.totalFechadoExito += exito
+
+        // CONTAGEM DE ASSINATURAS
+        if (c.contrato_assinado) {
+          mGeral.assinados++
+        } else {
+          mGeral.naoAssinados++
+        }
+      }
+
+      // --- SEMANA ---
+      if (dataCriacao >= inicioSemana) mSemana.novos++
+      if (c.status === 'Proposta Enviada' && dataProp >= inicioSemana) {
+        mSemana.propQtd++
+        mSemana.propPL += pl
+        mSemana.propExito += exito
+      }
+      if (c.status === 'Contrato Fechado' && dataFechamento >= inicioSemana) {
+        mSemana.fechQtd++
+        mSemana.fechPL += pl
+        mSemana.fechExito += exito
+        mSemana.fechMensal += mensal
+      }
+
+      // --- MÊS ---
+      if (dataCriacao >= inicioMes) mMes.novos++
+      if (c.status === 'Proposta Enviada' && dataProp >= inicioMes) {
+        mMes.propQtd++
+        mMes.propPL += pl
+        mMes.propExito += exito
+      }
+      if (c.status === 'Contrato Fechado' && dataFechamento >= inicioMes) {
+        mMes.fechQtd++
+        mMes.fechPL += pl
+        mMes.fechExito += exito
+        mMes.fechMensal += mensal
+      }
+
+      // Gráfico
+      const mesAno = dataCriacao.toLocaleDateString('pt-BR', {
+        month: 'short',
+        year: '2-digit',
+      })
+      if (!mapaMeses[mesAno]) mapaMeses[mesAno] = 0
+      mapaMeses[mesAno]++
+    })
+
+    // Taxas
+    const txProp = fTotal > 0 ? ((fQualificados / fTotal) * 100).toFixed(1) : 0
+    const txFech =
+      fQualificados > 0 ? ((fFechados / fQualificados) * 100).toFixed(1) : 0
+
+    setFunil({
+      totalEntrada: fTotal,
+      qualificadosProposta: fQualificados,
+      fechados: fFechados,
+      perdaAnalise: fPerdaAnalise,
+      perdaNegociacao: fPerdaNegociacao,
+      taxaConversaoProposta: txProp,
+      taxaConversaoFechamento: txFech,
+    })
+
+    const mesesGrafico = Object.keys(mapaMeses).map((key) => ({
+      mes: key,
+      qtd: mapaMeses[key],
+      altura: 0,
+    }))
+    const maxQtd = Math.max(...mesesGrafico.map((m) => m.qtd), 1)
+    mesesGrafico.forEach((m) => (m.altura = (m.qtd / maxQtd) * 100))
+
+    setMetrics({ semana: mSemana, mes: mMes, geral: mGeral })
+    setEvolucaoMensal(mesesGrafico.reverse().slice(0, 6).reverse())
+    const sorted = [...contratos]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 5)
+    setRecentes(sorted)
+  }
+
+  const formatMoney = (val) =>
+    new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(val)
+
+  const FinItem = ({ label, value, colorClass = 'text-gray-700' }) => {
+    if (!value || value === 0) return null
+    return (
+      <div className='flex justify-between items-end text-sm mt-1 border-b border-gray-100 pb-1 last:border-0 last:pb-0'>
+        <span className='text-gray-500 text-xs'>{label}</span>
+        <span className={`font-bold ${colorClass}`}>{formatMoney(value)}</span>
+      </div>
+    )
+  }
+
+  // Cálculos para o card final
+  const totalNegociacao =
+    metrics.geral.valorEmNegociacaoPL + metrics.geral.valorEmNegociacaoExito
+  const totalCarteira =
+    metrics.geral.totalFechadoPL +
+    metrics.geral.totalFechadoExito +
+    metrics.geral.receitaRecorrenteAtiva
+
   return (
-    <div className="p-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Activity size={32} className="text-blue-600" />
-            Controladoria Jurídica
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Visão estratégica de contratos e resultados
-          </p>
-        </div>
-
-        {/* Filtro de Período */}
-        <div className="flex items-center gap-2">
-          <Filter size={20} className="text-gray-400" />
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="mes_atual">Mês Atual</option>
-            <option value="trimestre">Último Trimestre</option>
-            <option value="ano">Ano Atual</option>
-          </select>
-        </div>
+    <div className='w-full space-y-8 pb-10'>
+      {/* TÍTULO E SUBTÍTULO */}
+      <div>
+        <h1 className='text-3xl font-bold text-[#0F2C4C]'>
+          Controladoria Jurídica
+        </h1>
+        <p className='text-gray-500'>
+          Visão estratégica de contratos e resultados.
+        </p>
       </div>
 
-      {/* Cards de Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <CardMetrica
-          titulo="Total de Contratos"
-          valor={dados.totalContratos}
-          icone={FileText}
-          cor="bg-blue-600"
-          tendencia={dados.tendencia}
-          link="/contratos"
-        />
-        <CardMetrica
-          titulo="Propostas Abertas"
-          valor={dados.propostasAbertas}
-          icone={Clock}
-          cor="bg-yellow-600"
-          link="/propostas"
-        />
-        <CardMetrica
-          titulo="Contratos Fechados"
-          valor={dados.contratosFechados}
-          icone={CheckCircle2}
-          cor="bg-green-600"
-          tendencia={dados.tendencia}
-        />
-        <CardMetrica
-          titulo="Taxa de Conversão"
-          valor={dados.taxaConversao}
-          icone={Target}
-          cor="bg-purple-600"
-          sufixo="%"
-        />
-      </div>
-
-      {/* Métricas Financeiras */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-xl shadow-sm p-6 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <DollarSign size={28} />
-            <h2 className="text-2xl font-bold">Valor Total</h2>
-          </div>
-          <p className="text-4xl font-bold mb-2">
-            {formatarMoeda(dados.valorTotal)}
-          </p>
-          <div className="flex items-center gap-2 text-green-100">
-            <TrendingUp size={16} />
-            <span className="text-sm">+{dados.tendencia}% vs período anterior</span>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl shadow-sm p-6 text-white">
-          <div className="flex items-center gap-3 mb-4">
-            <Briefcase size={28} />
-            <h2 className="text-2xl font-bold">Valor Fechado</h2>
-          </div>
-          <p className="text-4xl font-bold mb-2">
-            {formatarMoeda(dados.valorFechado)}
-          </p>
-          <div className="flex items-center gap-2 text-blue-100">
-            <CheckCircle2 size={16} />
-            <span className="text-sm">{dados.contratosFechados} contratos finalizados</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Gráficos e Tabelas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Distribuição por Status */}
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <PieChart size={24} className="text-blue-600" />
-            Distribuição por Status
-          </h2>
-          <div className="space-y-3">
-            {dados.distribuicaoPorStatus.map((item, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(item.status)}
-                      <span className="text-sm font-medium text-gray-700">{item.status}</span>
-                    </div>
-                    <span className="text-sm font-bold text-gray-900">{item.count}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full transition-all"
-                      style={{ width: `${item.percentual}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <span className="ml-3 text-xs font-semibold text-gray-500 w-12 text-right">
-                  {item.percentual}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Últimos Contratos */}
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <BarChart3 size={24} className="text-green-600" />
-              Últimos Contratos
+      {/* ================= 1. FUNIL ================= */}
+      <div className='bg-white p-6 rounded-2xl shadow-sm border border-gray-200'>
+        <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+          <Filter className='text-blue-600' size={24} />
+          <div>
+            <h2 className='text-xl font-bold text-gray-800'>
+              Funil de Eficiência
             </h2>
-            <Link 
-              to="/contratos" 
-              className="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center gap-1"
-            >
-              Ver todos
-              <ArrowUpRight size={16} />
-            </Link>
+            <p className='text-xs text-gray-500'>
+              Taxa de conversão de Prospects até Contratos Fechados.
+            </p>
           </div>
-          <div className="space-y-3">
-            {dados.ultimosContratos.map((contrato, index) => (
-              <div 
-                key={index} 
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900 text-sm truncate">
-                    {contrato.cliente}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {formatarData(contrato.created_at)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(contrato.status)}`}>
-                    {contrato.status}
-                  </span>
-                  <span className="text-sm font-bold text-gray-900">
-                    {formatarMoeda(contrato.valor || 0)}
-                  </span>
-                </div>
-              </div>
-            ))}
+        </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-5 gap-4 items-center'>
+          {/* ETAPA 1 */}
+          <div className='md:col-span-1 bg-gray-50 p-4 rounded-xl border border-gray-200 text-center relative'>
+            <p className='text-xs font-bold text-gray-500 uppercase'>
+              1. Prospects (Entrada)
+            </p>
+            <p className='text-3xl font-bold text-gray-800 mt-2'>
+              {funil.totalEntrada}
+            </p>
+            <span className='text-xs text-gray-400'>Total Analisado</span>
+            <div className='hidden md:block absolute -right-6 top-1/2 -translate-y-1/2 z-10'>
+              <ArrowRight className='text-gray-300' />
+            </div>
+          </div>
+          {/* Conversão 1 */}
+          <div className='md:col-span-1 flex flex-col items-center justify-center space-y-2'>
+            <div className='bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full'>
+              {funil.taxaConversaoProposta}% Avançam
+            </div>
+            <ArrowDown className='text-gray-300 md:hidden' />
+            <div className='text-xs text-red-400 flex items-center gap-1 bg-red-50 px-2 py-1 rounded border border-red-100 mt-2'>
+              <XCircle size={12} /> {funil.perdaAnalise} Rejeitados na Análise
+            </div>
+          </div>
+          {/* ETAPA 2 */}
+          <div className='md:col-span-1 bg-blue-50 p-4 rounded-xl border border-blue-100 text-center relative'>
+            <p className='text-xs font-bold text-blue-600 uppercase'>
+              2. Propostas Apresentadas
+            </p>
+            <p className='text-3xl font-bold text-blue-900 mt-2'>
+              {funil.qualificadosProposta}
+            </p>
+            <span className='text-xs text-blue-400'>Oportunidades Reais</span>
+            <div className='hidden md:block absolute -right-6 top-1/2 -translate-y-1/2 z-10'>
+              <ArrowRight className='text-blue-200' />
+            </div>
+          </div>
+          {/* Conversão 2 */}
+          <div className='md:col-span-1 flex flex-col items-center justify-center space-y-2'>
+            <div className='bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full'>
+              {funil.taxaConversaoFechamento}% Fecham
+            </div>
+            <ArrowDown className='text-gray-300 md:hidden' />
+            <div className='text-xs text-red-400 flex items-center gap-1 bg-red-50 px-2 py-1 rounded border border-red-100 mt-2'>
+              <XCircle size={12} /> {funil.perdaNegociacao} Rejeitados na
+              Proposta
+            </div>
+          </div>
+          {/* ETAPA 3 */}
+          <div className='md:col-span-1 bg-green-50 p-4 rounded-xl border border-green-100 text-center'>
+            <p className='text-xs font-bold text-green-600 uppercase'>
+              3. Contratos Fechados
+            </p>
+            <p className='text-3xl font-bold text-green-900 mt-2'>
+              {funil.fechados}
+            </p>
+            <span className='text-xs text-green-500'>Sucesso</span>
           </div>
         </div>
       </div>
 
-      {/* Alertas e Pendências */}
-      {dados.contratosPendentes.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <FileSignature size={24} className="text-yellow-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-bold text-yellow-900 mb-2">
-                Contratos Pendentes de Assinatura
-              </h3>
-              <p className="text-yellow-700 mb-4">
-                {dados.contratosPendentes.length} contrato(s) fechado(s) aguardando assinatura
+      {/* ================= 2. PULSO DA SEMANA ================= */}
+      <div className='bg-blue-50/50 p-6 rounded-2xl border border-blue-100'>
+        <div className='flex items-center gap-2 mb-4'>
+          <CalendarDays className='text-blue-700' size={24} />
+          <h2 className='text-xl font-bold text-blue-900'>Resumo da Semana</h2>
+        </div>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+          <div className='bg-white p-5 rounded-xl shadow-sm border border-blue-100 flex flex-col justify-between'>
+            <div>
+              <p className='text-xs text-gray-500 font-bold uppercase tracking-wider'>
+                Entrada de Casos
               </p>
-              <div className="space-y-2">
-                {dados.contratosPendentes.slice(0, 3).map((contrato, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm">
-                    <span className="text-yellow-900 font-medium">{contrato.cliente}</span>
-                    <span className="text-yellow-700">{formatarMoeda(contrato.valor || 0)}</span>
-                  </div>
-                ))}
+              <p className='text-3xl font-bold text-gray-800 mt-2'>
+                {metrics.semana.novos}
+              </p>
+            </div>
+            <div className='mt-2 text-xs text-gray-400'>
+              Novos leads cadastrados
+            </div>
+          </div>
+          <div className='bg-white p-5 rounded-xl shadow-sm border border-blue-100'>
+            <div className='mb-3'>
+              <p className='text-xs text-blue-600 font-bold uppercase tracking-wider'>
+                Propostas Enviadas
+              </p>
+              <div className='flex items-baseline gap-2'>
+                <p className='text-3xl font-bold text-gray-800 mt-1'>
+                  {metrics.semana.propQtd}
+                </p>
+                <span className='text-xs text-gray-400'>na semana</span>
               </div>
-              {dados.contratosPendentes.length > 3 && (
-                <Link 
-                  to="/contratos" 
-                  className="text-yellow-700 hover:text-yellow-800 text-sm font-semibold mt-3 inline-flex items-center gap-1"
-                >
-                  Ver todos ({dados.contratosPendentes.length})
-                  <ArrowUpRight size={14} />
-                </Link>
-              )}
+            </div>
+            <div className='bg-blue-50/50 p-3 rounded-lg space-y-1'>
+              <FinItem
+                label='Pró-labore Total'
+                value={metrics.semana.propPL}
+                colorClass='text-blue-700'
+              />
+              <FinItem
+                label='Êxito Total'
+                value={metrics.semana.propExito}
+                colorClass='text-blue-700'
+              />
+            </div>
+          </div>
+          <div className='bg-white p-5 rounded-xl shadow-sm border border-blue-100'>
+            <div className='mb-3'>
+              <p className='text-xs text-green-600 font-bold uppercase tracking-wider'>
+                Contratos Fechados
+              </p>
+              <div className='flex items-baseline gap-2'>
+                <p className='text-3xl font-bold text-gray-800 mt-1'>
+                  {metrics.semana.fechQtd}
+                </p>
+                <span className='text-xs text-gray-400'>na semana</span>
+              </div>
+            </div>
+            <div className='bg-green-50/50 p-3 rounded-lg space-y-1'>
+              <FinItem
+                label='Pró-labore Total'
+                value={metrics.semana.fechPL}
+                colorClass='text-green-700'
+              />
+              <FinItem
+                label='Êxito Total'
+                value={metrics.semana.fechExito}
+                colorClass='text-green-700'
+              />
+              <FinItem
+                label='Fixos Mensais Total'
+                value={metrics.semana.fechMensal}
+                colorClass='text-green-700'
+              />
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Indicadores de Performance */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl shadow-sm p-6 text-white">
-        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-          <TrendingUp size={28} />
-          Indicadores de Performance
+      {/* ================= 3. PERFORMANCE MENSAL vs TOTAL ================= */}
+      <div>
+        <h2 className='text-xl font-bold text-gray-800 mb-4 flex items-center gap-2'>
+          <TrendingUp size={20} className='text-[#0F2C4C]' /> Performance
+          Comercial
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div>
-            <p className="text-purple-100 text-sm mb-1">Ticket Médio</p>
-            <p className="text-3xl font-bold">
-              {formatarMoeda(dados.totalContratos > 0 ? dados.valorTotal / dados.totalContratos : 0)}
-            </p>
+
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+          {/* CARD ESQUERDA: MENSAL */}
+          <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative'>
+            <div className='absolute top-0 right-0 bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg'>
+              MÊS ATUAL
+            </div>
+
+            <div className='flex-1'>
+              <p className='text-sm text-gray-500 font-medium mb-1'>
+                Negociações do Mês
+              </p>
+              <h3 className='text-3xl font-bold text-blue-800'>
+                {metrics.mes.propQtd}{' '}
+                <span className='text-base font-normal text-gray-400'>
+                  propostas
+                </span>
+              </h3>
+              <div className='mt-4 space-y-2'>
+                <FinItem label='Pró-labore Total' value={metrics.mes.propPL} />
+                <FinItem label='Êxito Total' value={metrics.mes.propExito} />
+              </div>
+            </div>
+            <div className='w-full md:w-px bg-gray-100 h-full'></div>
+
+            <div className='flex-1'>
+              <p className='text-sm text-gray-500 font-medium mb-1'>
+                Realizado no Mês
+              </p>
+              <h3 className='text-3xl font-bold text-green-700'>
+                {metrics.mes.fechQtd}{' '}
+                <span className='text-base font-normal text-gray-400'>
+                  fechamentos
+                </span>
+              </h3>
+              <div className='mt-4 space-y-2'>
+                <FinItem
+                  label='Pró-labore Total'
+                  value={metrics.mes.fechPL}
+                  colorClass='text-green-700'
+                />
+                <FinItem
+                  label='Fixos Mensais Total'
+                  value={metrics.mes.fechMensal}
+                  colorClass='text-green-700'
+                />
+                <FinItem label='Êxito Total' value={metrics.mes.fechExito} />
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-purple-100 text-sm mb-1">Contratos/Dia (Média)</p>
-            <p className="text-3xl font-bold">
-              {(dados.totalContratos / 30).toFixed(1)}
-            </p>
+
+          {/* CARD DIREITA: TOTAL HISTÓRICO/ATIVO */}
+          <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 relative'>
+            <div className='absolute top-0 right-0 bg-[#0F2C4C] text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg'>
+              PERFORMANCE TOTAL
+            </div>
+
+            <div className='flex-1'>
+              <p className='text-sm text-gray-500 font-medium mb-1'>
+                Total em Negociação
+              </p>
+              <h3 className='text-3xl font-bold text-blue-900'>
+                {metrics.geral.propostasAtivas}{' '}
+                <span className='text-base font-normal text-gray-400'>
+                  em mesa
+                </span>
+              </h3>
+              <div className='mt-4 space-y-2'>
+                <FinItem
+                  label='Pró-labore Total'
+                  value={metrics.geral.valorEmNegociacaoPL}
+                />
+                <FinItem
+                  label='Êxito Total'
+                  value={metrics.geral.valorEmNegociacaoExito}
+                />
+              </div>
+            </div>
+            <div className='w-full md:w-px bg-gray-100 h-full'></div>
+
+            <div className='flex-1'>
+              <div className='mb-2'>
+                <p className='text-sm text-gray-500 font-medium mb-1'>
+                  Total Histórico Fechado
+                </p>
+                <h3 className='text-3xl font-bold text-green-800'>
+                  {metrics.geral.fechados}{' '}
+                  <span className='text-base font-normal text-gray-400'>
+                    contratos
+                  </span>
+                </h3>
+
+                {/* NOVA ÁREA: STATUS DE ASSINATURA */}
+                <div className='flex gap-2 mt-2'>
+                  <span className='flex items-center gap-1 text-[10px] bg-green-50 text-green-700 border border-green-100 px-2 py-1 rounded-full font-bold'>
+                    <FileSignature size={12} /> {metrics.geral.assinados}{' '}
+                    Assinados
+                  </span>
+                  <span className='flex items-center gap-1 text-[10px] bg-red-50 text-red-700 border border-red-100 px-2 py-1 rounded-full font-bold'>
+                    <AlertCircle size={12} /> {metrics.geral.naoAssinados}{' '}
+                    Pendentes
+                  </span>
+                </div>
+              </div>
+
+              <div className='mt-4 space-y-2'>
+                <FinItem
+                  label='Pró-labore Total'
+                  value={metrics.geral.totalFechadoPL}
+                  colorClass='text-green-800'
+                />
+                <FinItem
+                  label='Fixos Mensais Total'
+                  value={metrics.geral.receitaRecorrenteAtiva}
+                  colorClass='text-green-800'
+                />
+                <FinItem
+                  label='Êxito Total'
+                  value={metrics.geral.totalFechadoExito}
+                />
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-purple-100 text-sm mb-1">Taxa de Sucesso</p>
-            <p className="text-3xl font-bold">{dados.taxaConversao}%</p>
+        </div>
+      </div>
+
+      {/* ================= 4. DISTRIBUIÇÃO E GRÁFICO ================= */}
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+        {/* Card Grande de Volumetria */}
+        <div className='lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100'>
+          <div className='flex items-center gap-2 mb-6 border-b pb-4'>
+            <PieChart className='text-[#0F2C4C]' size={24} />
+            <div>
+              <h2 className='text-xl font-bold text-gray-800'>
+                Distribuição da Carteira
+              </h2>
+              <p className='text-xs text-gray-500'>
+                Visão consolidada por status.
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-purple-100 text-sm mb-1">Receita Média Mensal</p>
-            <p className="text-3xl font-bold">
-              {formatarMoeda(dados.valorFechado / 30 * 30)}
-            </p>
+          <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+            <div className='col-span-2 md:col-span-1 bg-[#0F2C4C] text-white p-4 rounded-lg flex flex-col justify-center items-center text-center'>
+              <span className='text-4xl font-bold'>
+                {metrics.geral.totalCasos}
+              </span>
+              <span className='text-xs opacity-80 uppercase tracking-wider mt-1'>
+                Total Analisado
+              </span>
+            </div>
+            <div className='bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-center'>
+              <Clock className='mx-auto text-yellow-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-yellow-800'>
+                {metrics.geral.emAnalise}
+              </p>
+              <p className='text-xs text-yellow-700 font-bold uppercase mt-1'>
+                Sob Análise
+              </p>
+            </div>
+            <div className='bg-blue-50 p-4 rounded-lg border border-blue-100 text-center'>
+              <Briefcase className='mx-auto text-blue-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-blue-800'>
+                {metrics.geral.propostasAtivas}
+              </p>
+              <p className='text-xs text-blue-700 font-bold uppercase mt-1'>
+                Propostas
+              </p>
+            </div>
+            <div className='bg-green-50 p-4 rounded-lg border border-green-100 text-center'>
+              <CheckCircle2 className='mx-auto text-green-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-green-800'>
+                {metrics.geral.fechados}
+              </p>
+              <p className='text-xs text-green-700 font-bold uppercase mt-1'>
+                Fechados
+              </p>
+            </div>
+            <div className='bg-red-50 p-4 rounded-lg border border-red-100 text-center'>
+              <XCircle className='mx-auto text-red-600 mb-2' size={20} />
+              <p className='text-2xl font-bold text-red-800'>
+                {metrics.geral.rejeitados}
+              </p>
+              <p className='text-xs text-red-700 font-bold uppercase mt-1'>
+                Rejeitados
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Gráfico */}
+        <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100'>
+          <h3 className='font-bold text-gray-800 mb-6 flex items-center gap-2'>
+            <BarChart3 className='text-[#0F2C4C]' size={20} />
+            Entrada de Casos (6 Meses)
+          </h3>
+          <div className='h-64 flex items-end justify-around gap-2 pb-6 border-b border-gray-100'>
+            {evolucaoMensal.length === 0 ? (
+              <p className='w-full text-center text-gray-400 self-center'>
+                Sem dados
+              </p>
+            ) : (
+              evolucaoMensal.map((item, index) => (
+                <div
+                  key={index}
+                  className='flex flex-col items-center gap-2 w-full h-full justify-end group'
+                >
+                  <span className='text-xs font-bold text-blue-900 mb-1 opacity-100'>
+                    {item.qtd}
+                  </span>
+                  <div
+                    className='relative w-full max-w-[40px] bg-blue-100 rounded-t-md hover:bg-blue-200 transition-all cursor-pointer'
+                    style={{ height: `${item.altura}%` }}
+                  ></div>
+                  <span className='text-xs text-gray-500 font-medium uppercase'>
+                    {item.mes}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Financeiro Acumulado Ativo (Atualizado com Total Geral) */}
+        <div className='bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center space-y-6 lg:col-span-3'>
+          <h3 className='font-bold text-gray-700 border-b pb-2 flex items-center gap-2'>
+            <Camera className='text-[#0F2C4C]' size={20} />
+            Fotografia Financeira Total
+          </h3>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+            <div>
+              <p className='text-xs text-gray-500 font-medium uppercase mb-2'>
+                Valores em Negociação (Ativo)
+              </p>
+              <div className='space-y-2'>
+                <FinItem
+                  label='Pró-labore Total'
+                  value={metrics.geral.valorEmNegociacaoPL}
+                />
+                <FinItem
+                  label='Êxito Total'
+                  value={metrics.geral.valorEmNegociacaoExito}
+                />
+
+                {/* TOTAL GERAL NEGOCIAÇÃO */}
+                <div className='flex justify-between items-end border-t border-gray-200 pt-2 mt-2'>
+                  <span className='text-sm font-bold text-gray-700'>
+                    TOTAL GERAL
+                  </span>
+                  <span className='text-xl font-bold text-[#0F2C4C]'>
+                    {formatMoney(totalNegociacao)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className='md:border-l md:pl-8 border-gray-100'>
+              <p className='text-xs text-gray-500 font-medium uppercase mb-2'>
+                Carteira Ativa (Receita)
+              </p>
+              <div className='space-y-2'>
+                <FinItem
+                  label='Pró-labore Total (Fechado)'
+                  value={metrics.geral.totalFechadoPL}
+                  colorClass='text-green-700'
+                />
+                <FinItem
+                  label='Êxito Total (Fechado)'
+                  value={metrics.geral.totalFechadoExito}
+                  colorClass='text-green-700'
+                />
+                <FinItem
+                  label='Fixos Mensais Total'
+                  value={metrics.geral.receitaRecorrenteAtiva}
+                  colorClass='text-green-700'
+                />
+
+                {/* TOTAL GERAL CARTEIRA */}
+                <div className='flex justify-between items-end border-t border-gray-200 pt-2 mt-2'>
+                  <span className='text-sm font-bold text-gray-700'>
+                    TOTAL GERAL
+                  </span>
+                  <span className='text-xl font-bold text-green-700'>
+                    {formatMoney(totalCarteira)}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
