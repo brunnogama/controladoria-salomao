@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { CheckCircle, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 
 // Context para gerenciar notificações globalmente
@@ -11,6 +11,9 @@ export const useToast = () => {
   }
   return context
 }
+
+// Referência global para toast (para uso fora de componentes React)
+let globalToastRef = null
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([])
@@ -37,6 +40,11 @@ export const ToastProvider = ({ children }) => {
   const error = useCallback((message, duration) => addToast(message, 'error', duration), [addToast])
   const warning = useCallback((message, duration) => addToast(message, 'warning', duration), [addToast])
   const info = useCallback((message, duration) => addToast(message, 'info', duration), [addToast])
+
+  // Registrar referência global
+  useEffect(() => {
+    globalToastRef = { success, error, warning, info, addToast, removeToast }
+  }, [success, error, warning, info, addToast, removeToast])
 
   return (
     <ToastContext.Provider value={{ success, error, warning, info, addToast, removeToast }}>
@@ -169,5 +177,37 @@ export const toastStyles = `
   animation: shrink linear forwards;
 }
 `
+
+// Funções notify para uso global (sem precisar do useToast hook)
+export const notify = {
+  success: (message, duration = 5000) => {
+    if (globalToastRef) {
+      globalToastRef.success(message, duration)
+    } else {
+      console.log('✅', message)
+    }
+  },
+  error: (message, duration = 7000) => {
+    if (globalToastRef) {
+      globalToastRef.error(message, duration)
+    } else {
+      console.error('❌', message)
+    }
+  },
+  warning: (message, duration = 6000) => {
+    if (globalToastRef) {
+      globalToastRef.warning(message, duration)
+    } else {
+      console.warn('⚠️', message)
+    }
+  },
+  info: (message, duration = 5000) => {
+    if (globalToastRef) {
+      globalToastRef.info(message, duration)
+    } else {
+      console.info('ℹ️', message)
+    }
+  }
+}
 
 export default ToastProvider
