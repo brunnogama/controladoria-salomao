@@ -33,7 +33,7 @@ const Sidebar = () => {
         <img 
           src="/logo-branca.png" 
           alt="Logo Salomão Advogados" 
-          className="h-10 w-auto object-contain" 
+          className="h-14 w-auto object-contain" 
         />
       </div>
 
