@@ -7,38 +7,12 @@
  * Todos os componentes importam daqui.
  */
 
-export const APP_VERSION = "2.0.1";
+export const APP_VERSION = "1.9.0";
 export const APP_NAME = "Flow Metrics System";
 export const LAST_UPDATE = "28/12/2024";
 
 // Changelog completo (usado em Configurações)
 export const RECENT_CHANGES = [
-  {
-    versao: "2.0.1",
-    data: "28/12/2024",
-    tipo: "UI Modernization",
-    mudancas: [
-      "🎨 Modernização visual do Dashboard (apenas CSS)",
-      "✨ Gradientes nos cards de métricas",
-      "🎯 Hover effects e transitions suaves",
-      "💎 Sombras e bordas melhoradas",
-      "📊 Interface consistente com Volumetria",
-      "⚡ Performance visual otimizada"
-    ]
-  },
-  {
-    versao: "2.0.0",
-    data: "28/12/2024",
-    tipo: "Dashboard Redesign",
-    mudancas: [
-      "🚀 Dashboard completamente reformulado",
-      "📊 UI moderna estilo Volumetria",
-      "🎨 Cards coloridos com ícones",
-      "📈 Painéis com gradientes (verde/azul/roxo)",
-      "🔗 Cards clicáveis com links",
-      "⚡ Código otimizado (67% menor)"
-    ]
-  },
   {
     versao: "1.9.0",
     data: "28/12/2024",
