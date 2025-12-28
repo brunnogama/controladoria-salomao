@@ -19,7 +19,6 @@ import Historico from './pages/Historico';
 import Configuracoes from './pages/Configuracoes';
 import GED from './pages/GED';
 import Kanban from './pages/Kanban';
-import DemoNotificacoes from './pages/DemoNotificacoes';
 
 // Sistema de Notificações
 import { ToastProvider } from './components/Toast';
@@ -50,7 +49,6 @@ const App = () => {
             <Route path="historico" element={<Historico />} />
             <Route path="kanban" element={<Kanban />} />
             <Route path="configuracoes" element={<Configuracoes />} />
-            <Route path="demo-notificacoes" element={<DemoNotificacoes />} />
           </Route>
           
           {/* Fallback - Redireciona rotas não encontradas para home */}
