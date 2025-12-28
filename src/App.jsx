@@ -1,7 +1,7 @@
 /**
  * @file App.jsx
  * @description Componente raiz da aplicação - Configuração de rotas
- * @version 1.4.0
+ * @version 1.8.0
  * @author Marcio Gama - Flow Metrics
  */
 
@@ -19,7 +19,11 @@ import Historico from './pages/Historico';
 import Configuracoes from './pages/Configuracoes';
 import GED from './pages/GED';
 import Kanban from './pages/Kanban';
-// import DiagnosticoCNPJ from './pages/DiagnosticoCNPJ';
+import DemoNotificacoes from './pages/DemoNotificacoes';
+
+// Sistema de Notificações
+import { ToastProvider } from './components/Toast';
+import ModalManager from './components/ModalManager';
 
 /**
  * Componente principal da aplicação
@@ -27,31 +31,36 @@ import Kanban from './pages/Kanban';
  */
 const App = () => {
   return (
-    <Router>
-      <Routes>
-        {/* Rota Pública - Login */}
-        <Route path="/login" element={<Login />} />
-        
-        {/* Rotas Protegidas - Layout Principal */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="contratos" element={<Contratos />} />
-          <Route path="contratos/novo" element={<ContratoForm />} />
-          <Route path="contratos/editar/:id" element={<ContratoForm />} />
-          <Route path="propostas" element={<Propostas />} />
-          <Route path="clientes" element={<Clientes />} />
-          <Route path="compliance" element={<Compliance />} />
-          <Route path="ged" element={<GED />} />
-          <Route path="historico" element={<Historico />} />
-          <Route path="kanban" element={<Kanban />} />
-          <Route path="configuracoes" element={<Configuracoes />} />
-          {/* <Route path="diagnostico-cnpj" element={<DiagnosticoCNPJ />} /> */}
-        </Route>
-        
-        {/* Fallback - Redireciona rotas não encontradas para home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+    <ToastProvider>
+      <Router>
+        <Routes>
+          {/* Rota Pública - Login */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* Rotas Protegidas - Layout Principal */}
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="contratos" element={<Contratos />} />
+            <Route path="contratos/novo" element={<ContratoForm />} />
+            <Route path="contratos/editar/:id" element={<ContratoForm />} />
+            <Route path="propostas" element={<Propostas />} />
+            <Route path="clientes" element={<Clientes />} />
+            <Route path="compliance" element={<Compliance />} />
+            <Route path="ged" element={<GED />} />
+            <Route path="historico" element={<Historico />} />
+            <Route path="kanban" element={<Kanban />} />
+            <Route path="configuracoes" element={<Configuracoes />} />
+            <Route path="demo-notificacoes" element={<DemoNotificacoes />} />
+          </Route>
+          
+          {/* Fallback - Redireciona rotas não encontradas para home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+      
+      {/* Gerenciador Global de Modais */}
+      <ModalManager />
+    </ToastProvider>
   );
 };
 
